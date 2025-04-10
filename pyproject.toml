@@ -18,7 +18,7 @@ classifiers = [
 ]
 license = {text = "MIT license"}
 dependencies = [
-  
+  "typer"
 ]
 
 [project.optional-dependencies]
