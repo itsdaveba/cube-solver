@@ -43,7 +43,6 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '__pycache__' -exec rm -fr {} +
 
 clean-test: ## remove test and coverage artifacts
-	rm -fr .tox/
 	rm -f .coverage
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
@@ -66,7 +65,7 @@ coverage: ## check code coverage quickly with the default Python
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/cube_solver.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ cube_solver
+	sphinx-apidoc -o docs/ src/cube_solver
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html
@@ -83,4 +82,6 @@ dist: clean ## builds source and wheel package
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
-	python setup.py install
+	python -m pip install --upgrade pip
+	python -m pip install -e .[dev]
+	python -m pip install -r requirements_dev.txt

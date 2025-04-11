@@ -1,5 +1,1 @@
-pip
-pytest
-coverage
 Sphinx
-twine
