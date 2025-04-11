@@ -3,11 +3,8 @@ Cube Solver
 ===========
 
 
-.. image:: https://img.shields.io/pypi/v/cube_solver.svg
-        :target: https://pypi.python.org/pypi/cube_solver
-
-.. image:: https://img.shields.io/travis/itsdaveba/cube_solver.svg
-        :target: https://travis-ci.com/itsdaveba/cube_solver
+.. image:: https://img.shields.io/pypi/v/cube-solver.svg
+        :target: https://pypi.python.org/pypi/cube-solver
 
 .. image:: https://readthedocs.org/projects/cube-solver/badge/?version=latest
         :target: https://cube-solver.readthedocs.io/en/latest/?version=latest
@@ -19,7 +16,7 @@ Cube Solver
 Rubik's Cube Solver
 
 
-* Free software: MIT license
+* Free software: MIT License
 * Documentation: https://cube-solver.readthedocs.io.
 
 
