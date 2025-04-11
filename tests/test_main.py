@@ -2,7 +2,7 @@
 
 """Tests for `cube_solver` package."""
 
-
+print("Testing")
 import unittest
 
 from cube_solver import main
