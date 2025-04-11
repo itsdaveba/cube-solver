@@ -19,7 +19,7 @@ description = "Rubik's Cube Solver"
 readme = "README.rst"
 license = "MIT"
 license-files = ["LICEN[CS]E*", "AUTHORS.rst"]
-keywords = ["rubik", "cube"]
+keywords = ["rubik", "cube", "solver"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
