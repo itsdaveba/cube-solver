@@ -1,47 +1,52 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools >= 75.8.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cube_solver"
-version = "0.1.0"
-description = "Rubik's Cube Solver"
-readme = "README.rst"
+name = "cube-solver"
+dynamic = ["version"]
+dependencies = [
+  "typer"
+]
+requires-python = ">= 3.8"
 authors = [
   {name = "Dave Barragan", email = "itsdaveba@gmail.com"}
 ]
 maintainers = [
   {name = "Dave Barragan", email = "itsdaveba@gmail.com"}
 ]
+description = "Rubik's Cube Solver"
+readme = "README.rst"
+license = "MIT"
+license-files = ["LICEN[CS]E*", "AUTHORS.rst"]
+keywords = ["rubik", "cube"]
 classifiers = [
-
-]
-license = {text = "MIT license"}
-dependencies = [
-  "typer"
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Topic :: Games/Entertainment :: Puzzle Games"
 ]
 
 [project.optional-dependencies]
 dev = [
-    "coverage",  # testing
-    "mypy",  # linting
-    "pytest",  # testing
-    "ruff"  # linting
+  "coverage",  # testing
+  "mypy",  # linting
+  "pytest",  # testing
+  "ruff"  # linting
 ]
 
 [project.urls]
+changelog = "https://github.com/itsdaveba/cube-solver/blob/main/HISTORY.rst"
+documentation = "https://cube-solver.readthedocs.io"
+issues = "https://github.com/itsdaveba/cube-solver/issues"
+source = "https://github.com/itsdaveba/cube-solver"
 
-bugs = "https://github.com/itsdaveba/cube_solver/issues"
-changelog = "https://github.com/itsdaveba/cube_solver/blob/master/changelog.md"
-homepage = "https://github.com/itsdaveba/cube_solver"
+[project.scripts]
+cube-solver = "cube_solver.cli:app"
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-
-[tool.setuptools.package-data]
-"*" = ["*.*"]
-
-
+[tool.setuptools.dynamic]
+version = {attr = "cube_solver.__version__"}
 
 
 # Mypy

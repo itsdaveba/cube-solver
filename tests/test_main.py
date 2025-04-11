@@ -5,7 +5,7 @@
 
 import unittest
 
-from cube_solver import cube_solver
+from cube_solver import main
 
 
 class TestCube_solver(unittest.TestCase):
