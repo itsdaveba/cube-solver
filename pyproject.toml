@@ -32,7 +32,7 @@ dev = [
   "coverage",  # testing
   "mypy",  # linting
   "pytest",  # testing
-  "ruff"  # linting
+  "flake8"  # linting
 ]
 
 [project.urls]
