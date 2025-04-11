@@ -1,5 +1,5 @@
 pip
-tox
+pytest
 coverage
 Sphinx
 twine

@@ -49,19 +49,16 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint/flake8: ## check style with flake8
-	flake8 cube_solver tests
-
+	flake8 src/cube_solver tests --count --select=E9,F63,F7,F82 --show-source --statistics
+	flake8 src/cube_solver tests --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
 lint: lint/flake8 ## check style
 
 test: ## run tests quickly with the default Python
-	python setup.py test
-
-test-all: ## run tests on every Python version with tox
-	tox
+	pytest
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source cube_solver setup.py test
+	coverage run -m pytest
 	coverage report -m
 	coverage html
 	$(BROWSER) htmlcov/index.html
