@@ -21,7 +21,7 @@ jobs:
           pip install flake8 pytest .
       - name: Lint with flake8
         run: |
-          flake8 . --count --select=E9,F63
+          flake8 . --select=E9,F63
       - name: Test with pytest
         run: |
           pytest
