@@ -13,6 +13,7 @@ def main():
     """Console script for cube_solver."""
     console.print("Replace this message by putting your code into cube_solver.cli.main")
     console.print("See Typer documentation at https://typer.tiangolo.com/")
+    console.print(cube_solver.__version__)
 
 
 if __name__ == "__main__":

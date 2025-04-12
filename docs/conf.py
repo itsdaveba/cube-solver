@@ -19,9 +19,9 @@
 #
 import os
 import sys
+import src.cube_solver
 sys.path.insert(0, os.path.abspath('..'))
 
-import src.cube_solver
 
 # -- General configuration ---------------------------------------------
 
@@ -157,6 +157,3 @@ texinfo_documents = [
      'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-
