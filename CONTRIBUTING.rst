@@ -130,4 +130,4 @@ Code of Conduct
 Please note that this project is released with a `Contributor Code of Conduct`_.
 By participating in this project you agree to abide by its terms.
 
-.. _`Contributor Code of Conduct`: CODE_OF_CONDUCT.rst
+.. _`Contributor Code of Conduct`: https://www.contributor-covenant.org/
