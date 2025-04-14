@@ -57,9 +57,9 @@ If you are proposing a feature:
 Get Started!
 ------------
 
-Ready to contribute? Here's how to set up `cube_solver` for local development.
+Ready to contribute? Here's how to set up `cube-solver` for local development.
 
-1. Fork the `cube_solver` repo on GitHub.
+1. Fork the `cube-solver` repo on GitHub.
 2. Clone your fork locally::
 
     $ git clone git@github.com:your_name_here/cube-solver.git
