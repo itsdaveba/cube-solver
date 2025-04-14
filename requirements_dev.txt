@@ -12,6 +12,6 @@ sphinx_rtd_theme
 watchdog
 
 # build
+bump2version
 build
 twine
-bump2version

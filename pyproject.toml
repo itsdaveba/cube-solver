@@ -39,9 +39,9 @@ docs = [
   "watchdog"  # servedocs
 ]
 build = [
+  "bump2version",  # bump
   "build",  # build
-  "twine",  # release
-  "bump2version"  # bump
+  "twine"  # release
 ]
 
 [project.urls]
