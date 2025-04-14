@@ -68,7 +68,7 @@ Ready to contribute? Here's how to set up `cube-solver` for local development.
 
     $ mkvirtualenv cube-solver
     $ cd cube-solver/
-    $ pip install -e .[dev]
+    $ pip install -e .[dev,docs]
 
 4. Create a branch for local development::
 
