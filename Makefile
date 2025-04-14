@@ -48,18 +48,18 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint/flake8: ## check style with flake8
-	flake8 src/cube_solver tests --count --select=E9,F63,F7,F82 --show-source --statistics
-	flake8 src/cube_solver tests --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+	python -m flake8 src/cube_solver tests --count --select=E9,F63,F7,F82 --show-source --statistics
+	python -m flake8 src/cube_solver tests --count --max-complexity=10 --max-line-length=127 --statistics
 
 lint: lint/flake8 ## check style
 
 test: ## run tests quickly with the default Python
-	pytest
+	python -m pytest
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run -m pytest
-	coverage report -m
-	coverage html
+	python -m coverage run -m pytest
+	python -m coverage report -m
+	python -m coverage html
 	$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs

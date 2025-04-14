@@ -1,4 +1,4 @@
-name: Python package
+name: Python Package
 
 on: [push]
 
@@ -18,10 +18,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest .
+          python -m pip install flake8 pytest .
       - name: Lint with flake8
         run: |
-          flake8 src/cube_solver tests --count --select=E9,F63,F7,F82 --show-source --statistics
+          python -m flake8 src/cube_solver tests --count --select=E9,F63,F7,F82 --show-source --statistics
+          python -m flake8 src/cube_solver tests --count --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with pytest
         run: |
-          pytest
+          python -m pytest
