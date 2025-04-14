@@ -32,7 +32,7 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/itsdaveba/cube-solver
+    $ git clone https://github.com/itsdaveba/cube-solver.git
 
 Or download the `tarball`_:
 
