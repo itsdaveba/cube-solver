@@ -31,7 +31,16 @@ classifiers = [
 dev = [
   "flake8",  # linting
   "pytest",  # testing
-  "coverage",  # testing
+  "coverage"  # testing
+]
+docs = [
+  "Sphinx",  # docs
+  "sphinx_rtd_theme",  # theme
+  "watchdog"  # servedocs
+]
+build = [
+  "build",  # build
+  "twine"  # release
 ]
 
 [project.urls]

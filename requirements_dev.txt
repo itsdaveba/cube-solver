@@ -1,5 +1,16 @@
-build
+typer
+-e .
+
+# dev
+flake8
+pytest
+coverage
+
+# docs
 Sphinx
 sphinx_rtd_theme
-twine
 watchdog
+
+# build
+build
+twine
