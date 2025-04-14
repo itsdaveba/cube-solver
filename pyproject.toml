@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cube-solver"
-version = "0.1.0"
+dynamic = ["version"]
 dependencies = [
   "typer"
 ]
@@ -51,3 +51,6 @@ source = "https://github.com/itsdaveba/cube-solver"
 
 [project.scripts]
 cube-solver = "cube_solver.cli:app"
+
+[tool.setuptools.dynamic]
+version = {attr = "cube_solver.__version__"}
