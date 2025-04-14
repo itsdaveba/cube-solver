@@ -40,7 +40,8 @@ docs = [
 ]
 build = [
   "build",  # build
-  "twine"  # release
+  "twine",  # release
+  "bump2version"  # bump
 ]
 
 [project.urls]

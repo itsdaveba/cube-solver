@@ -14,3 +14,4 @@ watchdog
 # build
 build
 twine
+bump2version
