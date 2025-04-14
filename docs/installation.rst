@@ -26,7 +26,7 @@ you through the process.
 From sources
 ------------
 
-The sources for Cube Solver can be downloaded from the `Github repo`_.
+The sources for Cube Solver can be downloaded from the `GitHub repo`_.
 
 You can either clone the public repository:
 
@@ -47,5 +47,5 @@ Once you have a copy of the source, you can install it with:
     $ pip install .
 
 
-.. _Github repo: https://github.com/itsdaveba/cube-solver
+.. _GitHub repo: https://github.com/itsdaveba/cube-solver
 .. _tarball: https://github.com/itsdaveba/cube-solver/tarball/master
