@@ -26,6 +26,7 @@ Features
 * Cube representation
 * Make maneuver
 * Generate scramble
+* Tree search solve
 
 Credits
 -------

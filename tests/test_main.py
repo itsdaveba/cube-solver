@@ -46,3 +46,12 @@ def test_content(response):
         assert move[0] != next_move[0]
         if move[0] in "ULF":
             assert OPPOSITE[move[0]] != next_move[0]
+
+    cube = main.Cube("R L2 F'")
+    assert cube.solve() == "F L2 R'"
+
+    cube = main.Cube("L F' L")
+    assert cube.solve() == "L' F L'"
+
+    cube = main.Cube("D L2 U'")
+    assert cube.solve() == "U L2 D'"

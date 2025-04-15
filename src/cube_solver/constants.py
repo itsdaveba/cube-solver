@@ -1,3 +1,7 @@
+COLORS = "WOGRBY"
+FACES = "ULFRBD"
+REPS = ["'", "", "2"]
+
 OPPOSITE = {
     "U": "D",
     "L": "R",

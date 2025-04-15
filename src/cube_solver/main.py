@@ -2,7 +2,7 @@
 from typing import Optional
 import numpy as np
 
-from cube_solver.constants import MOVE, OPPOSITE
+from cube_solver.constants import COLORS, FACES, REPS, OPPOSITE, MOVE
 
 
 class Cube:
@@ -10,7 +10,7 @@ class Cube:
         assert size > 0, "size must be greater than 0"
 
         self.size = size
-        self.faces = np.array([[[color] * size] * size for color in "WOGRBY"])
+        self.faces = np.array([[[color] * size] * size for color in COLORS])
         if scramble is not None:
             self.apply_maneuver(scramble)
 
@@ -24,6 +24,27 @@ class Cube:
     def apply_maneuver(self, maneuver: str) -> None:
         for move in maneuver.split():
             self.apply_move(move)
+
+    def is_solved(self):
+        return repr(self) == "".join([color * self.size * self.size for color in COLORS])
+
+    def solve(self, max_depth: int = 3) -> str:
+        solution = []
+        for depth in range(max_depth + 1):
+            if self._solve(depth, solution):
+                break
+        return " ".join(solution[::-1])
+
+    def _solve(self, depth: int, solution: list[str]) -> bool:
+        if depth == 0:
+            return self.is_solved()
+        for move in FACES:
+            for i in range(4):
+                self.apply_move(move)
+                if self._solve(depth - 1, solution):
+                    solution.append(move + REPS[i-2])
+                    return True
+        return False
 
     @staticmethod
     def generate_scramble(length: int = 25) -> str:
@@ -82,6 +103,12 @@ class Cube:
 
 
 if __name__ == "__main__":
-    cube = Cube("D F' U B2 R' B' F D2 U' L U B' R D' U F D R' F' U2 F' L F2 R2 D2")
-    Cube.generate_scramble()
-    print(cube)
+    depth = 3
+    scramble = Cube.generate_scramble(length=depth)
+    print("Scramble:", scramble)
+    cube = Cube(scramble)
+    solution = cube.solve()
+    if solution or len(scramble) == 0:
+        print("Solution:", solution)
+    else:
+        print("No solution found")
