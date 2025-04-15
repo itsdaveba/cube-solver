@@ -21,4 +21,21 @@ def test_content(response):
     """Sample pytest test function with the pytest fixture as an argument."""
     # from bs4 import BeautifulSoup
     # assert 'GitHub' in BeautifulSoup(response.content).title.string
-    main
+    cube = main.Cube(size=2)
+    assert str(cube) == \
+        "      -------\n      | W W | \n      | W W | \n-------------------------\n| O O | G G | R R | B B | \n| O O | G G | "\
+        + "R R | B B | \n-------------------------\n      | Y Y | \n      | Y Y | \n      -------"
+    cube = main.Cube()
+    assert str(cube) == \
+        "        ---------\n        | W W W | \n        | W W W | \n        | W W W | \n---------------------------------\n| "\
+        + "O O O | G G G | R R R | B B B | \n| O O O | G G G | R R R | B B B | \n| O O O | G G G | R R R | B B B | \n--------"\
+        + "-------------------------\n        | Y Y Y | \n        | Y Y Y | \n        | Y Y Y | \n        ---------"
+
+    cube.apply_maneuver("D F' U B2 R' B' F D2 U' L U B' R D' U F D R' F' U2 F' L F2 R2 D2")
+    assert repr(cube) == "WOYWWWBBRBBROOWRGWYRGOGBGRGYROYROYROBYRBBGBYWOYOWYGGGW"
+
+    cube = main.Cube("B R' L F2 L B2 L' B R B R D2 R' L2 U2 L2 U B U' D B L D2 F' D2")
+    assert repr(cube) == "BWRGWYGRRYYOGOYORWYGWBGWGOWGOGBRBBBBYGRRBOWRBOWRWYOYYO"
+
+    cube = main.Cube("U D F2 R D F' D B L F R2 F2 D2 R F' L2 U2 D' F2 L2 U2 F2 L' D2 R'")
+    assert repr(cube) == "OYBBWRYBWGRBOOYWWWRWORGWOWRGGWRROYYBRGYBBGOOGBOGGYBRYY"

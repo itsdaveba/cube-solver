@@ -1,4 +1,5 @@
 typer
+numpy
 -e .
 
 # dev

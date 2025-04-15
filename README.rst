@@ -23,7 +23,8 @@ Rubik's Cube Solver
 Features
 --------
 
-* TODO
+* Cube representation
+* Make maneuver
 
 Credits
 -------

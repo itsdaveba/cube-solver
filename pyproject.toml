@@ -6,7 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "cube-solver"
 dynamic = ["version"]
 dependencies = [
-  "typer"
+  "typer",
+  "numpy"
 ]
 requires-python = ">= 3.8"
 authors = [

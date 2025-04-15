@@ -122,7 +122,7 @@ $ bump2version patch # possible: major / minor / patch
 $ git push
 $ git push --tags
 
-GitHub Actions will then deploy to PyPI if tests pass.
+GitHub Actions will then deploy to PyPI after a release is published on GitHub.
 
 Code of Conduct
 ---------------
