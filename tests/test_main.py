@@ -5,6 +5,7 @@
 import pytest
 
 from cube_solver import main
+from cube_solver.constants import OPPOSITE
 
 
 @pytest.fixture
@@ -39,3 +40,9 @@ def test_content(response):
 
     cube = main.Cube("U D F2 R D F' D B L F R2 F2 D2 R F' L2 U2 D' F2 L2 U2 F2 L' D2 R'")
     assert repr(cube) == "OYBBWRYBWGRBOOYWWWRWORGWOWRGGWRROYYBRGYBBGOOGBOGGYBRYY"
+
+    scramble = main.Cube.generate_scramble(1000).split()
+    for move, next_move in zip(scramble[:-1], scramble[1:]):
+        assert move[0] != next_move[0]
+        if move[0] in "ULF":
+            assert OPPOSITE[move[0]] != next_move[0]

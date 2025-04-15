@@ -2,45 +2,15 @@
 from typing import Optional
 import numpy as np
 
-MOVE = {
-    "U": [([0, 0, 0, 0], [0, 0, 2, 2], [0, 2, 2, 0]),
-          ([1, 4, 3, 2], [0, 0, 0, 0], [0, 0, 0, 0]),
-          ([1, 4, 3, 2], [0, 0, 0, 0], [2, 2, 2, 2]),
-          ([0, 0, 0, 0], [0, 1, 2, 1], [1, 2, 1, 0]),
-          ([1, 4, 3, 2], [0, 0, 0, 0], [1, 1, 1, 1])],
-    "L": [([0, 2, 5, 4], [0, 0, 0, 2], [0, 0, 0, 2]),
-          ([0, 2, 5, 4], [2, 2, 2, 0], [0, 0, 0, 2]),
-          ([1, 1, 1, 1], [0, 0, 2, 2], [0, 2, 2, 0]),
-          ([0, 2, 5, 4], [1, 1, 1, 1], [0, 0, 0, 2]),
-          ([1, 1, 1, 1], [0, 1, 2, 1], [1, 2, 1, 0])],
-    "F": [([0, 3, 5, 1], [2, 0, 0, 2], [0, 0, 2, 2]),
-          ([0, 3, 5, 1], [2, 2, 0, 0], [2, 0, 0, 2]),
-          ([2, 2, 2, 2], [0, 0, 2, 2], [0, 2, 2, 0]),
-          ([0, 3, 5, 1], [2, 1, 0, 1], [1, 0, 1, 2]),
-          ([2, 2, 2, 2], [0, 1, 2, 1], [1, 2, 1, 0])],
-    "R": [([0, 4, 5, 2], [0, 2, 0, 0], [2, 0, 2, 2]),
-          ([0, 4, 5, 2], [2, 0, 2, 2], [2, 0, 2, 2]),
-          ([3, 3, 3, 3], [0, 0, 2, 2], [0, 2, 2, 0]),
-          ([0, 4, 5, 2], [1, 1, 1, 1], [2, 0, 2, 2]),
-          ([3, 3, 3, 3], [0, 1, 2, 1], [1, 2, 1, 0])],
-    "B": [([0, 1, 5, 3], [0, 2, 2, 0], [0, 0, 2, 2]),
-          ([0, 1, 5, 3], [0, 0, 2, 2], [2, 0, 0, 2]),
-          ([4, 4, 4, 4], [0, 0, 2, 2], [0, 2, 2, 0]),
-          ([0, 1, 5, 3], [0, 1, 2, 1], [1, 0, 1, 2]),
-          ([4, 4, 4, 4], [0, 1, 2, 1], [1, 2, 1, 0])],
-    "D": [([1, 2, 3, 4], [2, 2, 2, 2], [0, 0, 0, 0]),
-          ([1, 2, 3, 4], [2, 2, 2, 2], [2, 2, 2, 2]),
-          ([5, 5, 5, 5], [0, 0, 2, 2], [0, 2, 2, 0]),
-          ([1, 2, 3, 4], [2, 2, 2, 2], [1, 1, 1, 1]),
-          ([5, 5, 5, 5], [0, 1, 2, 1], [1, 2, 1, 0])]
-}
+from cube_solver.constants import MOVE, OPPOSITE
 
 
 class Cube:
     def __init__(self, scramble: Optional[str] = None, size: int = 3) -> None:
         assert size > 0, "size must be greater than 0"
+
         self.size = size
-        self.faces = np.array([[[color] * size for _ in range(size)] for color in "WOGRBY"])  # test * size * size
+        self.faces = np.array([[[color] * size] * size for color in "WOGRBY"])
         if scramble is not None:
             self.apply_maneuver(scramble)
 
@@ -54,6 +24,26 @@ class Cube:
     def apply_maneuver(self, maneuver: str) -> None:
         for move in maneuver.split():
             self.apply_move(move)
+
+    @staticmethod
+    def generate_scramble(length: int = 25) -> str:
+        assert length >= 1
+
+        options = set("ULFRBD")
+        repetition = np.random.choice(3, size=length)
+        repetition = list(map(lambda x: ["'", "", "2"][x], repetition))
+
+        move = np.random.choice(list(options)) + repetition[0]
+        scramble = [move]
+
+        for rep in repetition[1:]:
+            opt = options - {move[0]}
+            if move[0] in "ULF":
+                opt -= {OPPOSITE[move[0]]}
+            move = np.random.choice(list(opt)) + rep
+            scramble.append(move)
+
+        return " ".join(scramble)
 
     def __repr__(self) -> str:
         return "".join(self.faces.flatten())
@@ -93,4 +83,5 @@ class Cube:
 
 if __name__ == "__main__":
     cube = Cube("D F' U B2 R' B' F D2 U' L U B' R D' U F D R' F' U2 F' L F2 R2 D2")
+    Cube.generate_scramble()
     print(cube)
