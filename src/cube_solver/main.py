@@ -1,5 +1,5 @@
 """Main module."""
-from typing import Optional
+from typing import Optional, List
 import numpy as np
 
 from cube_solver.constants import COLORS, FACES, REPS, OPPOSITE, MOVE
@@ -35,7 +35,7 @@ class Cube:
                 break
         return " ".join(solution[::-1])
 
-    def _solve(self, depth: int, solution: list[str]) -> bool:
+    def _solve(self, depth: int, solution: List[str]) -> bool:
         if depth == 0:
             return self.is_solved()
         for move in FACES:
