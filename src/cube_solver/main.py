@@ -1,4 +1,5 @@
 """Main module."""
+from typing import Optional
 import numpy as np
 
 MOVE = {
@@ -36,7 +37,7 @@ MOVE = {
 
 
 class Cube:
-    def __init__(self, scramble: str | None = None, size: int = 3) -> None:
+    def __init__(self, scramble: Optional[str] = None, size: int = 3) -> None:
         assert size > 0, "size must be greater than 0"
         self.size = size
         self.faces = np.array([[[color] * size for _ in range(size)] for color in "WOGRBY"])  # test * size * size
