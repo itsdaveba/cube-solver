@@ -25,6 +25,7 @@ Features
 
 * Cube representation
 * Make maneuver
+* Generate scramble
 
 Credits
 -------
