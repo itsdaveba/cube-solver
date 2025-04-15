@@ -1,17 +1,8 @@
 COLORS = "WOGRBY"
 FACES = "ULFRBD"
-REPS = ["'", "", "2"]
-
-OPPOSITE = {
-    "U": "D",
-    "L": "R",
-    "F": "B",
-    "R": "L",
-    "B": "F",
-    "D": "U"
-}
-
-MOVE = {
+OPPOSITE_FACE = {face: opp for face, opp in zip(FACES, [FACES[i] for i in [5, 3, 4, 1, 2, 0]])}
+MOVE_COUNT_STR = ["'", "", "2"]
+FACE_MOVES = {
     "U": [([0, 0, 0, 0], [0, 0, 2, 2], [0, 2, 2, 0]),
           ([1, 4, 3, 2], [0, 0, 0, 0], [0, 0, 0, 0]),
           ([1, 4, 3, 2], [0, 0, 0, 0], [2, 2, 2, 2]),

@@ -1,8 +1,8 @@
-"""Main module."""
-from typing import Optional, List
+"""Cube module."""
+from typing import Optional
 import numpy as np
 
-from cube_solver.constants import COLORS, FACES, REPS, OPPOSITE, MOVE
+from cube_solver.constants import COLORS, FACES, OPPOSITE_FACE, MOVE_COUNT_STR, FACE_MOVES
 
 
 class Cube:
@@ -10,58 +10,42 @@ class Cube:
         assert size > 0, "size must be greater than 0"
 
         self.size = size
-        self.faces = np.array([[[color] * size] * size for color in COLORS])
+        self.reset()
+
         if scramble is not None:
             self.apply_maneuver(scramble)
+
+    def reset(self):
+        self.faces = np.array([[[color] * self.size for _ in range(self.size)] for color in COLORS])
 
     def apply_move(self, move: str) -> None:
         shift = len(move)
         if shift > 1 and move[1] == "'":
             shift = -1
-        for m in MOVE[move[0]]:
-            self.faces[m] = self.faces[tuple(np.roll(m, shift, axis=1))]
+
+        for indices in FACE_MOVES[move[0]]:
+            self.faces[indices] = self.faces[tuple(np.roll(indices, shift, axis=1))]
 
     def apply_maneuver(self, maneuver: str) -> None:
         for move in maneuver.split():
             self.apply_move(move)
 
-    def is_solved(self):
-        return repr(self) == "".join([color * self.size * self.size for color in COLORS])
-
-    def solve(self, max_depth: int = 3) -> str:
-        solution = []
-        for depth in range(max_depth + 1):
-            if self._solve(depth, solution):
-                break
-        return " ".join(solution[::-1])
-
-    def _solve(self, depth: int, solution: List[str]) -> bool:
-        if depth == 0:
-            return self.is_solved()
-        for move in FACES:
-            for i in range(4):
-                self.apply_move(move)
-                if self._solve(depth - 1, solution):
-                    solution.append(move + REPS[i-2])
-                    return True
-        return False
-
     @staticmethod
     def generate_scramble(length: int = 25) -> str:
         assert length >= 1
 
-        options = set("ULFRBD")
-        repetition = np.random.choice(3, size=length)
-        repetition = list(map(lambda x: ["'", "", "2"][x], repetition))
+        options = set(FACES)
+        count = np.random.choice(3, size=length)
+        count_strs = [MOVE_COUNT_STR[c] for c in count]
 
-        move = np.random.choice(list(options)) + repetition[0]
+        move = np.random.choice(list(options)) + count_strs[0]
         scramble = [move]
 
-        for rep in repetition[1:]:
+        for count_str in count_strs[1:]:
             opt = options - {move[0]}
-            if move[0] in "ULF":
-                opt -= {OPPOSITE[move[0]]}
-            move = np.random.choice(list(opt)) + rep
+            if move[0] in FACES[:3]:
+                opt -= {OPPOSITE_FACE[move[0]]}
+            move = np.random.choice(list(opt)) + count_str
             scramble.append(move)
 
         return " ".join(scramble)
@@ -100,15 +84,3 @@ class Cube:
         repr += "--" * self.size + "---"
 
         return repr
-
-
-if __name__ == "__main__":
-    depth = 3
-    scramble = Cube.generate_scramble(length=depth)
-    print("Scramble:", scramble)
-    cube = Cube(scramble)
-    solution = cube.solve()
-    if solution or len(scramble) == 0:
-        print("Solution:", solution)
-    else:
-        print("No solution found")

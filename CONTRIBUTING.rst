@@ -109,7 +109,7 @@ Tips
 To run a subset of tests::
 
 
-    $ pytest tests/test_main.py
+    $ pytest tests/test_cube.py
 
 Deploying
 ---------

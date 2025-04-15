@@ -1,5 +1,5 @@
 """Console script for cube_solver."""
-from cube_solver import Cube
+from cube_solver import Cube, Solver
 
 import typer
 from typing_extensions import Annotated
@@ -11,13 +11,14 @@ console = Console()
 
 @app.command()
 def solve(scramble: Annotated[str, typer.Argument()] = None, size: int = 3, scramble_length: int = None):
-    """Initialize a new cube."""
+    """Solve a cube."""
     if scramble_length is not None:
         scramble = Cube.generate_scramble(scramble_length)
     console.print("Scramble:", scramble)
     cube = Cube(scramble, size)
     console.print(cube)
-    solution = cube.solve()
+    solver = Solver(cube)
+    solution = solver.solve()
     console.print("Solution:", solution)
 
 
