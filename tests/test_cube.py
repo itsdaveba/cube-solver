@@ -32,17 +32,26 @@ def test_content(response):
         + "O O O | G G G | R R R | B B B | \n| O O O | G G G | R R R | B B B | \n| O O O | G G G | R R R | B B B | \n--------"\
         + "-------------------------\n        | Y Y Y | \n        | Y Y Y | \n        | Y Y Y | \n        ---------"
 
+    cube = Cube("B L B L F' L U' R' D2 U' B2 F R' B' F D U F2 D U' L2 R D F B")
+    assert str(cube) == \
+        "        ---------\n        | B Y B | \n        | B W R | \n        | R B W | \n---------------------------------\n| "\
+        + "O Y Y | B O B | O G W | R G Y | \n| R O W | R G Y | O R B | W B Y | \n| O G R | Y W W | R G O | W B Y | \n--------"\
+        + "-------------------------\n        | G O G | \n        | O Y W | \n        | G R G | \n        ---------"
+
+    cube.reset()
     cube.apply_maneuver("D F' U B2 R' B' F D2 U' L U B' R D' U F D R' F' U2 F' L F2 R2 D2")
     assert repr(cube) == "WOYWWWBBRBBROOWRGWYRGOGBGRGYROYROYROBYRBBGBYWOYOWYGGGW"
 
-    cube = Cube("B R' L F2 L B2 L' B R B R D2 R' L2 U2 L2 U B U' D B L D2 F' D2")
+    cube.reset()
+    cube.apply_maneuver("B R' L F2 L B2 L' B R B R D2 R' L2 U2 L2 U B U' D B L D2 F' D2")
     assert repr(cube) == "BWRGWYGRRYYOGOYORWYGWBGWGOWGOGBRBBBBYGRRBOWRBOWRWYOYYO"
 
-    cube = Cube("U D F2 R D F' D B L F R2 F2 D2 R F' L2 U2 D' F2 L2 U2 F2 L' D2 R'")
+    cube.reset()
+    cube.apply_maneuver("U D F2 R D F' D B L F R2 F2 D2 R F' L2 U2 D' F2 L2 U2 F2 L' D2 R'")
     assert repr(cube) == "OYBBWRYBWGRBOOYWWWRWORGWOWRGGWRROYYBRGYBBGOOGBOGGYBRYY"
 
     scramble = Cube.generate_scramble(1000).split()
     for move, next_move in zip(scramble[:-1], scramble[1:]):
         assert move[0] != next_move[0]
-        if move[0] in "ULF":
+        if move[0] in "UFR":
             assert OPPOSITE_FACE[move[0]] != next_move[0]

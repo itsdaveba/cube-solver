@@ -2,7 +2,7 @@
 from typing import Optional
 import numpy as np
 
-from cube_solver.constants import COLORS, FACES, OPPOSITE_FACE, MOVE_COUNT_STR, FACE_MOVES
+from cube_solver.constants import COLORS, FACES, OPPOSITE_FACE, MOVE_COUNT_STR, REPR_ORDER, FACE_MOVES
 
 
 class Cube:
@@ -19,11 +19,12 @@ class Cube:
         self.faces = np.array([[[color] * self.size for _ in range(self.size)] for color in COLORS])
 
     def apply_move(self, move: str) -> None:
+        base_move = move[0]
         shift = len(move)
         if shift > 1 and move[1] == "'":
-            shift = -1
+            shift = -1  # same as 3
 
-        for indices in FACE_MOVES[move[0]]:
+        for indices in FACE_MOVES[base_move]:
             self.faces[indices] = self.faces[tuple(np.roll(indices, shift, axis=1))]
 
     def apply_maneuver(self, maneuver: str) -> None:
@@ -38,20 +39,21 @@ class Cube:
         count = np.random.choice(3, size=length)
         count_strs = [MOVE_COUNT_STR[c] for c in count]
 
-        move = np.random.choice(list(options)) + count_strs[0]
-        scramble = [move]
+        base_move = np.random.choice(list(options))
+        count_str = count_strs[0]
+        scramble = [base_move + count_str]
 
-        for count_str in count_strs[1:]:
-            opt = options - {move[0]}
-            if move[0] in FACES[:3]:
-                opt -= {OPPOSITE_FACE[move[0]]}
-            move = np.random.choice(list(opt)) + count_str
-            scramble.append(move)
+        for move_count in count_strs[1:]:
+            opts = options - {base_move}
+            if base_move in "UFR":
+                opts -= {OPPOSITE_FACE[base_move]}
+            base_move = np.random.choice(list(opts))
+            scramble.append(base_move + count_str)
 
         return " ".join(scramble)
 
     def __repr__(self) -> str:
-        return "".join(self.faces.flatten())
+        return "".join(self.faces[REPR_ORDER].flatten())
 
     def __str__(self) -> str:
         # up face
@@ -60,14 +62,14 @@ class Cube:
         for j in range(self.size):
             repr += "  " * self.size + "  | "
             for k in range(self.size):
-                repr += self.faces[0][j][k] + " "
+                repr += self.faces[REPR_ORDER[0]][j][k] + " "
             repr += "| \n"
 
         # lateral faces
         repr += "--------" * self.size + "---------\n"
         for j in range(self.size):
             repr += "| "
-            for i in range(1, 5):
+            for i in REPR_ORDER[1:-1]:
                 for k in range(self.size):
                     repr += self.faces[i][j][k] + " "
                 repr += "| "
@@ -78,7 +80,7 @@ class Cube:
         for j in range(self.size):
             repr += "  " * self.size + "  | "
             for k in range(self.size):
-                repr += self.faces[5][j][k] + " "
+                repr += self.faces[REPR_ORDER[-1]][j][k] + " "
             repr += "| \n"
         repr += "  " * self.size + "  "
         repr += "--" * self.size + "---"
