@@ -2,7 +2,8 @@
 from typing import Optional
 import numpy as np
 
-from cube_solver.constants import COLORS, FACES, AXES, OPPOSITE_FACE, MOVE_COUNT_STR, REPR_ORDER, FACE_MOVES, CUBIE_INDEX
+from cube_solver.constants import COLORS, FACES, AXES, OPPOSITE_FACE, MOVE_COUNT_STR, REPR_ORDER
+from cube_solver.constants import FACE_MOVES, ARRAY_MOVES, CUBIE_INDEX
 
 
 class Cube:
@@ -19,6 +20,9 @@ class Cube:
         if self.representation == "face":
             self.faces = np.array([[[color] * self.size for _ in range(self.size)] for color in COLORS])
 
+        elif self.representation == "array":
+            self.array = np.array([[color] * self.size * self.size for color in COLORS]).flatten()
+
         elif self.representation == "cubie":
             self.cubies = np.full((3, 3, 3, 3), "K")
             for face, color in zip(FACES, COLORS):
@@ -31,8 +35,11 @@ class Cube:
             shift = -1  # same as 3
 
         if self.representation == "face":
-            for indices in FACE_MOVES[base_move]:
-                self.faces[indices] = self.faces[tuple(np.roll(indices, shift, axis=1))]
+            new_faces = self.faces[tuple(np.hstack(np.roll(FACE_MOVES[base_move], shift, axis=2)))]
+            self.faces[tuple(np.hstack(FACE_MOVES[base_move]))] = new_faces
+
+        elif self.representation == "array":
+            self.array[ARRAY_MOVES[base_move]] = self.array[np.roll(ARRAY_MOVES[base_move], shift, axis=1)]
 
         elif self.representation == "cubie":
             cubies = np.rot90(self.cubies[CUBIE_INDEX[base_move]], shift if base_move in "RDB" else -shift)
@@ -70,6 +77,11 @@ class Cube:
     def __repr__(self) -> str:
         if self.representation == "face":
             repr = "".join(self.faces[REPR_ORDER].flatten())
+
+        elif self.representation == "array":
+            repr = [self.array[face:face + self.size * self.size] for face in np.array(REPR_ORDER) * self.size * self.size]
+            repr = "".join(np.array(repr).flatten())
+
         elif self.representation == "cubie":
             repr = ""
             # up
@@ -106,7 +118,7 @@ class Cube:
             for j in range(self.size):
                 str += "  " * self.size + "  | "
                 for k in range(self.size):
-                    str += self.faces[REPR_ORDER[0]][j][k] + " "
+                    str += self.faces[REPR_ORDER[0], j, k] + " "
                 str += "| \n"
 
             # lateral faces
@@ -115,7 +127,7 @@ class Cube:
                 str += "| "
                 for i in REPR_ORDER[1:-1]:
                     for k in range(self.size):
-                        str += self.faces[i][j][k] + " "
+                        str += self.faces[i, j, k] + " "
                     str += "| "
                 str += "\n"
             str += "--------" * self.size + "---------\n"
@@ -124,7 +136,37 @@ class Cube:
             for j in range(self.size):
                 str += "  " * self.size + "  | "
                 for k in range(self.size):
-                    str += self.faces[REPR_ORDER[-1]][j][k] + " "
+                    str += self.faces[REPR_ORDER[-1], j, k] + " "
+                str += "| \n"
+            str += "  " * self.size + "  "
+            str += "--" * self.size + "---"
+
+        elif self.representation == "array":
+            # up face
+            str = "  " * self.size + "  "
+            str += "--" * self.size + "---\n"
+            for j in range(self.size):
+                str += "  " * self.size + "  | "
+                for k in range(self.size):
+                    str += self.array[REPR_ORDER[0] * self.size * self.size + j * self.size + k] + " "
+                str += "| \n"
+
+            # lateral faces
+            str += "--------" * self.size + "---------\n"
+            for j in range(self.size):
+                str += "| "
+                for i in REPR_ORDER[1:-1]:
+                    for k in range(self.size):
+                        str += self.array[i * self.size * self.size + j * self.size + k] + " "
+                    str += "| "
+                str += "\n"
+            str += "--------" * self.size + "---------\n"
+
+            # down face
+            for j in range(self.size):
+                str += "  " * self.size + "  | "
+                for k in range(self.size):
+                    str += self.array[REPR_ORDER[-1] * self.size * self.size + j * self.size + k] + " "
                 str += "| \n"
             str += "  " * self.size + "  "
             str += "--" * self.size + "---"
@@ -174,4 +216,5 @@ class Cube:
 
 
 if __name__ == "__main__":
-    cube = Cube("F", representation="cubie")
+    cube = Cube("F", representation="face")
+    repr(cube)
