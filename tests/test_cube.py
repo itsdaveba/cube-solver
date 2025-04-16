@@ -43,12 +43,18 @@ def test_content(response):
     assert repr(cube) == "WOYWWWBBRBBROOWRGWYRGOGBGRGYROYROYROBYRBBGBYWOYOWYGGGW"
 
     cube.reset()
-    cube.apply_maneuver("B R' L F2 L B2 L' B R B R D2 R' L2 U2 L2 U B U' D B L D2 F' D2")
-    assert repr(cube) == "BWRGWYGRRYYOGOYORWYGWBGWGOWGOGBRBBBBYGRRBOWRBOWRWYOYYO"
-
-    cube.reset()
     cube.apply_maneuver("U D F2 R D F' D B L F R2 F2 D2 R F' L2 U2 D' F2 L2 U2 F2 L' D2 R'")
     assert repr(cube) == "OYBBWRYBWGRBOOYWWWRWORGWOWRGGWRROYYBRGYBBGOOGBOGGYBRYY"
+
+    cube = Cube("F' U B R2 D B' R2 F2 B2 L B D2 F' L2 F L2 D B' D L' F' L F' U F2", representation="cubie")
+    assert str(cube) == \
+        "        ---------\n        | B B W | \n        | W W G | \n        | G Y G | \n---------------------------------\n| "\
+        + "Y R Y | R O R | W R B | O Y R | \n| B O O | W G G | W R W | B B R | \n| G Y Y | O G B | R R B | O O W | \n--------"\
+        + "-------------------------\n        | G O W | \n        | G Y Y | \n        | O B Y | \n        ---------"
+
+    cube.reset()
+    cube.apply_maneuver("B R' L F2 L B2 L' B R B R D2 R' L2 U2 L2 U B U' D B L D2 F' D2")
+    assert repr(cube) == "BWRGWYGRRYYOGOYORWYGWBGWGOWGOGBRBBBBYGRRBOWRBOWRWYOYYO"
 
     scramble = Cube.generate_scramble(1000).split()
     for move, next_move in zip(scramble[:-1], scramble[1:]):

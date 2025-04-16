@@ -1,7 +1,7 @@
 from typing import List
 
 from cube_solver import Cube
-from cube_solver.constants import COLORS, FACES, MOVE_COUNT_STR
+from cube_solver.constants import COLORS, FACES, MOVE_COUNT_STR, REPR_ORDER
 
 
 class Solver:
@@ -9,7 +9,7 @@ class Solver:
         if cube is None:
             cube = Cube()
         self.cube = cube
-        self.SOLVED_REPR = "".join([color * cube.size * cube.size for color in COLORS])
+        self.SOLVED_REPR = "".join([COLORS[r] * cube.size * cube.size for r in REPR_ORDER])
 
     def scramble(self, scramble):
         self.cube.reset()

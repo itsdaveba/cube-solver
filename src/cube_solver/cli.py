@@ -10,12 +10,15 @@ console = Console()
 
 
 @app.command()
-def solve(scramble: Annotated[str, typer.Argument()] = None, size: int = 3, scramble_length: int = None):
+def solve(scramble: Annotated[str, typer.Argument()] = None,
+          size: int = 3,
+          scramble_length: int = None,
+          representation: str = "face"):
     """Solve a cube."""
     if scramble_length is not None:
         scramble = Cube.generate_scramble(scramble_length)
     console.print("Scramble:", scramble)
-    cube = Cube(scramble, size)
+    cube = Cube(scramble, size, representation)
     console.print(cube)
     solver = Solver(cube)
     solution = solver.solve()

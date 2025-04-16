@@ -5,7 +5,7 @@ def test_solver():
     solver = Solver()
 
     solver.scramble("R L2 F'")
-    assert solver.solve() == "F L2 R'"
+    assert solver.solve() == "F R' L2"
 
     solver.scramble("L F' L")
     assert solver.solve() == "L' F L'"
