@@ -2,7 +2,7 @@
 from typing import Optional
 import numpy as np
 
-from cube_solver.constants import COLORS, FACES, OPPOSITE_FACE, MOVE_COUNT_STR, REPR_ORDER, FACE_MOVES, CUBIE_MOVES
+from cube_solver.constants import COLORS, FACES, AXES, OPPOSITE_FACE, MOVE_COUNT_STR, REPR_ORDER, FACE_MOVES, CUBIE_INDEX
 
 
 class Cube:
@@ -21,12 +21,8 @@ class Cube:
 
         elif self.representation == "cubie":
             self.cubies = np.full((3, 3, 3, 3), "K")
-            self.cubies[0, :, :, 0] = "W"
-            self.cubies[:, 2, :, 1] = "G"
-            self.cubies[:, :, 2, 2] = "R"
-            self.cubies[2, :, :, 0] = "Y"
-            self.cubies[:, 0, :, 1] = "B"
-            self.cubies[:, :, 0, 2] = "O"
+            for face, color in zip(FACES, COLORS):
+                self.cubies[CUBIE_INDEX[face] + (AXES[face],)] = color
 
     def apply_move(self, move: str) -> None:
         base_move = move[0]
@@ -39,13 +35,12 @@ class Cube:
                 self.faces[indices] = self.faces[tuple(np.roll(indices, shift, axis=1))]
 
         elif self.representation == "cubie":
-            for indices in CUBIE_MOVES[base_move]:
-                cubies = self.cubies[tuple(np.roll(indices, shift, axis=1))]
-                if shift != 2:  # if quarter turn
-                    cubies = np.fliplr(cubies)
-                    if base_move in "UDRL":
-                        cubies = np.roll(cubies, shift=1 if base_move in "UD" else -1, axis=1)
-                self.cubies[indices] = cubies
+            cubies = np.rot90(self.cubies[CUBIE_INDEX[base_move]], shift if base_move in "RDB" else -shift)
+            if shift != 2:
+                cubies = np.flip(cubies, axis=2)
+                if base_move in "UDRL":
+                    cubies = np.roll(cubies, shift=1 if base_move in "UD" else -1, axis=2)
+            self.cubies[CUBIE_INDEX[base_move]] = cubies
 
     def apply_maneuver(self, maneuver: str) -> None:
         for move in maneuver.split():
@@ -176,3 +171,7 @@ class Cube:
             str += "--" * self.size + "---"
 
         return str
+
+
+if __name__ == "__main__":
+    cube = Cube("F", representation="cubie")
