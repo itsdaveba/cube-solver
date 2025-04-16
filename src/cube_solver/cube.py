@@ -57,32 +57,32 @@ class Cube:
 
     def __str__(self) -> str:
         # up face
-        repr = "  " * self.size + "  "
-        repr += "--" * self.size + "---\n"
+        str = "  " * self.size + "  "
+        str += "--" * self.size + "---\n"
         for j in range(self.size):
-            repr += "  " * self.size + "  | "
+            str += "  " * self.size + "  | "
             for k in range(self.size):
-                repr += self.faces[REPR_ORDER[0]][j][k] + " "
-            repr += "| \n"
+                str += self.faces[REPR_ORDER[0]][j][k] + " "
+            str += "| \n"
 
         # lateral faces
-        repr += "--------" * self.size + "---------\n"
+        str += "--------" * self.size + "---------\n"
         for j in range(self.size):
-            repr += "| "
+            str += "| "
             for i in REPR_ORDER[1:-1]:
                 for k in range(self.size):
-                    repr += self.faces[i][j][k] + " "
-                repr += "| "
-            repr += "\n"
-        repr += "--------" * self.size + "---------\n"
+                    str += self.faces[i][j][k] + " "
+                str += "| "
+            str += "\n"
+        str += "--------" * self.size + "---------\n"
 
         # down face
         for j in range(self.size):
-            repr += "  " * self.size + "  | "
+            str += "  " * self.size + "  | "
             for k in range(self.size):
-                repr += self.faces[REPR_ORDER[-1]][j][k] + " "
-            repr += "| \n"
-        repr += "  " * self.size + "  "
-        repr += "--" * self.size + "---"
+                str += self.faces[REPR_ORDER[-1]][j][k] + " "
+            str += "| \n"
+        str += "  " * self.size + "  "
+        str += "--" * self.size + "---"
 
-        return repr
+        return str
