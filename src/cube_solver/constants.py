@@ -47,11 +47,11 @@ ARRAY_MOVES = {
     "L": [[0, 9, 27, 44], [6, 15, 33, 38], [45, 47, 53, 51], [3, 12, 30, 41], [46, 50, 52, 48]]
 }
 
-CUBIE_INDEX = {
+CUBIE_IDX = {
     "U": (0, slice(None), slice(None)),
     "F": (slice(None), 2, slice(None)),
-    "R": (slice(None), slice(None), 2),
-    "D": (2, slice(None), slice(None)),
-    "B": (slice(None), 0, slice(None)),
+    "R": (slice(None), slice(None, None, -1), 2),
+    "D": (2, slice(None, None, -1), slice(None)),
+    "B": (slice(None), 0, slice(None, None, -1)),
     "L": (slice(None), slice(None), 0),
 }
