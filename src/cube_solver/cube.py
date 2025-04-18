@@ -3,7 +3,7 @@ from typing import Optional
 import numpy as np
 
 from cube_solver.constants import COLORS, FACES, AXES, OPPOSITE_FACE, MOVE_COUNT_STR, REPR_ORDER
-from cube_solver.constants import FACE_MOVES, ARRAY_MOVES, CUBIE_IDX
+from cube_solver.constants import FACE_MOVES, ARRAY_MOVES, CUBIE_IDX, COORD_MOVES, COORD_CUBIE_INDEX
 
 
 class Cube:
@@ -24,10 +24,14 @@ class Cube:
         elif self.representation == "array":
             self.array = np.ravel([np.full((self.size, self.size), color) for color in COLORS])
 
-        elif self.representation == "cubie":
+        elif self.representation in ["cubie", "coord"]:
             self.cubies = np.full((self.size,) * 4, "K")
             for face, color in zip(FACES, COLORS):
                 self.cubies[CUBIE_IDX[face] + (AXES[face],)] = color
+
+            if self.representation == "coord":
+                self.orientation = np.zeros(20, dtype=int)
+                self.permutation = np.arange(20, dtype=int)
 
     def apply_move(self, move: str) -> None:
         base_move = move[0]
@@ -49,6 +53,17 @@ class Cube:
                 if base_move not in "FB":
                     cubies = np.roll(cubies, shift=1 if base_move in "UD" else -1, axis=2)
             self.cubies[CUBIE_IDX[base_move]] = cubies
+
+        elif self.representation == "coord":
+            coord_move = np.roll(COORD_MOVES[base_move], shift, axis=1)
+            orientation = self.orientation[coord_move]
+            if shift % 2 == 1:
+                if base_move in "FB":
+                    orientation = (orientation + [[1, 2, 1, 2], [1, 1, 1, 1]]) % ([3], [2])
+                elif base_move in "RL":
+                    orientation[0] = (orientation[0] + [2, 1, 2, 1]) % 3
+            self.orientation[COORD_MOVES[base_move]] = orientation
+            self.permutation[COORD_MOVES[base_move]] = self.permutation[coord_move]
 
     def apply_maneuver(self, maneuver: str) -> None:
         for move in maneuver.split():
@@ -75,6 +90,37 @@ class Cube:
 
         return " ".join(scramble)
 
+    def update_cubies(self):
+        cubies = self.cubies.copy()
+        for face, color in zip(FACES, COLORS):
+            cubies[CUBIE_IDX[face] + (AXES[face],)] = color
+
+        # corners
+        for index in range(8):
+            orientation = self.orientation[index]
+            permutation = self.permutation[index]
+            cubie = cubies[COORD_CUBIE_INDEX[permutation]]
+            if (index < 4) != (permutation < 4):
+                cubie = cubie[[0, 2, 1]]
+            self.cubies[COORD_CUBIE_INDEX[index]] = np.roll(cubie, -orientation if index < 4 else orientation)
+
+        # edges
+        def axis(x): return 2 if x < 12 else 1 if x < 16 else 0
+        swap = [[0, 2, 1], [2, 1, 0,], [1, 0, 2]]  # swap cubie along axis
+        for index in range(8, 20):
+            permutation = self.permutation[index]
+            cubie = cubies[COORD_CUBIE_INDEX[permutation]]
+            axes = {axis(index), axis(permutation)}
+            if axes == {0, 2}:
+                cubie = np.roll(cubie, 1 if axis(index) != 2 else -1)
+            elif axes == {1, 2}:
+                cubie = cubie[swap[0]]
+            elif axes == {0, 1}:
+                cubie = cubie[swap[2]]
+            if self.orientation[index]:
+                cubie = cubie[swap[axis(index)]]
+            self.cubies[COORD_CUBIE_INDEX[index]] = cubie
+
     def __repr__(self) -> str:
         if self.representation == "face":
             repr = "".join(self.faces[REPR_ORDER].flatten())
@@ -82,67 +128,54 @@ class Cube:
         elif self.representation == "array":
             repr = "".join(np.ravel([self.array[i:i+self.face_area] for i in np.multiply(REPR_ORDER, self.face_area)]))
 
-        elif self.representation == "cubie":
+        elif self.representation in ["cubie", "coord"]:
+            if self.representation == "coord":
+                self.update_cubies()
             repr = "".join(np.ravel([self.cubies[CUBIE_IDX[face] + (AXES[face],)] for face in np.array([*FACES])[REPR_ORDER]]))
 
         return repr
 
     def __str__(self) -> str:
-        if self.representation == "face":
-            # up face
-            str = "  " * self.size + "  " + "--" * self.size + "---\n"
-            for i in range(self.size):
-                str += "  " * self.size + "  | " + " ".join(self.faces[REPR_ORDER[0], i, :]) + " |\n"
+        if self.representation == "coord":
+            self.update_cubies()
 
-            # lateral faces
-            str += "--------" * self.size + "---------\n"
-            for i in range(self.size):
-                str += "| " + " | ".join([" ".join(row) for row in self.faces[REPR_ORDER[1:-1], i, :]]) + " |\n"
-            str += "--------" * self.size + "---------\n"
-
-            # down face
-            for i in range(self.size):
-                str += "  " * self.size + "  | " + " ".join(self.faces[REPR_ORDER[-1], i, :]) + " |\n"
-            str += "  " * self.size + "  " + "--" * self.size + "---"
-
-        elif self.representation == "array":
-            # up face
-            str = "  " * self.size + "  " + "--" * self.size + "---\n"
-            for i in range(self.size):
+        # up face
+        str = "  " * self.size + "  " + "--" * self.size + "---\n"
+        for i in range(self.size):
+            if self.representation == "face":
+                row = self.faces[REPR_ORDER[0], i, :]
+            elif self.representation == "array":
                 j = REPR_ORDER[0] * self.face_area + i * self.size
-                str += "  " * self.size + "  | " + " ".join(self.array[j:j+3]) + " |\n"
+                row = self.array[j:j+3]
+            elif self.representation in ["cubie", "coord"]:
+                row = self.cubies[0, i, :, 0]
+            str += "  " * self.size + "  | " + " ".join(row) + " |\n"
 
-            # lateral faces
-            str += "--------" * self.size + "---------\n"
-            for i in range(self.size):
+        # lateral faces
+        str += "--------" * self.size + "---------\n"
+        for i in range(self.size):
+            if self.representation == "face":
+                row = [" ".join(face_row) for face_row in self.faces[REPR_ORDER[1:-1], i, :]]
+            elif self.representation == "array":
                 js = [order * self.face_area + i * self.size for order in REPR_ORDER[1:-1]]
-                str += "| " + " | ".join([" ".join(self.array[j:j+3]) for j in js]) + " |\n"
-            str += "--------" * self.size + "---------\n"
-
-            # down face
-            for i in range(self.size):
-                j = REPR_ORDER[-1] * self.face_area + i * self.size
-                str += "  " * self.size + "  | " + " ".join(self.array[j:j+3]) + " |\n"
-            str += "  " * self.size + "  " + "--" * self.size + "---"
-
-        elif self.representation == "cubie":
-            # up face
-            str = "  " * self.size + "  " + "--" * self.size + "---\n"
-            for i in range(self.size):
-                str += "  " * self.size + "  | " + " ".join(self.cubies[0, i, :, 0]) + " |\n"
-
-            # lateral faces
-            str += "--------" * self.size + "---------\n"
-            for i in range(self.size):
+                row = [" ".join(self.array[j:j+3]) for j in js]
+            elif self.representation in ["cubie", "coord"]:
                 order = np.array([*FACES])[REPR_ORDER[1:-1]]
                 row = [" ".join(self.cubies[(i,) + CUBIE_IDX[face][1:] + (AXES[face],)]) for face in order]
-                str += "| " + " | ".join(row) + " |\n"
-            str += "--------" * self.size + "---------\n"
+            str += "| " + " | ".join(row) + " |\n"
+        str += "--------" * self.size + "---------\n"
 
-            # down face
-            for i in range(self.size - 1, -1, -1):
-                str += "  " * self.size + "  | " + " ".join(self.cubies[2, i, :, 0]) + " |\n"
-            str += "  " * self.size + "  " + "--" * self.size + "---"
+        # down face
+        for i in range(self.size):
+            if self.representation == "face":
+                row = self.faces[REPR_ORDER[-1], i, :]
+            elif self.representation == "array":
+                j = REPR_ORDER[-1] * self.face_area + i * self.size
+                row = self.array[j:j+3]
+            elif self.representation in ["cubie", "coord"]:
+                row = self.cubies[2, 2-i, :, 0]
+            str += "  " * self.size + "  | " + " ".join(row) + " |\n"
+        str += "  " * self.size + "  " + "--" * self.size + "---"
 
         return str
 

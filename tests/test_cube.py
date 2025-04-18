@@ -62,6 +62,16 @@ def test_content(response):
     cube.apply_maneuver("U D F2 R D F' D B L F R2 F2 D2 R F' L2 U2 D' F2 L2 U2 F2 L' D2 R'")
     assert repr(cube) == "OYBBWRYBWGRBOOYWWWRWORGWOWRGGWRROYYBRGYBBGOOGBOGGYBRYY"
 
+    cube = Cube("B2 R L' F' D F' D' U B D' F2 L2 R B2 D2 L' U2 L U2 R L' U' R2 D U", representation="coord")
+    assert str(cube) == \
+        "        ---------\n        | G W O |\n        | Y W O |\n        | O R O |\n---------------------------------\n| W R"\
+        + " Y | G B G | W W B | Y G R |\n| G O W | B G O | Y R G | Y B O |\n| R R R | B B O | B W W | B O G |\n--------------"\
+        + "-------------------\n        | Y Y W |\n        | G Y R |\n        | Y B R |\n        ---------"
+
+    cube.reset()
+    cube.apply_maneuver("U2 B' R U2 B R' D' U F' D B' D2 U' F B2 L' R2 B' L' D2 F' B' U' B2 U2")
+    assert repr(cube) == "OOGYWWYYWBBRBOBOWGGGRRGBORBBGRORYYOBWGWRBWOOYWGRRYWGYY"
+
     scramble = Cube.generate_scramble(1000).split()
     for move, next_move in zip(scramble[:-1], scramble[1:]):
         assert move[0] != next_move[0]

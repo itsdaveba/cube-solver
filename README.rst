@@ -28,6 +28,7 @@ Features
 * Generate scramble
 * Tree search solve
 * Cubie representation
+* Coordinate representation
 
 Credits
 -------
