@@ -90,7 +90,7 @@ class Cube:
 
         return " ".join(scramble)
 
-    def update_cubies(self):
+    def update_cubies(self):  # used by "coord" representation
         cubies = self.cubies.copy()
         for face, color in zip(FACES, COLORS):
             cubies[CUBIE_IDX[face] + (AXES[face],)] = color
@@ -136,45 +136,25 @@ class Cube:
         return repr
 
     def __str__(self) -> str:
-        if self.representation == "coord":
-            self.update_cubies()
+        repr = self.__repr__()
 
         # up face
         str = "  " * self.size + "  " + "--" * self.size + "---\n"
         for i in range(self.size):
-            if self.representation == "face":
-                row = self.faces[REPR_ORDER[0], i, :]
-            elif self.representation == "array":
-                j = REPR_ORDER[0] * self.face_area + i * self.size
-                row = self.array[j:j+3]
-            elif self.representation in ["cubie", "coord"]:
-                row = self.cubies[0, i, :, 0]
-            str += "  " * self.size + "  | " + " ".join(row) + " |\n"
+            j = i * self.size
+            str += "  " * self.size + "  | " + " ".join(repr[j:j+self.size]) + " |\n"
 
         # lateral faces
         str += "--------" * self.size + "---------\n"
         for i in range(self.size):
-            if self.representation == "face":
-                row = [" ".join(face_row) for face_row in self.faces[REPR_ORDER[1:-1], i, :]]
-            elif self.representation == "array":
-                js = [order * self.face_area + i * self.size for order in REPR_ORDER[1:-1]]
-                row = [" ".join(self.array[j:j+3]) for j in js]
-            elif self.representation in ["cubie", "coord"]:
-                order = np.array([*FACES])[REPR_ORDER[1:-1]]
-                row = [" ".join(self.cubies[(i,) + CUBIE_IDX[face][1:] + (AXES[face],)]) for face in order]
-            str += "| " + " | ".join(row) + " |\n"
+            js = [face * self.face_area + i * self.size for face in range(1, 5)]
+            str += "| " + " | ".join([" ".join(repr[j:j+self.size]) for j in js]) + " |\n"
         str += "--------" * self.size + "---------\n"
 
         # down face
         for i in range(self.size):
-            if self.representation == "face":
-                row = self.faces[REPR_ORDER[-1], i, :]
-            elif self.representation == "array":
-                j = REPR_ORDER[-1] * self.face_area + i * self.size
-                row = self.array[j:j+3]
-            elif self.representation in ["cubie", "coord"]:
-                row = self.cubies[2, 2-i, :, 0]
-            str += "  " * self.size + "  | " + " ".join(row) + " |\n"
+            j = 5 * self.face_area + i * self.size
+            str += "  " * self.size + "  | " + " ".join(repr[j:j+self.size]) + " |\n"
         str += "  " * self.size + "  " + "--" * self.size + "---"
 
         return str
