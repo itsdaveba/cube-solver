@@ -155,8 +155,3 @@ class Cube:
         str += "  " * self.size + "  " + "--" * self.size + "---"
 
         return str
-
-
-if __name__ == "__main__":
-    cube = Cube("F", representation="face")
-    repr(cube)
