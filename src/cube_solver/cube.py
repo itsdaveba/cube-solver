@@ -3,7 +3,7 @@ from typing import Optional
 import numpy as np
 
 from cube_solver.constants import COLORS, FACES, AXES, OPPOSITE_FACE, MOVE_COUNT_STR, REPR_ORDER
-from cube_solver.constants import FACE_MOVES, ARRAY_MOVES, CUBIE_IDX, COORD_MOVES, COORD_CUBIE_INDEX
+from cube_solver.constants import FACE_MOVES, ARRAY_MOVES, SWAP, CUBIE_IDX, COORD_MOVES, COORD_CUBIE_INDEX
 
 
 class Cube:
@@ -49,9 +49,7 @@ class Cube:
         elif self.representation == "cubie":
             cubies = np.rot90(self.cubies[CUBIE_IDX[base_move]], -shift)
             if shift % 2 == 1:
-                cubies = np.flip(cubies, axis=2)
-                if base_move not in "FB":
-                    cubies = np.roll(cubies, shift=1 if base_move in "UD" else -1, axis=2)
+                cubies = cubies[..., SWAP[AXES[base_move]]]
             self.cubies[CUBIE_IDX[base_move]] = cubies
 
         elif self.representation == "coord":
@@ -101,12 +99,11 @@ class Cube:
             permutation = self.permutation[index]
             cubie = cubies[COORD_CUBIE_INDEX[permutation]]
             if (index < 4) != (permutation < 4):
-                cubie = cubie[[0, 2, 1]]
+                cubie = cubie[SWAP[0]]
             self.cubies[COORD_CUBIE_INDEX[index]] = np.roll(cubie, -orientation if index < 4 else orientation)
 
         # edges
         def axis(x): return 2 if x < 12 else 1 if x < 16 else 0
-        swap = [[0, 2, 1], [2, 1, 0,], [1, 0, 2]]  # swap cubie along axis
         for index in range(8, 20):
             permutation = self.permutation[index]
             cubie = cubies[COORD_CUBIE_INDEX[permutation]]
@@ -114,11 +111,11 @@ class Cube:
             if axes == {0, 2}:
                 cubie = np.roll(cubie, 1 if axis(index) != 2 else -1)
             elif axes == {1, 2}:
-                cubie = cubie[swap[0]]
+                cubie = cubie[SWAP[0]]
             elif axes == {0, 1}:
-                cubie = cubie[swap[2]]
+                cubie = cubie[SWAP[2]]
             if self.orientation[index]:
-                cubie = cubie[swap[axis(index)]]
+                cubie = cubie[SWAP[axis(index)]]
             self.cubies[COORD_CUBIE_INDEX[index]] = cubie
 
     def __repr__(self) -> str:

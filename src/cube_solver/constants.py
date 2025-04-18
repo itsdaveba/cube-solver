@@ -4,6 +4,7 @@ AXES = {face: axis for face, axis in zip(FACES, [0, 1, 2, 0, 1, 2])}  # up, fron
 OPPOSITE_FACE = {face: opp for face, opp in zip("UFRDBL", "DBLUFR")}
 MOVE_COUNT_STR = ["'", "", "2"]  # example: U0 -> U', U1 -> U, U2 -> U2
 REPR_ORDER = [0, 5, 1, 2, 4, 3]  # up, left, front, right, back, down - for repr() and str()
+SWAP = [[0, 2, 1], [2, 1, 0,], [1, 0, 2]]  # swap cubie along axis
 
 FACE_MOVES = {
     "U": [([0, 0, 0, 0], [0, 0, 2, 2], [0, 2, 2, 0]),  # corner
