@@ -1,8 +1,9 @@
 """Cube module."""
 from typing import Optional
+from copy import deepcopy
 import numpy as np
 
-from cube_solver.constants import COLORS, FACES, AXES, OPPOSITE_FACE, MOVE_COUNT_STR, REPR_ORDER
+from cube_solver.constants import COLORS, FACES, AXES, OPPOSITE_FACE, MOVE_COUNT_STR, REPR_ORDER, NUM_CORNERS, NUM_EDGES
 from cube_solver.constants import FACE_MOVES, ARRAY_MOVES, SWAP, CUBIE_IDX, COORD_MOVES, COORD_CUBIE_INDEX
 
 
@@ -33,35 +34,42 @@ class Cube:
                 self.orientation = np.zeros(20, dtype=int)
                 self.permutation = np.arange(20, dtype=int)
 
-    def apply_move(self, move: str) -> None:
+    def apply_move(self, move: str, cube: "Cube" = None) -> None:
+        if cube is None:
+            cube = self
+        else:
+            cube = deepcopy(cube)
+
         base_move = move[0]
         shift = len(move)
         if shift > 1 and move[1] == "'":
             shift = -1
 
-        if self.representation == "face":
+        if cube.representation == "face":
             face_move = FACE_MOVES[base_move]
-            self.faces[tuple(np.hstack(face_move))] = self.faces[tuple(np.hstack(np.roll(face_move, shift, axis=2)))]
+            cube.faces[tuple(np.hstack(face_move))] = cube.faces[tuple(np.hstack(np.roll(face_move, shift, axis=2)))]
 
-        elif self.representation == "array":
-            self.array[ARRAY_MOVES[base_move]] = self.array[np.roll(ARRAY_MOVES[base_move], shift, axis=1)]
+        elif cube.representation == "array":
+            cube.array[ARRAY_MOVES[base_move]] = cube.array[np.roll(ARRAY_MOVES[base_move], shift, axis=1)]
 
-        elif self.representation == "cubie":
-            cubies = np.rot90(self.cubies[CUBIE_IDX[base_move]], -shift)
+        elif cube.representation == "cubie":
+            cubies = np.rot90(cube.cubies[CUBIE_IDX[base_move]], -shift)
             if shift % 2 == 1:
                 cubies = cubies[..., SWAP[AXES[base_move]]]
-            self.cubies[CUBIE_IDX[base_move]] = cubies
+            cube.cubies[CUBIE_IDX[base_move]] = cubies
 
-        elif self.representation == "coord":
+        elif cube.representation == "coord":
             coord_move = np.roll(COORD_MOVES[base_move], shift, axis=1)
-            orientation = self.orientation[coord_move]
+            orientation = cube.orientation[coord_move]
             if shift % 2 == 1:
                 if base_move in "FB":
                     orientation = (orientation + [[1, 2, 1, 2], [1, 1, 1, 1]]) % ([3], [2])
                 elif base_move in "RL":
                     orientation[0] = (orientation[0] + [2, 1, 2, 1]) % 3
-            self.orientation[COORD_MOVES[base_move]] = orientation
-            self.permutation[COORD_MOVES[base_move]] = self.permutation[coord_move]
+            cube.orientation[COORD_MOVES[base_move]] = orientation
+            cube.permutation[COORD_MOVES[base_move]] = cube.permutation[coord_move]
+
+        return cube
 
     def apply_maneuver(self, maneuver: str) -> None:
         for move in maneuver.split():
@@ -81,7 +89,7 @@ class Cube:
 
         for count_str in count_strs[1:]:
             opts = options - {base_move}
-            if base_move in "UFR":
+            if base_move in "DBL":
                 opts -= {OPPOSITE_FACE[base_move]}
             base_move = np.random.choice([*opts])
             scramble.append(base_move + count_str)
@@ -117,6 +125,35 @@ class Cube:
             if self.orientation[index]:
                 cubie = cubie[SWAP[axis(index)]]
             self.cubies[COORD_CUBIE_INDEX[index]] = cubie
+
+    def get_coord(self):  # corner orientation, edge orientation, corner permutation, edge permutation
+        # corner orientation index
+        corner_orientation_index = 0
+        for co in self.orientation[:NUM_CORNERS-1]:
+            corner_orientation_index *= 3
+            corner_orientation_index += co
+
+        # edge orientation index
+        edge_orientation_index = 0
+        for eo in self.orientation[NUM_CORNERS:-1]:
+            edge_orientation_index *= 2
+            edge_orientation_index += eo
+
+        # corner permutation index
+        corner_permutation_index = 0
+        factorial = 1
+        for i in range(NUM_CORNERS - 2, -1, -1):
+            corner_permutation_index += factorial * np.sum(self.permutation[i] > self.permutation[1+i:NUM_CORNERS])
+            factorial *= NUM_CORNERS - i
+
+        # edge permutation index
+        edge_permutation_index = 0
+        factorial = 1
+        for i in range(NUM_CORNERS + NUM_EDGES - 3, NUM_CORNERS - 1, -1):
+            edge_permutation_index += factorial * np.sum(self.permutation[i] > self.permutation[1+i:])
+            factorial *= NUM_EDGES - i + NUM_CORNERS
+
+        return corner_orientation_index, edge_orientation_index, corner_permutation_index, edge_permutation_index
 
     def __repr__(self) -> str:
         if self.representation == "face":

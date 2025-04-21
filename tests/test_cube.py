@@ -72,8 +72,10 @@ def test_content(response):
     cube.apply_maneuver("U2 B' R U2 B R' D' U F' D B' D2 U' F B2 L' R2 B' L' D2 F' B' U' B2 U2")
     assert repr(cube) == "OOGYWWYYWBBRBOBOWGGGRRGBORBBGRORYYOBWGWRBWOOYWGRRYWGYY"
 
+    assert cube.get_coord() == (1468, 1043, 2717, 206101212)
+
     scramble = Cube.generate_scramble(1000).split()
     for move, next_move in zip(scramble[:-1], scramble[1:]):
         assert move[0] != next_move[0]
-        if move[0] in "UFR":
+        if move[0] in "DBL":
             assert OPPOSITE_FACE[move[0]] != next_move[0]
