@@ -1,7 +1,7 @@
 from typing import List
 
 from cube_solver import Cube
-from cube_solver.constants import COLORS, FACES, OPPOSITE_FACE, MOVE_COUNT_STR, REPR_ORDER
+from cube_solver.constants import COLORS, NEXT_BASE_MOVES, MOVE_COUNT_STR, REPR_ORDER
 
 
 class Solver:
@@ -30,12 +30,7 @@ class Solver:
     def _solve(self, depth: int, solution: List[str], cube: Cube, last_base_move: str = None) -> bool:
         if depth == 0:
             return self.is_solved(cube)
-
-        base_moves = set(FACES) - {last_base_move}
-        if last_base_move is not None and last_base_move in "DBL":
-            base_moves -= {OPPOSITE_FACE[last_base_move]}
-
-        for base_move in base_moves:
+        for base_move in FACES if last_base_move is None else NEXT_BASE_MOVES[last_base_move]:
             for count_str in MOVE_COUNT_STR:
                 next_cube = cube.apply_move(base_move + count_str, cube)
                 if self._solve(depth - 1, solution, next_cube, base_move):

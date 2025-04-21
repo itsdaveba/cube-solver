@@ -3,7 +3,7 @@ from typing import Optional
 from copy import deepcopy
 import numpy as np
 
-from cube_solver.constants import COLORS, FACES, AXES, OPPOSITE_FACE, MOVE_COUNT_STR, REPR_ORDER, NUM_CORNERS, NUM_EDGES
+from cube_solver.constants import COLORS, FACES, AXES, NEXT_BASE_MOVES, MOVE_COUNT_STR, REPR_ORDER, NUM_CORNERS, NUM_EDGES
 from cube_solver.constants import FACE_MOVES, ARRAY_MOVES, SWAP, CUBIE_IDX, COORD_MOVES, COORD_CUBIE_INDEX
 
 
@@ -79,19 +79,15 @@ class Cube:
     def generate_scramble(length: int = 25) -> str:
         assert length >= 1
 
-        options = set(FACES)
         count = np.random.choice(3, size=length)
         count_strs = [MOVE_COUNT_STR[c] for c in count]
 
-        base_move = np.random.choice([*options])
+        base_move = np.random.choice([*FACES])
         count_str = count_strs[0]
         scramble = [base_move + count_str]
 
         for count_str in count_strs[1:]:
-            opts = options - {base_move}
-            if base_move in "DBL":
-                opts -= {OPPOSITE_FACE[base_move]}
-            base_move = np.random.choice([*opts])
+            base_move = np.random.choice([*NEXT_BASE_MOVES[base_move]])
             scramble.append(base_move + count_str)
 
         return " ".join(scramble)
