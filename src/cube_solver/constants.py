@@ -10,6 +10,11 @@ REPR_ORDER = [0, 5, 1, 2, 4, 3]  # up, left, front, right, back, down - for repr
 MOVE_COUNT_STR = ["'", "", "2"]  # example: U0 -> U', U1 -> U, U2 -> U2
 OPPOSITE_FACE = {face: opp for face, opp in zip("UFRDBL", "DBLUFR")}
 NEXT_BASE_MOVES = {face: set(FACES) - {face} - ({OPPOSITE_FACE[face]} if face in "DBL" else {None}) for face in FACES}
+NEXT_BASE_MOVES.update({None: FACES})
+ALL_MOVES = [face + count_str for face in FACES for count_str in MOVE_COUNT_STR]
+ALL_MOVES_INDEX = {move: i for i, move in enumerate(ALL_MOVES)}
+NEXT_MOVES = {move: [m + cs for m in NEXT_BASE_MOVES[move[0]] for cs in MOVE_COUNT_STR] for move in ALL_MOVES}
+NEXT_MOVES.update({None: ALL_MOVES})
 
 # face representation
 FACE_MOVES = {
@@ -73,6 +78,7 @@ NUM_EDGES = 12
 
 CORNER_CYCLE = [0 if i < 4 else 1 for i in range(8)]
 EDGE_AXIS = {i: 2 if i < 12 else 1 if i < 16 else 0 for i in range(8, 20)}
+EDGE_AXIS.update({-1: -1})
 NUM_EDGES_AXIS = 4
 EDGE_AXIS_OFFSET = [16, 12, 8]
 

@@ -2,8 +2,7 @@
 from copy import deepcopy
 import numpy as np
 
-from cube_solver.constants import SIZE, COLORS, FACES, REPR_ORDER
-from cube_solver.constants import MOVE_COUNT_STR, NEXT_BASE_MOVES
+from cube_solver.constants import SIZE, COLORS, FACES, REPR_ORDER, NEXT_MOVES
 from cube_solver.constants import FACE_MOVES, ARRAY_MOVES
 from cube_solver.constants import AXES, SWAP, CUBIE_IDX
 from cube_solver.constants import NUM_CORNERS, NUM_EDGES, CORNER_CYCLE, EDGE_AXIS, NUM_EDGES_AXIS, EDGE_AXIS_OFFSET
@@ -78,16 +77,11 @@ class Cube:
     def generate_scramble(length: int = 25) -> str:
         assert length >= 1, "scramble length must be greater or equal than 1"
 
-        count = np.random.choice(3, size=length)
-        count_strs = [MOVE_COUNT_STR[c] for c in count]
-
-        base_move = np.random.choice([*FACES])
-        count_str = count_strs[0]
-        scramble = [base_move + count_str]
-
-        for count_str in count_strs[1:]:
-            base_move = np.random.choice([*NEXT_BASE_MOVES[base_move]])
-            scramble.append(base_move + count_str)
+        scramble = []
+        move = None
+        for _ in range(length):
+            move = np.random.choice(NEXT_MOVES[move])
+            scramble.append(move)
 
         return " ".join(scramble)
 
@@ -146,10 +140,11 @@ class Cube:
         for axis in range(3):
             axis_pos = np.where(np.array([EDGE_AXIS[index] for index in self.permutation[NUM_CORNERS:]]) == axis)[0]
             axis_permutation = self.permutation[axis_pos + NUM_CORNERS]
-            for i in range(NUM_EDGES_AXIS - 1):
-                edge_permutation[axis] *= NUM_EDGES_AXIS - i
+            n = len(axis_permutation)
+            for i in range(n - 1):
+                edge_permutation[axis] *= n - i
                 edge_permutation[axis] += np.sum(axis_permutation[i] > axis_permutation[i+1:])
-            edge_permutation[axis] += PERM_EDGES_AXIS * np.sum(COMB_EDGES_AXIS[np.arange(NUM_EDGES_AXIS), axis_pos])
+            edge_permutation[axis] += PERM_EDGES_AXIS * np.sum(COMB_EDGES_AXIS[np.arange(n), axis_pos])
 
         return corner_orientation, edge_orientation, corner_permutation, tuple(edge_permutation)
 
@@ -175,6 +170,7 @@ class Cube:
 
         # edge permutation
         edge_permutation = coord[3]
+        self.permutation[NUM_CORNERS:] = -1
         for axis in range(3):
             combination_index, permutation_index = divmod(edge_permutation[axis], PERM_EDGES_AXIS)
             axis_pos = np.zeros(NUM_EDGES_AXIS, dtype=int)

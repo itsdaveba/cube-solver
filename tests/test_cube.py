@@ -80,6 +80,7 @@ def test_content(response):
     assert cube_str == repr(cube)
 
     scramble = Cube.generate_scramble(1000).split()
+    assert len(scramble) == 1000
     for move, next_move in zip(scramble[:-1], scramble[1:]):
         assert move[0] != next_move[0]
         if move[0] in "DBL":
