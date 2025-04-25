@@ -1,19 +1,22 @@
+import numpy as np
+
+# visual representation
+SIZE = 3  # 3x3 cube
 COLORS = "WGRYBO"  # up, front, right, down, back, left
 FACES = "UFRDBL"  # up, front, right, down, back, left
-AXES = {face: axis for face, axis in zip(FACES, [0, 1, 2, 0, 1, 2])}  # up, front, right, down, back, left
+REPR_ORDER = [0, 5, 1, 2, 4, 3]  # up, left, front, right, back, down - for repr() and str()
+
+# scramble
+MOVE_COUNT_STR = ["'", "", "2"]  # example: U0 -> U', U1 -> U, U2 -> U2
 OPPOSITE_FACE = {face: opp for face, opp in zip("UFRDBL", "DBLUFR")}
 NEXT_BASE_MOVES = {face: set(FACES) - {face} - ({OPPOSITE_FACE[face]} if face in "DBL" else {None}) for face in FACES}
-MOVE_COUNT_STR = ["'", "", "2"]  # example: U0 -> U', U1 -> U, U2 -> U2
-REPR_ORDER = [0, 5, 1, 2, 4, 3]  # up, left, front, right, back, down - for repr() and str()
-SWAP = [[0, 2, 1], [2, 1, 0,], [1, 0, 2]]  # swap cubie along axis
-NUM_CORNERS = 8
-NUM_EDGES = 12
 
+# face representation
 FACE_MOVES = {
-    "U": [([0, 0, 0, 0], [0, 0, 2, 2], [0, 2, 2, 0]),  # corner
+    "U": [([0, 0, 0, 0], [0, 0, 2, 2], [0, 2, 2, 0]),  # corners
           ([1, 5, 4, 2], [0, 0, 0, 0], [0, 0, 0, 0]),
           ([1, 5, 4, 2], [0, 0, 0, 0], [2, 2, 2, 2]),
-          ([0, 0, 0, 0], [0, 1, 2, 1], [1, 2, 1, 0]),  # edge
+          ([0, 0, 0, 0], [0, 1, 2, 1], [1, 2, 1, 0]),  # edges
           ([1, 5, 4, 2], [0, 0, 0, 0], [1, 1, 1, 1])],
     "F": [([0, 2, 3, 5], [2, 0, 0, 2], [0, 0, 2, 2]),
           ([0, 2, 3, 5], [2, 2, 0, 0], [2, 0, 0, 2]),
@@ -42,6 +45,7 @@ FACE_MOVES = {
           ([5, 5, 5, 5], [0, 1, 2, 1], [1, 2, 1, 0])]
 }
 
+# array representation
 ARRAY_MOVES = {
     "U": [[0, 2, 8, 6], [9, 45, 36, 18], [11, 47, 38, 20], [1, 5, 7, 3], [10, 46, 37, 19]],
     "F": [[6, 18, 29, 53], [8, 24, 27, 47], [9, 11, 17, 15], [7, 21, 28, 50], [10, 14, 16, 12]],
@@ -51,6 +55,9 @@ ARRAY_MOVES = {
     "L": [[0, 9, 27, 44], [6, 15, 33, 38], [45, 47, 53, 51], [3, 12, 30, 41], [46, 50, 52, 48]]
 }
 
+# cubie representation
+AXES = {face: axis for face, axis in zip(FACES, [0, 1, 2, 0, 1, 2])}  # up, front, right, down, back, left
+SWAP = [[0, 2, 1], [2, 1, 0,], [1, 0, 2]]  # swap cubie along axis
 CUBIE_IDX = {
     "U": (0, slice(None), slice(None)),
     "F": (slice(None), 2, slice(None)),
@@ -60,6 +67,21 @@ CUBIE_IDX = {
     "L": (slice(None), slice(None), 0),
 }
 
+# coord representation
+NUM_CORNERS = 8
+NUM_EDGES = 12
+
+CORNER_CYCLE = [0 if i < 4 else 1 for i in range(8)]
+EDGE_AXIS = {i: 2 if i < 12 else 1 if i < 16 else 0 for i in range(8, 20)}
+NUM_EDGES_AXIS = 4
+EDGE_AXIS_OFFSET = [16, 12, 8]
+
+PERM_EDGES_AXIS = 24
+COMB_EDGES_AXIS = np.zeros((NUM_EDGES_AXIS, NUM_EDGES), dtype=int)
+COMB_EDGES_AXIS[0] = range(12)
+for i in range(1, NUM_EDGES_AXIS):
+    COMB_EDGES_AXIS[i, i:] = COMB_EDGES_AXIS[i-1, i-1:-1].cumsum()
+
 COORD_MOVES = {
     "U": [[0, 4, 1, 5], [8, 13, 9, 12]],
     "F": [[1, 7, 3, 5], [9, 19, 11, 18]],
@@ -68,7 +90,6 @@ COORD_MOVES = {
     "B": [[0, 6, 2, 4], [8, 16, 10, 17]],
     "L": [[0, 5, 3, 6], [12, 18, 14, 16]]
 }
-
 COORD_CUBIE_INDEX = [
     (0, 0, 0), (0, 2, 2), (2, 0, 2), (2, 2, 0), (0, 0, 2), (0, 2, 0), (2, 0, 0), (2, 2, 2),  # corners
     (0, 0, 1), (0, 2, 1), (2, 0, 1), (2, 2, 1), (0, 1, 0), (0, 1, 2),  # edges

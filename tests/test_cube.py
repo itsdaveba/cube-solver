@@ -20,19 +20,13 @@ def response():
 
 def test_content(response):
     """Sample pytest test function with the pytest fixture as an argument."""
-    # from bs4 import BeautifulSoup
-    # assert 'GitHub' in BeautifulSoup(response.content).title.string
-    cube = Cube(size=2)
-    assert str(cube) == \
-        "      -------\n      | W W |\n      | W W |\n-------------------------\n| O O | G G | R R | B B |\n| O O | G G | R R"\
-        + " | B B |\n-------------------------\n      | Y Y |\n      | Y Y |\n      -------"
     cube = Cube()
     assert str(cube) == \
         "        ---------\n        | W W W |\n        | W W W |\n        | W W W |\n---------------------------------\n| O O"\
         + " O | G G G | R R R | B B B |\n| O O O | G G G | R R R | B B B |\n| O O O | G G G | R R R | B B B |\n--------------"\
         + "-------------------\n        | Y Y Y |\n        | Y Y Y |\n        | Y Y Y |\n        ---------"
 
-    cube = Cube("B L B L F' L U' R' D2 U' B2 F R' B' F D U F2 D U' L2 R D F B")
+    cube = Cube("B L B L F' L U' R' D2 U' B2 F R' B' F D U F2 D U' L2 R D F B", representation="face")
     assert str(cube) == \
         "        ---------\n        | B Y B |\n        | B W R |\n        | R B W |\n---------------------------------\n| O Y"\
         + " Y | B O B | O G W | R G Y |\n| R O W | R G Y | O R B | W B Y |\n| O G R | Y W W | R G O | W B Y |\n--------------"\
@@ -41,16 +35,6 @@ def test_content(response):
     cube.reset()
     cube.apply_maneuver("D F' U B2 R' B' F D2 U' L U B' R D' U F D R' F' U2 F' L F2 R2 D2")
     assert repr(cube) == "WOYWWWBBRBBROOWRGWYRGOGBGRGYROYROYROBYRBBGBYWOYOWYGGGW"
-
-    cube = Cube("F' U B R2 D B' R2 F2 B2 L B D2 F' L2 F L2 D B' D L' F' L F' U F2", representation="cubie")
-    assert str(cube) == \
-        "        ---------\n        | B B W |\n        | W W G |\n        | G Y G |\n---------------------------------\n| Y R"\
-        + " Y | R O R | W R B | O Y R |\n| B O O | W G G | W R W | B B R |\n| G Y Y | O G B | R R B | O O W |\n--------------"\
-        + "-------------------\n        | G O W |\n        | G Y Y |\n        | O B Y |\n        ---------"
-
-    cube.reset()
-    cube.apply_maneuver("B R' L F2 L B2 L' B R B R D2 R' L2 U2 L2 U B U' D B L D2 F' D2")
-    assert repr(cube) == "BWRGWYGRRYYOGOYORWYGWBGWGOWGOGBRBBBBYGRRBOWRBOWRWYOYYO"
 
     cube = Cube("R2 L U F' R D U F U2 R2 U2 R2 U2 L2 U' R' F2 R' D2 U B' D2 R' B' U2", representation="array")
     assert str(cube) == \
@@ -62,6 +46,16 @@ def test_content(response):
     cube.apply_maneuver("U D F2 R D F' D B L F R2 F2 D2 R F' L2 U2 D' F2 L2 U2 F2 L' D2 R'")
     assert repr(cube) == "OYBBWRYBWGRBOOYWWWRWORGWOWRGGWRROYYBRGYBBGOOGBOGGYBRYY"
 
+    cube = Cube("F' U B R2 D B' R2 F2 B2 L B D2 F' L2 F L2 D B' D L' F' L F' U F2", representation="cubie")
+    assert str(cube) == \
+        "        ---------\n        | B B W |\n        | W W G |\n        | G Y G |\n---------------------------------\n| Y R"\
+        + " Y | R O R | W R B | O Y R |\n| B O O | W G G | W R W | B B R |\n| G Y Y | O G B | R R B | O O W |\n--------------"\
+        + "-------------------\n        | G O W |\n        | G Y Y |\n        | O B Y |\n        ---------"
+
+    cube.reset()
+    cube.apply_maneuver("B R' L F2 L B2 L' B R B R D2 R' L2 U2 L2 U B U' D B L D2 F' D2")
+    assert repr(cube) == "BWRGWYGRRYYOGOYORWYGWBGWGOWGOGBRBBBBYGRRBOWRBOWRWYOYYO"
+
     cube = Cube("B2 R L' F' D F' D' U B D' F2 L2 R B2 D2 L' U2 L U2 R L' U' R2 D U", representation="coord")
     assert str(cube) == \
         "        ---------\n        | G W O |\n        | Y W O |\n        | O R O |\n---------------------------------\n| W R"\
@@ -72,7 +66,18 @@ def test_content(response):
     cube.apply_maneuver("U2 B' R U2 B R' D' U F' D B' D2 U' F B2 L' R2 B' L' D2 F' B' U' B2 U2")
     assert repr(cube) == "OOGYWWYYWBBRBOBOWGGGRRGBORBBGRORYYOBWGWRBWOOYWGRRYWGYY"
 
-    assert cube.get_coord() == (1468, 1043, 2717, 206101212)
+    assert cube.get_coord() == (1468, 1043, 2717, (10889, 4286, 2111))
+
+    cube.set_coord((1440, 578, 31234, (4639, 8061, 6317)))
+    assert repr(cube) == "OYROWBYRRYYRROGBGBGBWWGOYBWGOBWRGGBGWRBOBGYRORWOYYYWWO"
+
+    cube.reset()
+    cube.apply_maneuver("L' U F2 R' L2 B L2 U' F R2 F2 B2 R2 B' U F' B D' U L U2 R F' B' D2")
+    cube_str = repr(cube)
+    coord = cube.get_coord()
+    cube.reset()
+    cube.set_coord(coord)
+    assert cube_str == repr(cube)
 
     scramble = Cube.generate_scramble(1000).split()
     for move, next_move in zip(scramble[:-1], scramble[1:]):
