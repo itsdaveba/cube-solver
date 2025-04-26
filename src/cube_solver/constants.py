@@ -101,3 +101,13 @@ COORD_CUBIE_INDEX = [
     (0, 0, 1), (0, 2, 1), (2, 0, 1), (2, 2, 1), (0, 1, 0), (0, 1, 2),  # edges
     (2, 1, 0), (2, 1, 2), (1, 0, 0), (1, 0, 2), (1, 2, 0), (1, 2, 2)
 ]
+
+# solver with coord representation
+SOLVED_EDGE_PERMUTATION = (11856, 1656, 0)
+SOLVED_COORD = (0, 0, 0, SOLVED_EDGE_PERMUTATION)
+SOLVED_REPR = "".join([COLORS[r] * SIZE * SIZE for r in REPR_ORDER])
+
+CORNER_ORIENTATION_SIZE = 3 ** (NUM_CORNERS - 1)
+EDGE_ORIENTATION_SIZE = 2 ** (NUM_EDGES - 1)
+CORNER_PERMUTATION_SIZE = 8 * 7 * 6 * 5 * 4 * 3 * 2
+EDGE_PERMUTATION_SIZE = 12 * 11 * 10 * 9
