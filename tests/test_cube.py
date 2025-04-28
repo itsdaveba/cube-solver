@@ -66,18 +66,20 @@ def test_content(response):
     cube.apply_maneuver("U2 B' R U2 B R' D' U F' D B' D2 U' F B2 L' R2 B' L' D2 F' B' U' B2 U2")
     assert repr(cube) == "OOGYWWYYWBBRBOBOWGGGRRGBORBBGRORYYOBWGWRBWOOYWGRRYWGYY"
 
-    assert cube.get_coord() == (1468, 1043, 2717, (10889, 4286, 2111))
+    assert cube.get_coord(full_edge_permutation=True) == (1468, 1043, 2717, 206101212)
+    cube.set_coord((1607, 604, 7986, 173635732), full_edge_permutation=True)
+    assert repr(cube) == "RBROWWBRWGGRYOGYYRYYOWGRWRBGBGWROOBWYOWWBBOOGBGYGYROYB"
 
+    assert cube.get_coord() == (1607, 604, 7986, (1013, 10006, 6869))
     cube.set_coord((1440, 578, 31234, (4639, 8061, 6317)))
     assert repr(cube) == "OYROWBYRRYYRROGBGBGBWWGOYBWGOBWRGGBGWRBOBGYRORWOYYYWWO"
 
     cube.reset()
     cube.apply_maneuver("L' U F2 R' L2 B L2 U' F R2 F2 B2 R2 B' U F' B D' U L U2 R F' B' D2")
-    cube_str = repr(cube)
     coord = cube.get_coord()
     cube.reset()
     cube.set_coord(coord)
-    assert cube_str == repr(cube)
+    assert repr(cube) == "GBYRWOBRGRGYBOBBWROBWWGOGYGOGBYRWYYWRYYGBOBOOWRORYGWWR"
 
     scramble = Cube.generate_scramble(1000).split()
     assert len(scramble) == 1000
