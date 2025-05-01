@@ -66,19 +66,29 @@ def test_content(response):
     cube.apply_maneuver("U2 B' R U2 B R' D' U F' D B' D2 U' F B2 L' R2 B' L' D2 F' B' U' B2 U2")
     assert repr(cube) == "OOGYWWYYWBBRBOBOWGGGRRGBORBBGRORYYOBWGWRBWOOYWGRRYWGYY"
 
-    assert cube.get_coord(full_edge_permutation=True) == (1468, 1043, 2717, 206101212)
-    cube.set_coord((1607, 604, 7986, 173635732), full_edge_permutation=True)
-    assert repr(cube) == "RBROWWBRWGGRYOGYYRYYOWGRWRBGBGWROOBWYOWWBBOOGBGYGYROYB"
+    assert cube.get_coords(full_edge_permutation=True) == (1468, 1043, 2717, 206101212)
+    cube.set_coords((1607, 604, 7987, 173635732), full_edge_permutation=True)
+    assert repr(cube) == "RBROWWBRWGGRYORYYRYYOWGGWROGBGWROGBWYOWWBBOOOBGYGYRBYB"
 
-    assert cube.get_coord() == (1607, 604, 7986, (1013, 10006, 6869))
-    cube.set_coord((1440, 578, 31234, (4639, 8061, 6317)))
+    assert cube.get_coords() == (1607, 604, 7987, (1013, 7126, 9749))
+    cube.set_coords((1440, 578, 31234, (4639, 8061, 6317)))
     assert repr(cube) == "OYROWBYRRYYRROGBGBGBWWGOYBWGOBWRGGBGWRBOBGYRORWOYYYWWO"
+
+    cube.set_coords((-1, -1, -1, (-1, -1, -1)))
+    assert cube.get_coords() == (2186, 2047, 40319, (-1, -1, -1))
+
+    cube.reset()
+    cube.apply_maneuver("D2 U F U2 D2 L' F' B U L F B2 R2 L' D' U2 B2 R2 L2 F' U2 D B' R' B'")
+    coords = cube.get_coords(full_edge_permutation=True)
+    cube.reset()
+    cube.set_coords(coords, full_edge_permutation=True)
+    assert repr(cube) == "WYRBWGOGBRYGOOBBWOWRRWGYYRYYOGGRWORBYOGOBBWWWBYGRYBRGO"
 
     cube.reset()
     cube.apply_maneuver("L' U F2 R' L2 B L2 U' F R2 F2 B2 R2 B' U F' B D' U L U2 R F' B' D2")
-    coord = cube.get_coord()
+    coords = cube.get_coords()
     cube.reset()
-    cube.set_coord(coord)
+    cube.set_coords(coords)
     assert repr(cube) == "GBYRWOBRGRGYBOBBWROBWWGOGYGOGBYRWYYWRYYGBOBOOWRORYGWWR"
 
     scramble = Cube.generate_scramble(1000).split()

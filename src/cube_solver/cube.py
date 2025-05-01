@@ -85,7 +85,7 @@ class Cube:
 
         return " ".join(scramble)
 
-    def update_cubies(self) -> None:  # used by "coord" representation
+    def _update_cubies(self) -> None:  # used by "coord" representation
         cubies = self.cubies.copy()
         for face, color in zip(FACES, COLORS):
             cubies[CUBIE_IDX[face] + (AXES[face],)] = color
@@ -116,7 +116,7 @@ class Cube:
                 cubie = cubie[SWAP[EDGE_AXIS[index]]]
             self.cubies[COORD_CUBIE_INDEX[index]] = cubie
 
-    def get_coord(self, full_edge_permutation: bool = False) -> tuple:
+    def get_coords(self, full_edge_permutation: bool = False) -> tuple:
         # corner orientation
         corner_orientation = 0
         for co in self.orientation[:NUM_CORNERS-1]:
@@ -157,7 +157,7 @@ class Cube:
 
         return corner_orientation, edge_orientation, corner_permutation, edge_permutation
 
-    def set_coord(self, coord: tuple, full_edge_permutation: bool = False) -> None:
+    def set_coords(self, coord: tuple, full_edge_permutation: bool = False) -> None:
         # corner orientation
         corner_orientation = coord[0]
         for i in range(NUM_CORNERS - 2, -1, -1):
@@ -220,7 +220,7 @@ class Cube:
 
         elif self.representation in ["cubie", "coord"]:
             if self.representation == "coord":
-                self.update_cubies()
+                self._update_cubies()
             repr = "".join(np.ravel([self.cubies[CUBIE_IDX[face] + (AXES[face],)] for face in np.array([*FACES])[REPR_ORDER]]))
 
         return repr
