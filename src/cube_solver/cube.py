@@ -116,7 +116,7 @@ class Cube:
                 cubie = cubie[SWAP[EDGE_AXIS[index]]]
             self.cubies[COORD_CUBIE_INDEX[index]] = cubie
 
-    def get_coords(self, full_edge_permutation: bool = False) -> tuple:
+    def get_coords(self, partial_corner: bool = False, partial_edge: bool = False) -> tuple:
         # corner orientation
         corner_orientation = 0
         for co in self.orientation[:NUM_CORNERS-1]:
@@ -136,7 +136,7 @@ class Cube:
             corner_permutation += np.sum(self.permutation[i] > self.permutation[i+1:NUM_CORNERS])
 
         # edge permutation
-        if full_edge_permutation:
+        if not partial_edge:
             edge_permutation = 0
             for i in range(NUM_CORNERS, NUM_CORNERS + NUM_EDGES - 2):
                 edge_permutation *= NUM_CORNERS + NUM_EDGES - i
@@ -157,7 +157,7 @@ class Cube:
 
         return corner_orientation, edge_orientation, corner_permutation, edge_permutation
 
-    def set_coords(self, coord: tuple, full_edge_permutation: bool = False) -> None:
+    def set_coords(self, coord: tuple, partial_corner: bool = False, partial_edge: bool = False) -> None:
         # corner orientation
         corner_orientation = coord[0]
         for i in range(NUM_CORNERS - 2, -1, -1):
@@ -180,7 +180,7 @@ class Cube:
             corner_parity += self.permutation[i]
 
         # edge permutation
-        if full_edge_permutation:
+        if not partial_edge:
             edge_parity = 0
             edge_permutation = coord[3]
             self.permutation[-2:] = [0, 1]

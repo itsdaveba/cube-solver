@@ -102,8 +102,8 @@ class Solver:
                     tuple([self.trans_edge_permutation[position[3][axis], ALL_MOVES_INDEX[move]] for axis in range(3)]))
         if isinstance(position, tuple):
             cube = Cube()
-            cube.set_coords(position)
-            return cube.apply_move(move).get_coords()
+            cube.set_coords(position, partial_edge=True)
+            return cube.apply_move(move).get_coords(partial_edge=True)
         return position.apply_move(move, position)
 
     def is_solved(self, position: Cube | tuple) -> bool:
@@ -113,13 +113,13 @@ class Solver:
 
     def solve(self, cube: Cube, max_depth: int = 10) -> str:
         solution = []
-        position = cube.get_coords() if cube.representation == "coord" else cube
+        position = cube.get_coords(partial_edge=True) if cube.representation == "coord" else cube
         for depth in range(max_depth + 1):
-            if self._solve(depth, solution, position):
+            if self._solve(depth, position, solution):
                 break
         return " ".join(solution[::-1])
 
-    def _solve(self, depth: int, solution: list[str], position: Cube | tuple, last_move: str = None) -> bool:
+    def _solve(self, depth: int, position: Cube | tuple, solution: list[str], last_move: str = None) -> bool:
         if depth == 0:
             return self.is_solved(position)
         if self.pruning_tables:
@@ -131,14 +131,14 @@ class Solver:
                                 if self.prun_edge_orientation[position[1]] <= depth:
                                     for move in NEXT_MOVES[last_move]:
                                         next_position = self._get_next_position(position, move)
-                                        if self._solve(depth - 1, solution, next_position, move):
+                                        if self._solve(depth - 1, next_position, solution, move):
                                             solution.append(move)
                                             return True
             return False
         else:
             for move in NEXT_MOVES[last_move]:
                 next_position = self._get_next_position(position, move)
-                if self._solve(depth - 1, solution, next_position, move):
+                if self._solve(depth - 1, next_position, solution, move):
                     solution.append(move)
                     return True
             return False
