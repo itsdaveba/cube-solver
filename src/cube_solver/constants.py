@@ -84,7 +84,7 @@ NUM_PERM_AXIS = 24
 CORNER_AXIS_OFFSET = [0, 4]
 EDGE_AXIS_OFFSET = [16, 12, 8]
 AXIS = [0 if i < 4 else 1 for i in range(8)]
-AXIS += [2 if i < 12 else 1 if i < 16 else 0 for i in range(8, 20)]
+AXIS += [2 if i < 12 else 1 if i < 16 else 0 for i in range(8, 20)] + [EMPTY]
 FACTORIAL = np.cumprod(range(1, NUM_EDGES + 1))
 
 COMB_AXIS = np.zeros((NUM_AXIS_ELEMS, max(NUM_CORNERS, NUM_EDGES)), dtype=int)

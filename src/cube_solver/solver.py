@@ -21,7 +21,7 @@ def get_pruning_table(name: str, coord_index: int) -> np.ndarray:
         pruning_table = np.full(shape, EMPTY, dtype=np.int8)
         for i in range(3 if coord_index == 3 else 1):
             cube.reset()
-            init_coord = cube.get_coords()[coord_index]
+            init_coord = cube.get_coords(partial_edge=True)[coord_index]
             if coord_index == 3:
                 init_coord = init_coord[i]
             if coord_index == 3:
@@ -35,9 +35,9 @@ def get_pruning_table(name: str, coord_index: int) -> np.ndarray:
                     coords[coord_index][i], depth = queue.popleft()
                 else:
                     coords[coord_index], depth = queue.popleft()
-                cube.set_coords(coords)
+                cube.set_coords(coords, partial_edge=True)
                 for move in ALL_MOVES:
-                    coord = cube.apply_move(move, cube).get_coords()[coord_index]
+                    coord = cube.apply_move(move, cube).get_coords(partial_edge=True)[coord_index]
                     if coord_index == 3:
                         coord = coord[i]
                         if pruning_table[i, coord] == EMPTY:
@@ -65,9 +65,9 @@ def get_transition_table(name: str, coord_index: int) -> np.ndarray:
                 coords[coord_index][0] = coord
             else:
                 coords[coord_index] = coord
-            cube.set_coords(coords)
+            cube.set_coords(coords, partial_edge=True)
             for i in range(len(ALL_MOVES)):
-                next_coord = cube.apply_move(ALL_MOVES[i], cube).get_coords()[coord_index]
+                next_coord = cube.apply_move(ALL_MOVES[i], cube).get_coords(partial_edge=True)[coord_index]
                 if coord_index == 3:
                     next_coord = next_coord[0]
                 transition_table[coord, i] = next_coord
