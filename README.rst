@@ -29,6 +29,9 @@ Features
 * Tree search solve
 * Cubie representation
 * Coordinate representation
+* Transition tables
+* Pruning tables
+* Thistlethwaite solver algorithm
 
 Credits
 -------

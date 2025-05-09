@@ -12,10 +12,26 @@ cube\_solver.cli module
    :undoc-members:
    :show-inheritance:
 
-cube\_solver.main module
+cube\_solver.constants module
+-----------------------------
+
+.. automodule:: cube_solver.constants
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cube\_solver.cube module
 ------------------------
 
-.. automodule:: cube_solver.main
+.. automodule:: cube_solver.cube
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cube\_solver.solver module
+--------------------------
+
+.. automodule:: cube_solver.solver
    :members:
    :undoc-members:
    :show-inheritance:

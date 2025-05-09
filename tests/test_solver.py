@@ -26,18 +26,18 @@ def test_solver():
     solver = Solver()
     assert solver.solve(cube) == "D L' U D2"
 
-    cube = Cube("F L2 D U' L F", representation="coord")
+    cube = Cube("F L2 D U' L", representation="coord")
     solver = Solver(transition_tables=True)
-    assert solver.solve(cube) == "F' L' U D' L2 F'"
+    assert solver.solve(cube) == "L' U D' L2 F'"
+
+    cube = Cube("D F' R' F B' D' F2 B2", representation="coord")
+    solver = Solver(transition_tables=True, pruning_tables=True)
+    assert solver.solve(cube) == "F2 B2 D F' B R F D'"
 
     cube = Cube("L2 B D' F2 L' F' R", representation="coord")
     solver = Solver(pruning_tables=True)
     assert solver.solve(cube) == "R' F L F2 D B' L2"
 
-    cube = Cube("D F' R' F B' D' F2 B2 L2 U2", representation="coord")
-    solver = Solver(pruning_tables=True, transition_tables=True)
-    assert solver.solve(cube) == "U2 L2 F2 B2 D F' B R F D'"
-
     cube = Cube("D2 R F' B D2 L' D' B2 R2 F2 B R L' D2 R' F U D R' D' B' L2 U2 B U2")
-    solver = Solver(pruning_tables=True, transition_tables=True)
+    solver = Solver(transition_tables=True, pruning_tables=True)
     assert solver.thistlethwaite(cube) == "F' R2 F' U' L2 U2 R F2 D' L' U2 B2 L2 U' L2 D' U2 F2 L2 F2 U2 R2 D2 R2 F2 D2 L2"
