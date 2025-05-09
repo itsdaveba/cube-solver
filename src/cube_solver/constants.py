@@ -9,12 +9,14 @@ REPR_ORDER = [0, 5, 1, 2, 4, 3]  # up, left, front, right, back, down - for repr
 # scramble
 MOVE_COUNT_STR = ["'", "", "2"]  # example: U0 -> U', U1 -> U, U2 -> U2
 OPPOSITE_FACE = {face: opp for face, opp in zip("UFRDBL", "DBLUFR")}
-NEXT_BASE_MOVES = {face: set(FACES) - {face} - ({OPPOSITE_FACE[face]} if face in "DBL" else {None}) for face in FACES}
+NEXT_BASE_MOVES = {face: [f for f in FACES if f != face and (f != OPPOSITE_FACE[face] or face in "UFR")] for face in FACES}
 NEXT_BASE_MOVES.update({None: FACES})
 ALL_MOVES = [face + count_str for face in FACES for count_str in MOVE_COUNT_STR]
 ALL_MOVES_INDEX = {move: i for i, move in enumerate(ALL_MOVES)}
-NEXT_MOVES = {move: [m + cs for m in NEXT_BASE_MOVES[move[0]] for cs in MOVE_COUNT_STR] for move in ALL_MOVES}
-NEXT_MOVES.update({None: ALL_MOVES})
+NEXT_MOVES = {None: ALL_MOVES}
+for move in ALL_MOVES:
+    next_moves = [m + cs for m in NEXT_BASE_MOVES[move[0]] for cs in MOVE_COUNT_STR]
+    NEXT_MOVES.update({move: next_moves})
 
 # face representation
 FACE_MOVES = {
@@ -77,17 +79,18 @@ NUM_CORNERS = 8
 NUM_EDGES = 12
 EMPTY = -1
 
-CORNER_CYCLE = [0 if i < 4 else 1 for i in range(8)]
-EDGE_AXIS = {i: 2 if i < 12 else 1 if i < 16 else 0 for i in range(8, 20)}
-EDGE_AXIS.update({EMPTY: EMPTY})
-NUM_EDGES_AXIS = 4
+NUM_AXIS_ELEMS = 4
+NUM_PERM_AXIS = 24
+CORNER_AXIS_OFFSET = [0, 4]
 EDGE_AXIS_OFFSET = [16, 12, 8]
+AXIS = [0 if i < 4 else 1 for i in range(8)]
+AXIS += [2 if i < 12 else 1 if i < 16 else 0 for i in range(8, 20)]
+FACTORIAL = np.cumprod(range(1, NUM_EDGES + 1))
 
-PERM_EDGES_AXIS = 24
-COMB_EDGES_AXIS = np.zeros((NUM_EDGES_AXIS, NUM_EDGES), dtype=int)
-COMB_EDGES_AXIS[0] = range(12)
-for i in range(1, NUM_EDGES_AXIS):
-    COMB_EDGES_AXIS[i, i:] = COMB_EDGES_AXIS[i-1, i-1:-1].cumsum()
+COMB_AXIS = np.zeros((NUM_AXIS_ELEMS, max(NUM_CORNERS, NUM_EDGES)), dtype=int)
+COMB_AXIS[0] = range(max(NUM_CORNERS, NUM_EDGES))
+for i in range(1, NUM_AXIS_ELEMS):
+    COMB_AXIS[i, i:] = COMB_AXIS[i-1, i-1:-1].cumsum()
 
 COORD_MOVES = {
     "U": [[0, 4, 1, 5], [8, 13, 9, 12]],
@@ -110,7 +113,44 @@ SOLVED_REPR = "".join([COLORS[r] * SIZE * SIZE for r in REPR_ORDER])
 
 CORNER_ORIENTATION_SIZE = 3 ** (NUM_CORNERS - 1)
 EDGE_ORIENTATION_SIZE = 2 ** (NUM_EDGES - 1)
-CORNER_PERMUTATION_SIZE = 8 * 7 * 6 * 5 * 4 * 3 * 2
-EDGE_PERMUTATION_SIZE = 12 * 11 * 10 * 9 * 8 * 7 * 6 * 5 * 4 * 3
-PARTIAL_EDGE_PERMUTATION_SIZE = 12 * 11 * 10 * 9
+CORNER_PERMUTATION_SIZE = FACTORIAL[NUM_CORNERS - 1]
+EDGE_PERMUTATION_SIZE = FACTORIAL[NUM_EDGES - 1] // 2  # parity
+PARTIAL_EDGE_PERMUTATION_SIZE = FACTORIAL[NUM_EDGES - 1] // FACTORIAL[NUM_EDGES - NUM_AXIS_ELEMS - 1]
 COORDS_SIZES = [CORNER_ORIENTATION_SIZE, EDGE_ORIENTATION_SIZE, CORNER_PERMUTATION_SIZE, PARTIAL_EDGE_PERMUTATION_SIZE]
+
+# thistlethwaite
+NUM_PHASES = 4
+NUM_THREADS = 6
+
+PHASE_MOVES = []
+PHASE_NEXT_MOVES = []
+DOUBLE_STR = MOVE_COUNT_STR[2]
+RESTRICT = ["", "FB", "FRBL", FACES]
+for i in range(NUM_PHASES):
+    phase_moves = [face + count_str for face in FACES for count_str in (DOUBLE_STR if face in RESTRICT[i] else MOVE_COUNT_STR)]
+    phase_next_moves = {None: phase_moves}
+    for move in phase_moves:
+        next_moves = [m + cs for m in NEXT_BASE_MOVES[move[0]] for cs in (DOUBLE_STR if m in RESTRICT[i] else MOVE_COUNT_STR)]
+        phase_next_moves.update({move: next_moves})
+    PHASE_MOVES.append(phase_moves)
+    PHASE_NEXT_MOVES.append(phase_next_moves)
+
+COMBINATION_8C4 = FACTORIAL[8 - 1] // FACTORIAL[4 - 1]
+PHASE_TABLE_SIZES = [(EDGE_ORIENTATION_SIZE,)]
+PHASE_TABLE_SIZES.append((CORNER_ORIENTATION_SIZE, PARTIAL_EDGE_PERMUTATION_SIZE // NUM_PERM_AXIS))
+PHASE_TABLE_SIZES.append((COMBINATION_8C4, COMBINATION_8C4, NUM_THREADS))
+PHASE_TABLE_SIZES.append((NUM_PERM_AXIS, NUM_PERM_AXIS // NUM_THREADS, NUM_PERM_AXIS, NUM_PERM_AXIS, NUM_PERM_AXIS // 2))
+
+THREAD_PERM_GROUP = [1, 0, 4, 5, 2, 3]
+THREAD_SELECTOR = np.full((NUM_THREADS, NUM_THREADS), EMPTY, dtype=int)
+filter = np.eye(NUM_THREADS, dtype=bool)
+for i in range(NUM_THREADS):
+    THREAD_SELECTOR[filter] = i
+    filter = filter[THREAD_PERM_GROUP] if i % 2 == 0 else np.rot90(filter, 2)
+CORNER_THREAD = np.full((NUM_THREADS, NUM_THREADS), EMPTY, dtype=int)
+for i, y in enumerate(THREAD_SELECTOR):
+    CORNER_THREAD[y, range(NUM_THREADS)] = i
+CORNER_THREAD = np.vstack((CORNER_THREAD, CORNER_THREAD[THREAD_PERM_GROUP]))
+CORNER_THREAD = np.hstack((CORNER_THREAD, CORNER_THREAD[:, THREAD_PERM_GROUP]))
+CORNER_THREAD = np.vstack((CORNER_THREAD, np.flipud(CORNER_THREAD)))
+CORNER_THREAD = np.hstack((CORNER_THREAD, np.fliplr(CORNER_THREAD)))

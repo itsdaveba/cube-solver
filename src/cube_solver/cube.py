@@ -5,8 +5,8 @@ import numpy as np
 from cube_solver.constants import SIZE, COLORS, FACES, REPR_ORDER, NEXT_MOVES
 from cube_solver.constants import FACE_MOVES, ARRAY_MOVES
 from cube_solver.constants import AXES, SWAP, CUBIE_IDX
-from cube_solver.constants import NUM_CORNERS, NUM_EDGES, EMPTY, CORNER_CYCLE, EDGE_AXIS, NUM_EDGES_AXIS, EDGE_AXIS_OFFSET
-from cube_solver.constants import PERM_EDGES_AXIS, COMB_EDGES_AXIS, COORD_MOVES, COORD_CUBIE_INDEX
+from cube_solver.constants import NUM_CORNERS, NUM_EDGES, EMPTY, NUM_AXIS_ELEMS, NUM_PERM_AXIS
+from cube_solver.constants import CORNER_AXIS_OFFSET, EDGE_AXIS_OFFSET, AXIS, COMB_AXIS, COORD_MOVES, COORD_CUBIE_INDEX
 
 
 class Cube:
@@ -95,25 +95,25 @@ class Cube:
             orientation = self.orientation[index]
             permutation = self.permutation[index]
             cubie = cubies[COORD_CUBIE_INDEX[permutation]]
-            if CORNER_CYCLE[index] != CORNER_CYCLE[permutation]:
+            if AXIS[index] != AXIS[permutation]:
                 cubie = cubie[SWAP[0]]
             if orientation:
-                cubie = np.roll(cubie, orientation if CORNER_CYCLE[index] else -orientation)
+                cubie = np.roll(cubie, orientation if AXIS[index] else -orientation)
             self.cubies[COORD_CUBIE_INDEX[index]] = cubie
 
         # edges
         for index in range(NUM_CORNERS, NUM_CORNERS + NUM_EDGES):
             permutation = self.permutation[index]
             cubie = cubies[COORD_CUBIE_INDEX[permutation]]
-            axes = {EDGE_AXIS[index], EDGE_AXIS[permutation]}
+            axes = {AXIS[index], AXIS[permutation]}
             if axes == {0, 2}:
-                cubie = np.roll(cubie, 1 if EDGE_AXIS[index] != 2 else -1)
+                cubie = np.roll(cubie, 1 if AXIS[index] != 2 else -1)
             elif axes == {1, 2}:
                 cubie = cubie[SWAP[0]]
             elif axes == {0, 1}:
                 cubie = cubie[SWAP[2]]
             if self.orientation[index]:
-                cubie = cubie[SWAP[EDGE_AXIS[index]]]
+                cubie = cubie[SWAP[AXIS[index]]]
             self.cubies[COORD_CUBIE_INDEX[index]] = cubie
 
     def get_coords(self, partial_corner: bool = False, partial_edge: bool = False) -> tuple:
@@ -130,10 +130,24 @@ class Cube:
             edge_orientation += eo
 
         # corner permutation
-        corner_permutation = 0
-        for i in range(NUM_CORNERS - 1):
-            corner_permutation *= NUM_CORNERS - i
-            corner_permutation += np.sum(self.permutation[i] > self.permutation[i+1:NUM_CORNERS])
+        if not partial_corner:
+            corner_permutation = 0
+            for i in range(NUM_CORNERS - 1):
+                corner_permutation *= NUM_CORNERS - i
+                corner_permutation += np.sum(self.permutation[i] > self.permutation[i+1:NUM_CORNERS])
+        else:
+            corner_permutation = [0, 0]
+            for cycle in range(2):
+                cycle_pos = np.where(np.array([AXIS[index] for index in self.permutation[:NUM_CORNERS]]) == cycle)[0]
+                cycle_permutation = self.permutation[cycle_pos]
+                if len(cycle_permutation) == NUM_AXIS_ELEMS:
+                    for i in range(NUM_AXIS_ELEMS - 1):
+                        corner_permutation[cycle] *= NUM_AXIS_ELEMS - i
+                        corner_permutation[cycle] += np.sum(cycle_permutation[i] > cycle_permutation[i+1:])
+                    corner_permutation[cycle] += NUM_PERM_AXIS * np.sum(COMB_AXIS[np.arange(NUM_AXIS_ELEMS), cycle_pos])
+                else:
+                    corner_permutation[cycle] = EMPTY
+            corner_permutation = tuple(corner_permutation)
 
         # edge permutation
         if not partial_edge:
@@ -144,13 +158,13 @@ class Cube:
         else:
             edge_permutation = [0, 0, 0]
             for axis in range(3):
-                axis_pos = np.where(np.array([EDGE_AXIS[index] for index in self.permutation[NUM_CORNERS:]]) == axis)[0]
+                axis_pos = np.where(np.array([AXIS[index] for index in self.permutation[NUM_CORNERS:]]) == axis)[0]
                 axis_permutation = self.permutation[axis_pos + NUM_CORNERS]
-                if len(axis_permutation) == NUM_EDGES_AXIS:
-                    for i in range(NUM_EDGES_AXIS - 1):
-                        edge_permutation[axis] *= NUM_EDGES_AXIS - i
+                if len(axis_permutation) == NUM_AXIS_ELEMS:
+                    for i in range(NUM_AXIS_ELEMS - 1):
+                        edge_permutation[axis] *= NUM_AXIS_ELEMS - i
                         edge_permutation[axis] += np.sum(axis_permutation[i] > axis_permutation[i+1:])
-                    edge_permutation[axis] += PERM_EDGES_AXIS * np.sum(COMB_EDGES_AXIS[np.arange(NUM_EDGES_AXIS), axis_pos])
+                    edge_permutation[axis] += NUM_PERM_AXIS * np.sum(COMB_AXIS[np.arange(NUM_AXIS_ELEMS), axis_pos])
                 else:
                     edge_permutation[axis] = EMPTY
             edge_permutation = tuple(edge_permutation)
@@ -171,13 +185,35 @@ class Cube:
         self.orientation[NUM_CORNERS+NUM_EDGES-1] = -np.sum(self.orientation[NUM_CORNERS:-1]) % 2
 
         # corner permutation
-        corner_parity = 0
-        corner_permutation = coord[2]
-        self.permutation[NUM_CORNERS-1] = 0
-        for i in range(NUM_CORNERS - 2, -1, -1):
-            corner_permutation, self.permutation[i] = divmod(corner_permutation, NUM_CORNERS - i)
-            self.permutation[i+1:NUM_CORNERS] += self.permutation[i+1:NUM_CORNERS] >= self.permutation[i]
-            corner_parity += self.permutation[i]
+        if not partial_corner:
+            corner_parity = 0
+            corner_permutation = coord[2]
+            self.permutation[NUM_CORNERS-1] = 0
+            for i in range(NUM_CORNERS - 2, -1, -1):
+                corner_permutation, self.permutation[i] = divmod(corner_permutation, NUM_CORNERS - i)
+                self.permutation[i+1:NUM_CORNERS] += self.permutation[i+1:NUM_CORNERS] >= self.permutation[i]
+                corner_parity += self.permutation[i]
+        else:
+            corner_parity = 0  # TEST partial corner with full edge
+            corner_permutation = coord[2]
+            self.permutation[:NUM_CORNERS] = EMPTY
+            for cycle in range(2):
+                if corner_permutation[cycle] != EMPTY:
+                    combination_index, permutation_index = divmod(corner_permutation[cycle], NUM_PERM_AXIS)
+                    cycle_pos = np.zeros(NUM_AXIS_ELEMS, dtype=int)
+                    i, pos = NUM_AXIS_ELEMS - 1, NUM_CORNERS - 1
+                    while i >= 0:
+                        if combination_index >= COMB_AXIS[i, pos]:
+                            combination_index -= COMB_AXIS[i, pos]
+                            cycle_pos[i] = pos
+                            i -= 1
+                        pos -= 1
+                    cycle_permutation = np.zeros(NUM_AXIS_ELEMS, dtype=int)
+                    for i in range(NUM_AXIS_ELEMS - 2, - 1, -1):
+                        permutation_index, cycle_permutation[i] = divmod(permutation_index, NUM_AXIS_ELEMS - i)
+                        cycle_permutation[i+1:] += cycle_permutation[i+1:] >= cycle_permutation[i]
+                        corner_parity += cycle_permutation[i]
+                    self.permutation[cycle_pos] = cycle_permutation + CORNER_AXIS_OFFSET[cycle]
 
         # edge permutation
         if not partial_edge:
@@ -196,18 +232,18 @@ class Cube:
             self.permutation[NUM_CORNERS:] = EMPTY
             for axis in range(3):
                 if edge_permutation[axis] != EMPTY:
-                    combination_index, permutation_index = divmod(edge_permutation[axis], PERM_EDGES_AXIS)
-                    axis_pos = np.zeros(NUM_EDGES_AXIS, dtype=int)
-                    i, pos = NUM_EDGES_AXIS - 1, NUM_EDGES - 1
+                    combination_index, permutation_index = divmod(edge_permutation[axis], NUM_PERM_AXIS)
+                    axis_pos = np.zeros(NUM_AXIS_ELEMS, dtype=int)
+                    i, pos = NUM_AXIS_ELEMS - 1, NUM_EDGES - 1
                     while i >= 0:
-                        if combination_index >= COMB_EDGES_AXIS[i, pos]:
-                            combination_index -= COMB_EDGES_AXIS[i, pos]
+                        if combination_index >= COMB_AXIS[i, pos]:
+                            combination_index -= COMB_AXIS[i, pos]
                             axis_pos[i] = pos
                             i -= 1
                         pos -= 1
-                    axis_permutation = np.zeros(NUM_EDGES_AXIS, dtype=int)
-                    for i in range(NUM_EDGES_AXIS - 2, - 1, -1):
-                        permutation_index, axis_permutation[i] = divmod(permutation_index, NUM_EDGES_AXIS - i)
+                    axis_permutation = np.zeros(NUM_AXIS_ELEMS, dtype=int)
+                    for i in range(NUM_AXIS_ELEMS - 2, - 1, -1):
+                        permutation_index, axis_permutation[i] = divmod(permutation_index, NUM_AXIS_ELEMS - i)
                         axis_permutation[i+1:] += axis_permutation[i+1:] >= axis_permutation[i]
                     self.permutation[axis_pos + NUM_CORNERS] = axis_permutation + EDGE_AXIS_OFFSET[axis]
 

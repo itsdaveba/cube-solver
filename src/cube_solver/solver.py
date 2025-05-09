@@ -4,8 +4,9 @@ import numpy as np
 from collections import deque
 
 from cube_solver import Cube
-from cube_solver.constants import ALL_MOVES, ALL_MOVES_INDEX, NEXT_MOVES, EMPTY
+from cube_solver.constants import ALL_MOVES, ALL_MOVES_INDEX, NEXT_MOVES, EMPTY, NUM_PERM_AXIS
 from cube_solver.constants import SOLVED_PARTIAL_COORD, SOLVED_REPR, COORDS_SIZES
+from cube_solver.constants import NUM_PHASES, NUM_THREADS, PHASE_MOVES, PHASE_NEXT_MOVES, PHASE_TABLE_SIZES, CORNER_THREAD
 
 
 def get_pruning_table(name: str, coord_index: int) -> np.ndarray:
@@ -99,7 +100,7 @@ class Solver:
             return (self.trans_corner_orientation[position[0], ALL_MOVES_INDEX[move]],
                     self.trans_edge_orientation[position[1], ALL_MOVES_INDEX[move]],
                     self.trans_corner_permutation[position[2], ALL_MOVES_INDEX[move]],
-                    tuple([self.trans_edge_permutation[position[3][axis], ALL_MOVES_INDEX[move]] for axis in range(3)]))
+                    tuple(self.trans_edge_permutation[position[3][axis], ALL_MOVES_INDEX[move]] for axis in range(3)))
         if isinstance(position, tuple):
             cube = Cube()
             cube.set_coords(position, partial_edge=True)
@@ -142,3 +143,82 @@ class Solver:
                     solution.append(move)
                     return True
             return False
+
+    def thistlethwaite(self, cube: Cube) -> str:
+        self.phase_tables = [self._get_phase_table(phase) for phase in range(NUM_PHASES)]
+
+        solution = []
+        for phase in range(NUM_PHASES):
+            phase_solution = []
+            coords = cube.get_coords(partial_corner=True, partial_edge=True)
+            phase_coords = self._get_phase_coords(phase, coords)
+            depth = self.phase_tables[phase][phase_coords]
+            if self._phase(phase, depth, cube, phase_solution):
+                phase_solution = " ".join(phase_solution[::-1])
+                solution.append(phase_solution)
+                cube.apply_maneuver(phase_solution)
+            else:
+                return "NO SOLUTION FOUND"
+
+        return " ".join(solution)
+
+    def _get_phase_coords(self, phase: int, coords: tuple) -> tuple:
+        if phase == 0:
+            edge_orientation = coords[1]
+            return (edge_orientation,)
+        if phase == 1:
+            corner_orientation = coords[0]
+            edge_combination = coords[3][0] // NUM_PERM_AXIS
+            return (corner_orientation, edge_combination)
+        if phase == 2:
+            corner_combination = coords[2][0] // NUM_PERM_AXIS
+            edge_combination = coords[3][2] // NUM_PERM_AXIS
+            corner_thread = CORNER_THREAD[coords[2][0] % NUM_PERM_AXIS, coords[2][1] % NUM_PERM_AXIS]
+            return (corner_combination, edge_combination, corner_thread)
+        if phase == 3:
+            corner_permutation = [cp % NUM_PERM_AXIS for cp in coords[2]]
+            corner_permutation[1] //= NUM_THREADS
+            edge_permutation = [ep % NUM_PERM_AXIS for ep in coords[3]]
+            edge_permutation[2] //= 2  # parity
+            return tuple(corner_permutation) + tuple(edge_permutation)
+
+    def _get_phase_table(self, phase):
+        try:
+            with open(f"tables/phase{phase+1}.pkl", "rb") as file:
+                return pickle.load(file)
+        except FileNotFoundError:
+            cube = Cube()
+            shape = PHASE_TABLE_SIZES[phase]
+            phase_table = np.full(shape, EMPTY, dtype=np.int8)
+            coords = cube.get_coords(partial_corner=True, partial_edge=True)
+            phase_coords = self._get_phase_coords(phase, coords)
+            phase_table[phase_coords] = 0
+            queue = deque([(coords, 0)])
+            while queue:
+                coords, depth = queue.popleft()
+                cube.set_coords(coords, partial_corner=True, partial_edge=True)
+                for move in PHASE_MOVES[phase]:
+                    next_cube = cube.apply_move(move, cube)
+                    next_coords = next_cube.get_coords(partial_corner=True, partial_edge=True)
+                    phase_coords = self._get_phase_coords(phase, next_coords)
+                    if phase_table[phase_coords] == EMPTY:
+                        phase_table[phase_coords] = depth + 1
+                        queue.append((next_coords, depth + 1))
+            with open(f"tables/phase{phase+1}.pkl", "wb") as file:
+                pickle.dump(phase_table, file)
+            return phase_table
+
+    def _phase(self, phase: int, depth: int, cube: Cube, solution: list[str], last_move: str = None) -> bool:
+        if depth == 0:
+            return True
+        for move in PHASE_NEXT_MOVES[phase][last_move]:
+            next_cube = cube.apply_move(move, cube)
+            coords = next_cube.get_coords(partial_corner=True, partial_edge=True)
+            phase_coords = self._get_phase_coords(phase, coords)
+            next_depth = self.phase_tables[phase][phase_coords]
+            if next_depth < depth:
+                if self._phase(phase, next_depth, next_cube, solution, move):
+                    solution.append(move)
+                    return True
+                return False
+        return False
