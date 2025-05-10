@@ -79,8 +79,9 @@ To use Cube Solver in a Python project:
     print("Solution:", solution)
 
 
+=======
 Credits
--------
+=======
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
