@@ -2,10 +2,15 @@
 History
 =======
 
+1.0.1 (2025-05-10)
+------------------
+
+* Improved Command-line
+
 1.0.0 (2025-05-10)
 ------------------
 
-* Command line interface
+* Command-line interface
 * Transition and pruning tables
 * Thistlethwaite solver algorithm
 
