@@ -2,19 +2,16 @@
 Usage
 =====
 
-You can use the command `cube` strightaway::
+After intallation (see :doc:`installation guide <installation>`), you can use the ``cube`` command straight away::
 
     $ cube --help
     $ cube scramble
 
-The first time you solve a cube, it will generate required tables at it will take around::
+The first time you solve a cube, it will generate the required tables, which takes around 3 minutes::
 
     $ cube solve -r
 
-
-
-
-To use Cube Solver in a project
+To use Cube Solver in a Python project:
 
 .. code-block:: python
 
@@ -26,6 +23,6 @@ To use Cube Solver in a project
     cube = Cube(scramble)
     print(cube)
 
-    solver = Solver()
+    solver = Solver(transition_tables=True, pruning_tables=True)
     solution = solver.thistlethwaite(cube)
     print("Solution:", solution)

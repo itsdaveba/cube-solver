@@ -23,15 +23,10 @@ Rubik's Cube Solver
 Features
 --------
 
-* Cube representation
-* Make maneuver
-* Generate scramble
-* Tree search solve
-* Cubie representation
-* Coordinate representation
-* Transition tables
-* Pruning tables
+* Command line interface
+* Transition and pruning tables
 * Thistlethwaite solver algorithm
+
 
 Credits
 -------
