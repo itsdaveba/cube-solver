@@ -1,4 +1,4 @@
-.. include:: ../radme.rst
+.. include:: ..docs/radme.rst
 
 ============
 Installation
@@ -21,7 +21,7 @@ This is the preferred method to install Cube Solver, as it will always install t
 Usage
 =====
 
-After intallation (see :doc:`installation guide <installation>`), you can use the ``cube`` command straight away:
+After intallation, you can use the ``cube`` command straight away:
 
 .. code-block:: console
 
