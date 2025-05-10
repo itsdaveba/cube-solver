@@ -2,7 +2,6 @@
 Cube Solver
 ===========
 
-
 .. image:: https://img.shields.io/pypi/v/cube-solver.svg
         :target: https://pypi.python.org/pypi/cube-solver
 
@@ -11,10 +10,7 @@ Cube Solver
         :alt: Documentation Status
 
 
-
-
 Rubik's Cube Solver
-
 
 * Free software: MIT License
 * Documentation: https://cube-solver.readthedocs.io.
@@ -23,7 +19,7 @@ Rubik's Cube Solver
 Features
 --------
 
-* Command line interface
+* Command-line interface
 * Transition and pruning tables
 * Thistlethwaite solver algorithm
 

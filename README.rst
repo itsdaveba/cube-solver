@@ -2,7 +2,6 @@
 Cube Solver
 ===========
 
-
 .. image:: https://img.shields.io/pypi/v/cube-solver.svg
         :target: https://pypi.python.org/pypi/cube-solver
 
@@ -11,10 +10,7 @@ Cube Solver
         :alt: Documentation Status
 
 
-
-
 Rubik's Cube Solver
-
 
 * Free software: MIT License
 * Documentation: https://cube-solver.readthedocs.io.
@@ -23,7 +19,7 @@ Rubik's Cube Solver
 Features
 --------
 
-* Command line interface
+* Command-line interface
 * Transition and pruning tables
 * Thistlethwaite solver algorithm
 
@@ -32,11 +28,10 @@ Features
 Installation
 ============
 
-
 Stable release
 --------------
 
-To install Cube Solver, run this command in your terminal:
+To install Cube Solver, run the following command in your terminal:
 
 .. code-block:: console
 
@@ -49,17 +44,20 @@ This is the preferred method to install Cube Solver, as it will always install t
 Usage
 =====
 
-After intallation, you can use the ``cube`` command straight away:
+After installation, you can use the ``cube`` command straight away:
 
 .. code-block:: console
 
     cube --help
 
+To generate a scramble, use the ``scramble`` subcommand:
+
 .. code-block:: console
 
     cube scramble
 
-The first time you solve a cube, it will generate the required tables, which takes around 3 minutes:
+To solve a cube using the **Thistlethwaite** algorithm, use the ``solve`` command.
+The first time you solve a cube, it will generate the required tables, which takes around 5 minutes:
 
 .. code-block:: console
 

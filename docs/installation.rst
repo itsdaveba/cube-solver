@@ -8,7 +8,7 @@ Installation
 Stable release
 --------------
 
-To install Cube Solver, run this command in your terminal:
+To install Cube Solver, run the following command in your terminal:
 
 .. code-block:: console
 

@@ -2,12 +2,22 @@
 Usage
 =====
 
-After intallation (see :doc:`installation guide <installation>`), you can use the ``cube`` command straight away::
+After installation (see :doc:`installation guide <installation>`), you can use the ``cube`` command straight away:
+
+.. code-block:: console
 
     $ cube --help
+
+To generate a scramble, use the ``scramble`` subcommand:
+
+.. code-block:: console
+
     $ cube scramble
 
-The first time you solve a cube, it will generate the required tables, which takes around 3 minutes::
+To solve a cube using the **Thistlethwaite** algorithm, use the ``solve`` command.
+The first time you solve a cube, it will generate the required tables, which takes around 5 minutes:
+
+.. code-block:: console
 
     $ cube solve -r
 
