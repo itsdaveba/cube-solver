@@ -14,7 +14,7 @@ To generate a scramble, use the ``scramble`` subcommand:
 
     $ cube scramble
 
-To solve a cube using the **Thistlethwaite** algorithm, use the ``solve`` command.
+To solve a cube using the **Thistlethwaite** algorithm, use the ``solve`` subcommand.
 The first time you solve a cube, it will generate the required tables, which takes around 5 minutes:
 
 .. code-block:: console
