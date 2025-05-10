@@ -8,13 +8,13 @@ Installation
 Stable release
 --------------
 
-To install Cube Solver, run the following command in your terminal:
+To install **Cube Solver**, run the following command in your terminal:
 
 .. code-block:: console
 
     $ pip install cube-solver
 
-This is the preferred method to install Cube Solver, as it will always install the most recent stable release.
+This is the preferred method to install **Cube Solver**, as it will always install the most recent stable release.
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
@@ -26,7 +26,7 @@ you through the process.
 From sources
 ------------
 
-The sources for Cube Solver can be downloaded from the `GitHub repo`_.
+The sources for **Cube Solver** can be downloaded from the `GitHub repo`_.
 
 You can either clone the public repository:
 

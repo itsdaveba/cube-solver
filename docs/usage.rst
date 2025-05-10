@@ -21,7 +21,7 @@ The first time you solve a cube, it will generate the required tables, which tak
 
     $ cube solve -r
 
-To use Cube Solver in a Python project:
+To use **Cube Solver** in a Python project:
 
 .. code-block:: python
 

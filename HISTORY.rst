@@ -3,6 +3,7 @@ History
 =======
 
 1.0.0 (2025-05-10)
+------------------
 
 * Command line interface
 * Transition and pruning tables
