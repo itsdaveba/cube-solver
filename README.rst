@@ -21,14 +21,18 @@ This is the preferred method to install Cube Solver, as it will always install t
 Usage
 =====
 
-After intallation (see :doc:`installation guide <installation>`), you can use the ``cube`` command straight away::
+After intallation (see :doc:`installation guide <installation>`), you can use the ``cube`` command straight away:
 
-    $ cube --help
-    $ cube scramble
+.. code-block:: console
 
-The first time you solve a cube, it will generate the required tables, which takes around 3 minutes::
+    cube --help
+    cube scramble
 
-    $ cube solve -r
+The first time you solve a cube, it will generate the required tables, which takes around 3 minutes:
+
+.. code-block:: console
+
+    cube solve -r
 
 To use Cube Solver in a Python project:
 
