@@ -54,6 +54,9 @@ After intallation, you can use the ``cube`` command straight away:
 .. code-block:: console
 
     cube --help
+
+.. code-block:: console
+
     cube scramble
 
 The first time you solve a cube, it will generate the required tables, which takes around 3 minutes:
