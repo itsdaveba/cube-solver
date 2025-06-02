@@ -1,5 +1,5 @@
 """Console script for cube_solver."""
-from cube_solver import Cube, Solver
+from cube_solver import Cube, BaseSolver
 
 import click
 import typer

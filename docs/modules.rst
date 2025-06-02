@@ -1,5 +1,5 @@
-cube_solver
-===========
+API Documentation
+=================
 
 .. toctree::
    :maxdepth: 4

@@ -1,4 +1,4 @@
-.PHONY: clean clean-build clean-pyc clean-test coverage dist docs help install lint lint/flake8
+.PHONY: clean clean-build clean-pyc clean-test coverage dist docs help install lint lint/flake8 cmodules
 
 .DEFAULT_GOAL := help
 
@@ -24,17 +24,29 @@ export PRINT_HELP_PYSCRIPT
 
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
+# Python C API
+PYTHON_INCLUDES := $(shell python3-config --includes)
+NUMPY_INCLUDES := $(shell python -c "import numpy; print(numpy.get_include())")
+
+CC = gcc
+CFLAGS = -fPIC -O2 -Wall -g -I./include $(PYTHON_INCLUDES) -I$(NUMPY_INCLUDES)
+LDFLAGS = -shared
+
+SRC = $(wildcard *.c)
+TARGET = $(SRC:module.c=.so)
+
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
 
-clean-build: ## remove build artifacts
+clean-build: ## remove build artifacts, rm -f {TARGET}? but removing cutils.c
 	rm -fr build/
 	rm -fr dist/
 	rm -fr .eggs/
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '*.egg' -exec rm -f {} +
+	rm -f csolver.so
 
 clean-pyc: ## remove Python file artifacts
 	find . -name '*.pyc' -exec rm -f {} +
@@ -55,6 +67,7 @@ lint: lint/flake8 ## check style
 
 test: ## run tests quickly with the default Python
 	python -m pytest
+	python -m pytest --doctest-modules src/cube_solver/cube.py
 
 coverage: ## check code coverage quickly with the default Python
 	python -m coverage run -m pytest
@@ -65,7 +78,7 @@ coverage: ## check code coverage quickly with the default Python
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/cube_solver.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ src/cube_solver
+	sphinx-apidoc -o docs/ src/cube_solver -e -M -H "API Documentation"
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html
@@ -83,3 +96,8 @@ release: dist ## package and upload a release
 install: clean ## install the package to the active Python's site-packages
 	python -m pip install --upgrade pip
 	python -m pip install -r requirements_dev.txt
+
+cmodules: $(TARGET) ## create extended Python C modules
+
+%.so: $(SRC)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
