@@ -14,10 +14,10 @@ class Color(IntEnum):  # up, front, right, down, back, left
     NONE = -1  #: No color.
     WHITE = auto()  #: White color (Up face).
     GREEN = auto()  #: Green color (Front face).
-    ORANGE = auto()  #: Orange color (Right face).
+    RED = auto()  #: Red color (Right face).
     YELLOW = auto()  #: Yellow color (Down face).
     BLUE = auto()  #: Blue color (Back face).
-    RED = auto()  #: Red color (Left face).
+    ORANGE = auto()  #: Orange color (Left face).
 
     @classmethod
     def colors(cls) -> Iterator:
