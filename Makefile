@@ -67,7 +67,7 @@ lint: lint/flake8 ## check style
 
 test: ## run tests quickly with the default Python
 	python -m pytest
-	python -m pytest --doctest-modules src/cube_solver/cube.py
+	python -m pytest --doctest-modules src/cube_solver/
 
 coverage: ## check code coverage quickly with the default Python
 	python -m coverage run -m pytest

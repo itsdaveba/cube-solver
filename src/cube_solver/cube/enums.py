@@ -45,6 +45,16 @@ class Face(IntEnum):
         for i in range(6):
             yield cls(i)
 
+    # @property
+    # def cubie_slice(self) -> tuple:
+    #     """Slice for the Cubie representation."""
+    #     return cubie_slice[self]
+
+    # @property
+    # def perm(self) -> list:
+    #     """Face move permutation."""
+    #     return face_perm[self]
+
 
 cubie_slice = {
     Face.NONE: (),
@@ -152,6 +162,29 @@ class Move(IntEnum):
         """Iterate over rotations."""
         for i in range(45, 54):
             yield cls(i)
+
+    # @property
+    # def face(self) -> Face:
+    #     return move_face[self]
+
+    # @property
+    # def shift(self) -> int:
+    #     return move_shift[self]
+
+    # @property
+    # def str(self) -> str:
+    #     str = self.name
+    #     if self.name[1] == "1":
+    #         str = str[0]
+    #     elif self.name[1] == "3":
+    #         str = str[0] + "'"
+    #     return str
+
+
+# move_face = {move: Face[move.name[0]] for move in Move}
+# face_map[Move.NONE] = Face.NONE
+# move_shift = {move: int(move.name[1]) if move.name[1] != 3 else -1 for move in Move}
+# shift_map[Move.NONE] = 0
 
 
 class Cubie(IntEnum):
