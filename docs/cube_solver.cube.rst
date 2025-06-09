@@ -5,6 +5,7 @@ cube\_solver.cube package
    :members:
    :undoc-members:
    :show-inheritance:
+   :ignore-module-all:
 
 Submodules
 ----------

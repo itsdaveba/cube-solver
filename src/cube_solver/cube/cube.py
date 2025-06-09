@@ -463,7 +463,7 @@ class Cube:
             raise TypeError(f"maneuver must be str, not {type(maneuver).__name__}")
 
         for move_str in maneuver.split():
-            self.apply_move(Move.from_str(move_str))
+            self.apply_move(Move.from_string(move_str))
 
 # #     def get_coord(self, coord_type: str) -> int | tuple:
 # #         """

@@ -8,6 +8,7 @@ class IntEnum(int, Enum):
     __repr__ = Enum.__str__
 
 
+# TODO test different axis order
 class Axis(IntEnum):
     """Axis enumeration."""
     NONE = -1  #: no axis.
@@ -47,10 +48,32 @@ class Layer(IntEnum):
         """Layer permutation."""
         return layer_perm[self]
 
+    @property
+    def is_outer(self) -> bool:
+        """Whether this is an outer layer."""
+        return 0 <= self < 6
+
+    @property
+    def is_inner(self) -> bool:
+        """Whether this is an inner layer."""
+        return 6 <= self < 9
+
     @classmethod
     def layers(cls) -> Iterator["Layer"]:
         """Iterate over valid layers."""
         for i in range(9):
+            yield cls(i)
+
+    @classmethod
+    def outers(cls) -> Iterator["Layer"]:
+        """Iterate over outer layers."""
+        for i in range(6):
+            yield cls(i)
+
+    @classmethod
+    def inners(cls) -> Iterator["Layer"]:
+        """Iterate over inner layers."""
+        for i in range(6, 9):
             yield cls(i)
 
 
@@ -270,7 +293,7 @@ class Cubie(IntEnum):
             raise ValueError(f"faces length must be at most 3, got {len(faces)}")
         for face in faces:
             if not isinstance(face, Face):
-                raise TypeError(f"faces elements must be Face, not {type(faces).__name__}")
+                raise TypeError(f"faces elements must be Face, not {type(faces[0]).__name__}")
         min_faces = min([faces[i:] + faces[:i] for i in range(len(faces))]) if faces else []
         try:
             return faces_cubie[tuple(min_faces)]
@@ -393,20 +416,10 @@ class Move(IntEnum):
         if self == Move.NONE:
             return [Layer.NONE]
         if self.is_rotation:
-            if self.axis == Axis.X:
-                return [Layer.R, Layer.M, Layer.L]
-            if self.axis == Axis.Y:
-                return [Layer.U, Layer.E, Layer.D]
-            if self.axis == Axis.Z:
-                return [Layer.F, Layer.S, Layer.B]
+            return [layer for layer in Layer.layers() if layer.axis == self.axis]
         layers = [Layer[self.name[0]]]
         if self.is_wide:
-            if self.axis == Axis.X:
-                layers += [Layer.M]
-            if self.axis == Axis.Y:
-                layers += [Layer.E]
-            if self.axis == Axis.Z:
-                layers += [Layer.S]
+            layers += [layer for layer in Layer.inners() if layer.axis == self.axis]
         return layers
 
     @property
@@ -416,7 +429,7 @@ class Move(IntEnum):
             return [0]
         shift = int(self.name[-1]) if self.name[-1] != "3" else -1
         if self.is_rotation:
-            return [shift, shift if self.axis == Axis.Z else -shift, -shift]
+            return [shift, -shift, shift if self.axis == Axis.Z else -shift]
         shifts = [shift]
         if self.is_wide:
             if self.axis == Axis.Z:
@@ -445,7 +458,7 @@ class Move(IntEnum):
         return 45 <= self < 54
 
     @classmethod
-    def from_str(cls, string: str) -> "Move":
+    def from_string(cls, string: str) -> "Move":
         """
         Return the corresponding :class:`Move` enum.
 
