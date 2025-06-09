@@ -218,72 +218,6 @@ class Cube:
     #     """Return a copy of the Cube object."""
     #     return deepcopy(self)
 
-    def reset(self):
-        """
-        Reset the cube to the solved state using the default color scheme.
-
-        Examples
-        --------
-        >>> from cube_solver import Cube
-        >>> cube = Cube(random_state=True)  # doctest: +SKIP
-        >>> cube.reset()  # doctest: +SKIP
-        >>> cube  # doctest: +SKIP
-        WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY
-        """
-        # TODO check
-        # self._state = None
-        # self._coords = None
-        self._cubies = np.full((SIZE,) * 3 + (3,), Color.NONE, dtype=int)
-        self._scheme = {face: color for face, color in zip(Face.faces(), Color.colors())}
-        self.orientation = np.zeros(NUM_CORNERS + NUM_EDGES, dtype=int)
-        self.permutation = np.arange(NUM_CORNERS + NUM_EDGES, dtype=int)
-
-    def _parse_repr(self, repr: str):
-        """
-        Parse a string representation into a cube state.
-
-        Parameters
-        ----------
-        repr : str
-            String representation of the cube.
-        """
-        if len(repr) != len(REPR_ORDER)*SIZE*SIZE:
-            raise ValueError(f"repr length must be {len(REPR_ORDER)*SIZE*SIZE}, got {len(repr)}")
-        if "N" in repr:
-            raise ValueError("invalid color character, got 'N'")
-
-        face_repr = [repr[i:i+SIZE*SIZE] for i in range(0, len(REPR_ORDER)*SIZE*SIZE, SIZE*SIZE)]
-        for face, _repr in zip(REPR_ORDER, face_repr):
-            self._cubies[face._cubie_slice] = np.reshape([*map(Color.from_char, _repr)], shape=(SIZE, SIZE))
-
-        # centers
-        self._scheme = {}
-        for center in Cubie.centers():
-            self._scheme[Face.from_char(center.name)] = Color(self._cubies[center._index][center.axis])
-        inv_scheme = {val: key for key, val in self._scheme.items()}
-
-        if len(set(self._scheme.values())) != len([*Color.colors()]):
-            raise ValueError(f"invalid cubie centers, got {[*self._scheme.values()]}")
-
-        # corners and edges
-        for slot in chain(Cubie.corners(), Cubie.edges()):
-            faces = np.array([inv_scheme[color] for color in self._cubies[slot._index] if color != Color.NONE], dtype=Color)
-            if slot.is_corner:
-                if slot.axis == Axis.DIAG_M11:
-                    faces = faces[SWAP_CUBIE[Axis.Y]]
-                try:
-                    self.orientation[slot] = [face.axis for face in faces].index(Axis.Y)
-                except ValueError:
-                    raise ValueError(f"invalid cubie faces, got {faces.tolist()}")
-            else:
-                self.orientation[slot] = faces[0].axis > faces[1].axis
-            self.permutation[slot] = Cubie.from_faces([*faces])
-
-        if len(set(self.permutation)) != NUM_CORNERS + NUM_EDGES:
-            raise ValueError(f"invalid cubie permutation")
-        if np.sum(self.orientation[:NUM_CORNERS]) % 3 != 0 or np.sum(self.orientation[NUM_CORNERS:]) % 2 != 0:
-            raise ValueError(f"invalid cubie orientation")
-
     def __repr__(self) -> str:
         """String representation of the `Cube` object."""
         cubies = np.full_like(self._cubies, Color.NONE)
@@ -342,6 +276,85 @@ class Cube:
         str += "  " * SIZE + "  " + "--" * SIZE + "---"
 
         return str
+
+    def _parse_repr(self, repr: str):
+        """
+        Parse a string representation into a cube state.
+
+        Parameters
+        ----------
+        repr : str
+            String representation of the cube.
+        """
+        if len(repr) != len(REPR_ORDER)*SIZE*SIZE:
+            raise ValueError(f"repr length must be {len(REPR_ORDER)*SIZE*SIZE}, got {len(repr)}")
+        if "N" in repr:
+            raise ValueError("invalid color character, got 'N'")
+
+        face_repr = [repr[i:i+SIZE*SIZE] for i in range(0, len(REPR_ORDER)*SIZE*SIZE, SIZE*SIZE)]
+        for face, _repr in zip(REPR_ORDER, face_repr):
+            self._cubies[face._cubie_slice] = np.reshape([*map(Color.from_char, _repr)], shape=(SIZE, SIZE))
+
+        # centers
+        self._scheme = {}
+        for center in Cubie.centers():
+            self._scheme[Face.from_char(center.name)] = Color(self._cubies[center._index][center.axis])
+        inv_scheme = {val: key for key, val in self._scheme.items()}
+
+        if len(set(self._scheme.values())) != len([*Color.colors()]):
+            raise ValueError(f"invalid cubie centers, got {[*self._scheme.values()]}")
+
+        # corners and edges
+        for slot in chain(Cubie.corners(), Cubie.edges()):
+            faces = np.array([inv_scheme[color] for color in self._cubies[slot._index] if color != Color.NONE], dtype=Color)
+            if slot.is_corner:
+                if slot.axis == Axis.DIAG_M11:
+                    faces = faces[SWAP_CUBIE[Axis.Y]]
+                try:
+                    self.orientation[slot] = [face.axis for face in faces].index(Axis.Y)
+                except ValueError:
+                    raise ValueError(f"invalid cubie faces, got {faces.tolist()}")
+            else:
+                self.orientation[slot] = faces[0].axis > faces[1].axis
+            self.permutation[slot] = Cubie.from_faces([*faces])
+
+        if len(set(self.permutation)) != NUM_CORNERS + NUM_EDGES:
+            raise ValueError(f"invalid cubie permutation")
+        if np.sum(self.orientation[:NUM_CORNERS]) % 3 != 0 or np.sum(self.orientation[NUM_CORNERS:]) % 2 != 0:
+            raise ValueError(f"invalid cubie orientation")
+
+    def reset(self):
+        """
+        Reset the cube to the solved state using the default color scheme.
+
+        Examples
+        --------
+        >>> from cube_solver import Cube
+        >>> cube = Cube(random_state=True)  # doctest: +SKIP
+        >>> cube.reset()  # doctest: +SKIP
+        >>> cube  # doctest: +SKIP
+        WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY
+        """
+        # TODO check
+        # self._state = None
+        # self._coords = None
+        self._cubies = np.full((SIZE,) * 3 + (3,), Color.NONE, dtype=int)
+        self._scheme = {face: color for face, color in zip(Face.faces(), Color.colors())}
+        self.orientation = np.zeros(NUM_CORNERS + NUM_EDGES, dtype=int)
+        self.permutation = np.arange(NUM_CORNERS + NUM_EDGES, dtype=int)
+
+    def set_random_state(self):
+        """
+        Set a uniform random state.
+
+        Sets random corner orientation, edge orientation,
+        corner permutation, and edge permutation coordinates.
+        """
+        pass
+#         self.set_coord("co", np.random.randint(CORNER_ORIENTATION_SIZE))
+#         self.set_coord("eo", np.random.randint(EDGE_ORIENTATION_SIZE))
+#         self.set_coord("cp", np.random.randint(CORNER_PERMUTATION_SIZE))
+#         self.set_coord("ep", np.random.randint(EDGE_PERMUTATION_SIZE))
 
     def apply_move(self, move: Move):
         """
@@ -760,19 +773,6 @@ class Cube:
 #         self.set_coord("eo", coords[1])
 #         self.set_coord("pcp" if partial_corner_perm else "cp", coords[2])
 #         self.set_coord("pep" if partial_edge_perm else "ep", coords[3])
-
-    def set_random_state(self):
-        """
-        Set a uniform random state.
-
-        Sets random corner orientation, edge orientation,
-        corner permutation, and edge permutation coordinates.
-        """
-        pass
-#         self.set_coord("co", np.random.randint(CORNER_ORIENTATION_SIZE))
-#         self.set_coord("eo", np.random.randint(EDGE_ORIENTATION_SIZE))
-#         self.set_coord("cp", np.random.randint(CORNER_PERMUTATION_SIZE))
-#         self.set_coord("ep", np.random.randint(EDGE_PERMUTATION_SIZE))
 
 
 # # def generate_scramble(length: int = 25) -> str:
