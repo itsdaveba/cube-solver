@@ -1,7 +1,7 @@
 from cube_solver.cube.enums import Axis, Layer, Color, Face, Cubie, Move
 
 
-def test_axis(response):
+def test_axis():
     assert hasattr(Axis, "NONE")
     assert len([*Axis.axes()]) == 5
 
