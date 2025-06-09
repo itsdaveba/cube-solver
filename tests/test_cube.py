@@ -105,3 +105,53 @@ def test_cube(response):
     """Sample pytest test function with the pytest fixture as an argument."""
     cube = Cube()
     assert repr(cube) == "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY"
+
+    cube = Cube("U F2 R' D B2 L' M E2 S' Uw Fw2 Rw' Dw Bw2 Lw' u f2 r' d b2 l' x y2 z'")
+    assert repr(cube) == "YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO"
+    with pytest.raises(TypeError, match="scramble must be str or None, not int"):
+        Cube(0)
+    with pytest.raises(TypeError, match="maneuver must be str, not NoneType"):
+        cube.apply_maneuver(None)
+    with pytest.raises(TypeError, match="move must be Move, not NoneType"):
+        cube.apply_move(None)
+    with pytest.raises(ValueError, match="invalid move, got Move.NONE"):
+        cube.apply_move(Move.NONE)
+
+    cube = Cube(repr="YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO")
+    assert str(cube) == """        ---------
+        | Y G W |
+        | Y Y O |
+        | B W W |
+---------------------------------
+| B G R | Y B G | R Y O | G R O |
+| G R R | B G B | O O B | Y B W |
+| W G B | R R Y | G O G | Y R B |
+---------------------------------
+        | W W R |
+        | O W W |
+        | O Y O |
+        ---------"""
+    with pytest.raises(TypeError, match="repr must be str or None, not int"):
+        Cube(repr=0)
+    with pytest.raises(ValueError, match="repr length must be 54, got 4"):
+        Cube(repr="None")
+    with pytest.raises(ValueError, match="invalid color character, got 'N'"):
+        Cube(repr="YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYN")
+    match = r"invalid cubie centers, got \[Color.YELLOW, Color.GREEN, Color.ORANGE, Color.YELLOW, Color.BLUE, Color.RED\]"
+    with pytest.raises(ValueError, match=match):
+        Cube(repr="YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROYWOYO")
+    with pytest.raises(ValueError, match=r"invalid cubie faces, got \[Face.RIGHT, Face.LEFT\]"):
+        Cube(repr="YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOOO")
+    with pytest.raises(ValueError, match=r"invalid cubie faces, got \[Face.UP, Face.FRONT, Face.RIGHT\]"):
+        Cube(repr="YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWORBWWROWWOOY")
+    with pytest.raises(ValueError, match=r"invalid cubie faces, got \[Face.FRONT, Face.FRONT, Face.FRONT\]"):
+        Cube(repr="YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWGRBWWROWWOOG")
+    with pytest.raises(ValueError, match=r"invalid cubie permutation"):
+        Cube(repr="YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWRRBWWROWWOYY")
+    with pytest.raises(ValueError, match=r"invalid cubie orientation"):
+        Cube(repr="YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYYBWWROWWORO")
+
+    cube = Cube(random_state=True)
+    assert cube.coords != (0, 0, 0, 0)
+    with pytest.raises(TypeError, match="random_state must be bool, not int"):
+        Cube(random_state=0)

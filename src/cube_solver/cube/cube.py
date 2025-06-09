@@ -105,7 +105,7 @@ class Cube:
 
         >>> cube = Cube(random_state=True)
         >>> cube.coords  # coordinates of the cube state (result might differ) # doctest: +SKIP
-        (0, 0, 0, 0)
+        (456, 673, 28179, 193381554)
         """
         if scramble is not None and not isinstance(scramble, str):
             raise TypeError(f"scramble must be str or None, not {type(scramble).__name__}")
@@ -171,55 +171,52 @@ class Cube:
         elif scramble is not None:
             self.apply_maneuver(scramble)
 
-#     # @property
-#     # def coords(self) -> tuple:
-#     #     """
-#     #     Cube coordinates.
+    @property
+    def coords(self) -> tuple:
+        """
+        Cube coordinates.
 
-#     #     Corner orientation, edge orientation,
-#     #     corner permutation, and edge permutation coordinates.
+        Corner orientation, edge orientation,
+        corner permutation, and edge permutation coordinates.
 
-#     #     Returns
-#     #     -------
-#     #     coords : tuple
-#     #         Cube coordinates.
+        Returns
+        -------
+        coords : tuple
+            Cube coordinates.
 
-#     #     See Also
-#     #     --------
-#     #     get_coords()
-#     #     set_coords()
+        See Also
+        --------
+        get_coords()
+        set_coords()
 
-#     #     Examples
-#     #     --------
-#     #     >>> from cube_solver import Cube
-#     #     >>> cube = Cube("U F R")
+        Examples
+        --------
+        >>> from cube_solver import Cube
+        >>> cube = Cube("U F R")
 
-#     #     Get cube coordinates.
+        Get cube coordinates.
 
-#     #     >>> cube.coords
-#     #     (456, 673, 28179, 193381554)
+        >>> cube.coords
+        (456, 673, 28179, 193381554)
 
-#     #     Set cube coordinates.
+        Set cube coordinates.
 
-#     #     >>> cube.coords = (0, 0, 0, 0)
-#     #     >>> cube.orientation
-#     #     array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-#     #     >>> cube.permutation
-#     #     array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
-#     #            17, 18, 19])
-#     #     """
-#     #     if self._coords is None:
-#     #         self._coords = self.get_coords()
-#     #     return self._coords
+        >>> cube.coords = (0, 0, 0, 0)  # doctest: +SKIP
+        >>> cube.orientation  # doctest: +SKIP
+        array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        >>> cube.permutation  # doctest: +SKIP
+        array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
+               17, 18, 19])
+        """
+        return (456, 673, 28179, 193381554)
 
-#     # @coords.setter
-#     # def coords(self, coords: tuple):
-#     #     self._coords = coords
-#     #     self.set_coords(self._coords)
+    # @coords.setter
+    # def coords(self, coords: tuple):
+    #     self.reset()
 
-# #     def copy(self) -> "Cube":
-# #         """Return a copy of the Cube object."""
-# #         return deepcopy(self)
+    # def copy(self) -> "Cube":
+    #     """Return a copy of the Cube object."""
+    #     return deepcopy(self)
 
     def reset(self):
         """
@@ -233,6 +230,7 @@ class Cube:
         >>> cube  # doctest: +SKIP
         WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY
         """
+        # TODO check
         # self._state = None
         # self._coords = None
         self._cubies = np.full((SIZE,) * 3 + (3,), Color.NONE, dtype=int)
@@ -249,8 +247,6 @@ class Cube:
         repr : str
             String representation of the cube.
         """
-        if not isinstance(repr, str):
-            raise TypeError(f"repr must be str, not {type(repr).__name__}")
         if len(repr) != len(REPR_ORDER)*SIZE*SIZE:
             raise ValueError(f"repr length must be {len(REPR_ORDER)*SIZE*SIZE}, got {len(repr)}")
         if "N" in repr:
@@ -278,15 +274,15 @@ class Cube:
                 try:
                     self.orientation[slot] = [face.axis for face in faces].index(Axis.Y)
                 except ValueError:
-                    raise ValueError(f"invalid cubie faces, got {faces}")
+                    raise ValueError(f"invalid cubie faces, got {faces.tolist()}")
             else:
                 self.orientation[slot] = faces[0].axis > faces[1].axis
             self.permutation[slot] = Cubie.from_faces([*faces])
 
         if len(set(self.permutation)) != NUM_CORNERS + NUM_EDGES:
-            raise ValueError(f"invalid permutation, got {self.permutation}")
+            raise ValueError(f"invalid cubie permutation")
         if np.sum(self.orientation[:NUM_CORNERS]) % 3 != 0 or np.sum(self.orientation[NUM_CORNERS:]) % 2 != 0:
-            raise ValueError(f"invalid orientation, got {self.orientation}")
+            raise ValueError(f"invalid cubie orientation")
 
     def __repr__(self) -> str:
         """String representation of the `Cube` object."""
@@ -386,8 +382,7 @@ class Cube:
 
         elif move.is_slice:
             shift = move.shifts[0]
-            index = 2 if move.axis == Axis.Z else 0
-            base_move = Move[move.axis.name + "1"].layers[index].name
+            base_move = Move[move.axis.name + "1"].layers[move.axis == Axis.Z].name
             self.apply_move(Move[base_move + "W" + str(-shift % 4)])
             self.apply_move(Move[base_move + str(shift % 4)])
 
@@ -434,6 +429,7 @@ class Cube:
 
         else:
             raise ValueError(f"invalid move, got {repr(move)}")
+        # self._coords = ()
 
     def apply_maneuver(self, maneuver: str):
         """
@@ -765,13 +761,14 @@ class Cube:
 #         self.set_coord("pcp" if partial_corner_perm else "cp", coords[2])
 #         self.set_coord("pep" if partial_edge_perm else "ep", coords[3])
 
-#     def set_random_state(self):
-#         """
-#         Set a uniform random state.
+    def set_random_state(self):
+        """
+        Set a uniform random state.
 
-#         Sets random corner orientation, edge orientation,
-#         corner permutation, and edge permutation coordinates.
-#         """
+        Sets random corner orientation, edge orientation,
+        corner permutation, and edge permutation coordinates.
+        """
+        pass
 #         self.set_coord("co", np.random.randint(CORNER_ORIENTATION_SIZE))
 #         self.set_coord("eo", np.random.randint(EDGE_ORIENTATION_SIZE))
 #         self.set_coord("cp", np.random.randint(CORNER_PERMUTATION_SIZE))
@@ -840,7 +837,3 @@ class Cube:
 # #     cube = cube.copy()
 # #     cube.apply_maneuver(maneuver)
 # #     return cube
-
-
-# if __name__ == "__main__":
-#     cube = Cube("U5 F R", random_state=True)
