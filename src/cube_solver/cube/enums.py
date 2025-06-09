@@ -17,6 +17,12 @@ class Axis(IntEnum):
     DIAG_M11 = auto()  #: Diagonal axis along :attr:`Cubie.UFL` and :attr:`Cubie.DBR` corners.
     DIAG_111 = auto()  #: Diagonal axis along :attr:`Cubie.UFR` and :attr:`Cubie.DBL` corners.
 
+    @classmethod
+    def axes(cls) -> Iterator["Axis"]:
+        """Iterate over valid axes."""
+        for i in range(5):
+            yield cls(i)
+
 
 class Layer(IntEnum):
     """Layer enumeration."""
@@ -40,6 +46,12 @@ class Layer(IntEnum):
     def perm(self) -> list[list["Cubie"]]:
         """Layer permutation."""
         return layer_perm[self]
+
+    @classmethod
+    def layers(cls) -> Iterator["Layer"]:
+        """Iterate over valid layers."""
+        for i in range(9):
+            yield cls(i)
 
 
 class Color(IntEnum):
@@ -266,6 +278,12 @@ class Cubie(IntEnum):
             raise ValueError(f"invalid cubie faces, got {faces}")
 
     @classmethod
+    def cubies(cls) -> Iterator["Cubie"]:
+        """Iterate over valud cubies."""
+        for i in range(27):
+            yield cls(i)
+
+    @classmethod
     def corners(cls) -> Iterator["Cubie"]:
         """Iterate over corner cubies."""
         for i in range(8):
@@ -442,6 +460,12 @@ class Move(IntEnum):
             return str_move[string]
         except KeyError:
             raise ValueError(f"invalid move string, got '{string}'")
+
+    @classmethod
+    def moves(cls) -> Iterator["Move"]:
+        """Iterate over valid moves."""
+        for i in range(54):
+            yield cls(i)
 
     @classmethod
     def face_moves(cls) -> Iterator["Move"]:
