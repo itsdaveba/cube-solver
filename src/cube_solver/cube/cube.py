@@ -103,7 +103,7 @@ class Cube:
 
         Initial random state.
 
-        >>> cube = Cube(random_state=True)  # doctest: +SKIP
+        >>> cube = Cube(random_state=True)
         >>> cube.coords  # coordinates of the cube state (result might differ) # doctest: +SKIP
         (0, 0, 0, 0)
         """
@@ -532,7 +532,7 @@ class Cube:
 # #             if coord_type in ("cp", "ep"):
 # #                 return utils.get_permutation_coord(permutation, coord_type == "ep")
 # #             num_axes = 2 if coord_type == "pcp" else 3
-# #             combinations = [np.where(np.array([AXIS[perm] for perm in permutation]) == axis)[0] for axis in range(num_axes)]
+# #             combinations = [np.where(np.array([AXIS[perm] for perm in permutation]) ==axis)[0] for axis in range(num_axes)]
 # #             coord = tuple(utils.get_partial_permutation_coord(permutation, combination) for combination in combinations)
 # #             if np.all([c == EMPTY for c in coord[1:]]):
 # #                 return coord[0]
@@ -556,7 +556,7 @@ class Cube:
 # #             Cube coordinates in the following order:
 # #             corner orientation, edge orientation, (partial) corner permutation, (partial) edge permutation.
 # #         partial_corner_perm : bool
-# #             If `True`, use the partial corner permutation coordinate, otherwise use the normal corner permutation coordinate.
+# #             If `True`,use the partial corner permutation coordinate,otherwise use the normal corner permutation coordinate.
 # #         partial_edge_perm : bool
 # #             If `True`, use the partial edge permutation coordinate, otherwise use the normal edge permutation coordinate.
 
@@ -776,76 +776,6 @@ class Cube:
 #         self.set_coord("eo", np.random.randint(EDGE_ORIENTATION_SIZE))
 #         self.set_coord("cp", np.random.randint(CORNER_PERMUTATION_SIZE))
 #         self.set_coord("ep", np.random.randint(EDGE_PERMUTATION_SIZE))
-
-#     def _update_cubies(self):
-#         """
-#         Update the cubie representation of the cube.
-#         Used to generate the string representation of the `__repr__` method.
-#         """
-#         cubies = np.full_like(self._cubies, Color.BLACK)
-#         for face, color in zip(Face, Color):  # TODO Color has extra color
-#             cubies[face.cubie_slice] = color
-
-#         # corners
-#         for slot in Cubie.corners():  # TODO what happens when permutation has -1?
-#             orientation = self.orientation[slot]
-#             permutation = Cubie(self.permutation[slot])
-#             cubie = cubies[permutation.index]
-#             if slot.axis != permutation.axis:
-#                 cubie = cubie[SWAP_CUBIE[0]]
-#             if orientation:
-#                 cubie = np.roll(cubie, orientation if slot.axis else -orientation)
-#             self._cubies[slot.index] = cubie
-
-#         # edges
-#         for slot in Cubie.edges():
-#             permutation = Cubie(self.permutation[slot])
-#             cubie = cubies[permutation.index]
-#             axes = {slot.axis, permutation.axis}
-#             if axes == {0, 2}:
-#                 cubie = np.roll(cubie, 1 if slot.axis != 2 else -1)
-#             elif axes == {1, 2}:
-#                 cubie = cubie[SWAP_CUBIE[0]]
-#             elif axes == {0, 1}:
-#                 cubie = cubie[SWAP_CUBIE[2]]
-#             if self.orientation[slot]:
-#                 cubie = cubie[SWAP_CUBIE[slot.axis]]
-#             self._cubies[slot.index] = cubie
-
-#         # centers
-#         for slot in Cubie.centers():
-#             self._cubies[slot.index] = cubies[slot.index]
-
-#     def __repr__(self) -> str:
-#         """String representation of the `Cube` object. Same as the `state` property"""
-#         self._update_cubies()
-#         repr = "".join([str(Color(n)) for n in np.ravel([self._cubies[face.cubie_slice] for face in REPR_ORDER])])
-#         return repr
-
-#     def __str__(self) -> str:
-#         """Print representation of the `Cube` object."""
-#         repr = self.__repr__()
-
-#         # up face
-#         str = "  " * SIZE + "  " + "--" * SIZE + "---\n"  # TODO Try with size 2
-#         for i in range(SIZE):
-#             j = i * SIZE
-#             str += "  " * SIZE + "  | " + " ".join(repr[j:j+SIZE]) + " |\n"
-
-#         # lateral faces
-#         str += "--------" * SIZE + "---------\n"
-#         for i in range(SIZE):
-#             js = [face * SIZE * SIZE + i * SIZE for face in range(1, 5)]
-#             str += "| " + " | ".join(" ".join(repr[j:j+SIZE]) for j in js) + " |\n"
-#         str += "--------" * SIZE + "---------\n"
-
-#         # down face
-#         for i in range(SIZE):
-#             j = 5 * SIZE * SIZE + i * SIZE
-#             str += "  " * SIZE + "  | " + " ".join(repr[j:j+SIZE]) + " |\n"
-#         str += "  " * SIZE + "  " + "--" * SIZE + "---"
-
-#         return str
 
 
 # # def generate_scramble(length: int = 25) -> str:
