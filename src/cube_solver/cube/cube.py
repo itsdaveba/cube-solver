@@ -240,106 +240,230 @@ class Cube:
         self.orientation = np.zeros(NUM_CORNERS + NUM_EDGES, dtype=int)
         self.permutation = np.arange(NUM_CORNERS + NUM_EDGES, dtype=int)
 
-#     def apply_move(self, move: Move):
-#         """
-#         Apply a move to the cube.
+    def _parse_repr(self, repr: str):
+        """
+        Parse a string representation into a cube state.
 
-#         Parameters
-#         ----------
-#         move : Move
-#             The move to apply.
+        Parameters
+        ----------
+        repr : str
+            String representation of the cube.
+        """
+        if not isinstance(repr, str):
+            raise TypeError(f"repr must be str, not {type(repr).__name__}")
+        if len(repr) != len(REPR_ORDER)*SIZE*SIZE:
+            raise ValueError(f"repr length must be {len(REPR_ORDER)*SIZE*SIZE}, got {len(repr)}")
+        if "N" in repr:
+            raise ValueError("invalid color character, got 'N'")
 
-#         Examples
-#         --------
-#         >>> from cube_solver import Cube, Move
-#         >>> cube = Cube()
-#         >>> cube.apply_move(Move.U1)
-#         >>> cube.apply_move(Move.F1)
-#         >>> cube.apply_move(Move.R1)
-#         >>> cube.coords
-#         (0, 0, 0, 0)
-#         >>> cube
-#         WWRWWROORGGYOOYOOYGGBGGYGGYWWWRRBRRBGOOWBBWBBRRBYYBYYO
-#         >>> print(cube)
-#                 ---------
-#                 | W W R |
-#                 | W W R |
-#                 | O O R |
-#         ---------------------------------
-#         | G G Y | G G B | W W W | G O O |
-#         | O O Y | G G Y | R R B | W B B |
-#         | O O Y | G G Y | R R B | W B B |
-#         ---------------------------------
-#                 | R R B |
-#                 | Y Y B |
-#                 | Y Y O |
-#                 ---------
-#         """
-#         if not isinstance(move, Move):
-#             raise TypeError(f"move must be Move, not {type(move).__name__}")
-#         # if move == Move.NONE:
-#         #     raise ValueError(f"invalid move got ({move})")
+        face_repr = [repr[i:i+SIZE*SIZE] for i in range(0, len(REPR_ORDER)*SIZE*SIZE, SIZE*SIZE)]
+        for face, _repr in zip(REPR_ORDER, face_repr):
+            self._cubies[face._cubie_slice] = np.reshape([*map(Color.from_char, _repr)], shape=(SIZE, SIZE))
 
-#         move_perm = np.roll(move.face.perm, move.shift, axis=1)
-#         orientation = self.orientation[move_perm]
-#         if move.shift % 2 == 1:
-#             if move.face in (Face.F, Face.B):
-#                 orientation = (orientation + [[1, 2, 1, 2], [1, 1, 1, 1]]) % ([3], [2])  # corners and edges
-#             elif move.face in (Face.R, Face.L):
-#                 orientation[0] = (orientation[0] + [2, 1, 2, 1]) % 3  # corners
-#         self.orientation[move.face.perm] = orientation
-#         self.permutation[move.face.perm] = self.permutation[move_perm]
-#         self._coords = ()
+        # centers
+        self._scheme = {}
+        for center in Cubie.centers():
+            self._scheme[Face.from_char(center.name)] = Color(self._cubies[center._index][center.axis])
+        inv_scheme = {val: key for key, val in self._scheme.items()}
 
-#     def apply_maneuver(self, maneuver: str):
-#         """
-#         Apply a sequence of moves to the cube.
+        if len(set(self._scheme.values())) != len([*Color.colors()]):
+            raise ValueError(f"invalid cubie centers, got {[*self._scheme.values()]}")
 
-#         Parameters
-#         ----------
-#         maneuver : str
-#             The sequence of moves to apply.
+        # corners and edges
+        for slot in chain(Cubie.corners(), Cubie.edges()):
+            faces = np.array([inv_scheme[color] for color in self._cubies[slot._index] if color != Color.NONE], dtype=Color)
+            if slot.is_corner:
+                if slot.axis == Axis.DIAG_M11:
+                    faces = faces[SWAP_CUBIE[Axis.Y]]
+                try:
+                    self.orientation[slot] = [face.axis for face in faces].index(Axis.Y)
+                except ValueError:
+                    raise ValueError(f"invalid cubie faces, got {faces}")
+            else:
+                self.orientation[slot] = faces[0].axis > faces[1].axis
+            self.permutation[slot] = Cubie.from_faces([*faces])
 
-#         Examples
-#         --------
-#         >>> from cube_solver import Cube
-#         >>> cube = Cube()
-#         >>> cube.apply_maneuver("U F R")
-#         >>> cube.coords
-#         (0, 0, 0, 0)
-#         >>> cube
-#         WWRWWROORGGYOOYOOYGGBGGYGGYWWWRRBRRBGOOWBBWBBRRBYYBYYO
-#         >>> print(cube)
-#                 ---------
-#                 | W W R |
-#                 | W W R |
-#                 | O O R |
-#         ---------------------------------
-#         | G G Y | G G B | W W W | G O O |
-#         | O O Y | G G Y | R R B | W B B |
-#         | O O Y | G G Y | R R B | W B B |
-#         ---------------------------------
-#                 | R R B |
-#                 | Y Y B |
-#                 | Y Y O |
-#                 ---------
-#         """
-#         if not isinstance(maneuver, str):
-#             raise TypeError(f"maneuver must be str, not {type(maneuver).__name__}")
+        if len(set(self.permutation)) != NUM_CORNERS + NUM_EDGES:
+            raise ValueError(f"invalid permutation, got {self.permutation}")
+        if np.sum(self.orientation[:NUM_CORNERS]) % 3 != 0 or np.sum(self.orientation[NUM_CORNERS:]) % 2 != 0:
+            raise ValueError(f"invalid orientation, got {self.orientation}")
 
-#         for move_str in maneuver.split():
-#             if move_str[0] not in Face.__members__ or len(move_str) > 2:
-#                 break
-#             if len(move_str) == 1:
-#                 move_str += "1"
-#             elif move_str[1] == "'":
-#                 move_str = move_str[0] + "3"
-#             elif move_str[1] != "2":
-#                 break
-#             self.apply_move(Move[move_str])
-#         else:
-#             return
-#         raise ValueError(f"invalid move got({move_str})")
+    def __repr__(self) -> str:
+        """String representation of the `Cube` object."""
+        cubies = np.full_like(self._cubies, Color.NONE)
+        for face in Face.faces():
+            cubies[face._cubie_slice] = self._scheme[face]
+
+        # centers
+        for slot in Cubie.centers():
+            self._cubies[slot._index] = cubies[slot._index]
+
+        # corners and edges
+        for slot in chain(Cubie.corners(), Cubie.edges()):  # TODO what happens when permutation has -1?
+            orientation = self.orientation[slot]
+            permutation = Cubie(self.permutation[slot])
+            cubie = cubies[permutation._index]
+            if slot.is_corner:
+                if slot.axis != permutation.axis:
+                    cubie = cubie[SWAP_CUBIE[Axis.Y]]
+                if orientation:
+                    cubie = np.roll(cubie, orientation if slot.axis == Axis.DIAG_111 else -orientation)
+            else:
+                axes = {slot.axis, permutation.axis}
+                if axes == {0, 2}:
+                    cubie = np.roll(cubie, 1 if slot.axis != 2 else -1)
+                elif axes == {1, 2}:
+                    cubie = cubie[SWAP_CUBIE[Axis.Y]]
+                elif axes == {0, 1}:
+                    cubie = cubie[SWAP_CUBIE[Axis.X]]
+                if orientation:
+                    cubie = cubie[SWAP_CUBIE[slot.axis]]
+            self._cubies[slot._index] = cubie
+
+        return "".join([Color(color).char for color in np.ravel([self._cubies[face._cubie_slice] for face in REPR_ORDER])])
+
+    def __str__(self) -> str:
+        """Print representation of the `Cube` object."""
+        repr = self.__repr__()
+
+        # up face
+        str = "  " * SIZE + "  " + "--" * SIZE + "---\n"
+        for i in range(SIZE):
+            j = REPR_ORDER.index(Face.UP) * SIZE * SIZE + i * SIZE
+            str += "  " * SIZE + "  | " + " ".join(repr[j:j+SIZE]) + " |\n"
+
+        # lateral faces
+        str += "--------" * SIZE + "---------\n"
+        for i in range(SIZE):
+            js = [REPR_ORDER.index(face) * SIZE * SIZE + i * SIZE for face in [Face.LEFT, Face.FRONT, Face.RIGHT, Face.BACK]]
+            str += "| " + " | ".join(" ".join(repr[j:j+SIZE]) for j in js) + " |\n"
+        str += "--------" * SIZE + "---------\n"
+
+        # down face
+        for i in range(SIZE):
+            j = REPR_ORDER.index(Face.DOWN) * SIZE * SIZE + i * SIZE
+            str += "  " * SIZE + "  | " + " ".join(repr[j:j+SIZE]) + " |\n"
+        str += "  " * SIZE + "  " + "--" * SIZE + "---"
+
+        return str
+
+    def apply_move(self, move: Move):
+        """
+        Apply a move to the cube.
+
+        Parameters
+        ----------
+        move : Move
+            The move to apply.
+
+        Examples
+        --------
+        >>> from cube_solver import Cube
+        >>> from cube_solver.cube import Move
+        >>> cube = Cube()
+        >>> cube.apply_move(Move.U1)   # U
+        >>> cube.apply_move(Move.M2)   # M2
+        >>> cube.apply_move(Move.FW3)  # Fw'
+        >>> cube.apply_move(Move.X1)   # x
+        >>> cube
+        RGGBBORGGWYWWYWGOOGOOGOOYWYYWYYWYRRBRRBRRBWYWBRBBGBOGO
+        """
+        if not isinstance(move, Move):
+            raise TypeError(f"move must be Move, not {type(move).__name__}")
+
+        if move.is_face:
+            layer = move.layers[0]
+            shift = move.shifts[0]
+            cubies = np.roll(layer.perm, shift, axis=1)
+            orientation = self.orientation[cubies]
+            if shift % 2 == 1:
+                if layer.axis == Axis.Z:
+                    orientation = (orientation + [[1, 2, 1, 2], [1, 1, 1, 1]]) % ([3], [2])  # corners and edges
+                elif layer.axis == Axis.X:
+                    orientation[0] = (orientation[0] + [2, 1, 2, 1]) % 3  # corners
+            self.orientation[layer.perm] = orientation
+            self.permutation[layer.perm] = self.permutation[cubies]
+
+        elif move.is_slice:
+            shift = move.shifts[0]
+            index = 2 if move.axis == Axis.Z else 0
+            base_move = Move[move.axis.name + "1"].layers[index].name
+            self.apply_move(Move[base_move + "W" + str(-shift % 4)])
+            self.apply_move(Move[base_move + str(shift % 4)])
+
+        elif move.is_wide:
+            shift = move.shifts[0]
+            mult = 1 if Move[move.axis.name + "1"].layers[0].name == move.name[0] else -1
+            self.apply_move(Move[move.axis.name + str(mult * shift % 4)])
+            self.apply_move(Move[Face.from_char(move.name[0]).opposite.char + str(shift % 4)])
+
+        elif move.is_rotation:
+            layers_perm = [layer.perm for layer in move.layers]
+            layers_shifted = [np.roll(layer, shift, axis=1) for layer, shift in zip(layers_perm, move.shifts)]
+            rotation = {center: center for center in Cubie.centers()}
+            rotation.update({Cubie(key): Cubie(val) for key, val in zip(np.ravel(layers_shifted), np.ravel(layers_perm))})
+
+            # centers
+            scheme = self._scheme.copy()
+            for center in Cubie.centers():
+                self._scheme[Face.from_char(rotation[center].name)] = scheme[Face.from_char(center.name)]
+
+            # corners and edges
+            cubies = [*Cubie.corners()] + [*Cubie.edges()]
+            slots = [rotation[cubie] for cubie in cubies]
+            orientation = self.orientation[cubies]
+            permutation = self.permutation[cubies]
+            if move.shifts[0] % 2 == 1:
+                is_corner = np.array([cubie.is_corner for cubie in cubies])
+                cubie_axis = np.array([cubie.axis for cubie in cubies])
+                perm_axis = np.array([Cubie(perm).axis for perm in permutation])
+                corner_comp = edge_comp = [perm_axis, cubie_axis]
+                if move.axis == Axis.X:
+                    corner_comp = [cubie_axis, Axis.DIAG_111]
+                    edge_comp = [Axis.X, Axis.X]
+                elif move.axis == Axis.Y:
+                    edge_comp = [Axis.Y, Axis.Y]
+                elif move.axis == Axis.Z:
+                    corner_comp = [cubie_axis, Axis.DIAG_M11]
+                axis_comp = perm_axis != np.where(is_corner, corner_comp[0], edge_comp[0])
+                condition = cubie_axis == np.where(is_corner, corner_comp[1], edge_comp[1])
+                incr = np.where(condition, axis_comp, np.where(is_corner, -axis_comp.astype(int), ~axis_comp))
+                orientation = (orientation + incr) % np.where(is_corner, 3, 2)
+            self.orientation[slots] = orientation
+            self.permutation[slots] = [rotation[perm] for perm in permutation]
+
+        else:
+            raise ValueError(f"invalid move, got {repr(move)}")
+
+    def apply_maneuver(self, maneuver: str):
+        """
+        Apply a sequence of moves to the cube.
+
+        Accepts the following move types:
+
+        * Face moves (e.g. `U`, `F2`, `R'`).
+        * Slice moves (e.g. `M`, `E2`, `S'`).
+        * Wide moves (e.g. `Uw`, `Fw2`, `Rw'` or `u`, `f2`, `r'`).
+        * Rotations (e.g. `x`, `y2`, `z'`).
+
+        Parameters
+        ----------
+        maneuver : str
+            The sequence of moves to apply.
+
+        Examples
+        --------
+        >>> from cube_solver import Cube
+        >>> cube = Cube()
+        >>> cube.apply_maneuver("U M2 Fw' x")
+        >>> cube
+        RGGBBORGGWYWWYWGOOGOOGOOYWYYWYYWYRRBRRBRRBWYWBRBBGBOGO
+        """
+        if not isinstance(maneuver, str):
+            raise TypeError(f"maneuver must be str, not {type(maneuver).__name__}")
+
+        for move_str in maneuver.split():
+            self.apply_move(Move.from_str(move_str))
 
 # #     def get_coord(self, coord_type: str) -> int | tuple:
 # #         """
