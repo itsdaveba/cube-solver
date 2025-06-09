@@ -5,76 +5,285 @@ from enum import Enum, auto
 
 class IntEnum(int, Enum):
     """Integer enumeration."""
-    def __repr__(self) -> str:
-        return self.name
+    __repr__ = Enum.__str__
 
 
-class Color(IntEnum):  # up, front, right, down, back, left
+class Axis(IntEnum):
+    """Axis enumeration."""
+    NONE = -1  #: no axis.
+    Y = auto()  #: `Y` axis along :attr:`Face.UP` and :attr:`Face.DOWN`.
+    Z = auto()  #: `Z` axis along :attr:`Face.FRONT` and :attr:`Face.BACK`.
+    X = auto()  #: `X` axis along :attr:`Face.RIGHT` and :attr:`Face.LEFT`.
+    DIAG_M11 = auto()  #: Diagonal axis along :attr:`Cubie.UFL` and :attr:`Cubie.DBR` corners.
+    DIAG_111 = auto()  #: Diagonal axis along :attr:`Cubie.UFR` and :attr:`Cubie.DBL` corners.
+
+
+class Layer(IntEnum):
+    """Layer enumeration."""
+    NONE = -1  #: no layer.
+    U = auto()  #: `U` layer.
+    F = auto()  #: `F` layer.
+    R = auto()  #: `R` layer.
+    D = auto()  #: `D` layer.
+    B = auto()  #: `B` layer.
+    L = auto()  #: `L` layer.
+    M = auto()  #: `M` layer.
+    E = auto()  #: `E` layer.
+    S = auto()  #: `S` layer.
+
+    @property
+    def axis(self) -> Axis:
+        """Layer axis."""
+        return layer_axis[self]
+
+    @property
+    def perm(self) -> list[list["Cubie"]]:
+        """Layer permutation."""
+        return layer_perm[self]
+
+
+class Color(IntEnum):
     """Color enumeration."""
     NONE = -1  #: No color.
-    WHITE = auto()  #: White color (Up face).
-    GREEN = auto()  #: Green color (Front face).
-    RED = auto()  #: Red color (Right face).
-    YELLOW = auto()  #: Yellow color (Down face).
-    BLUE = auto()  #: Blue color (Back face).
-    ORANGE = auto()  #: Orange color (Left face).
+    WHITE = auto()  #: `White` color.
+    GREEN = auto()  #: `Green` color.
+    RED = auto()  #: `Red` color.
+    YELLOW = auto()  #: `Yellow` color.
+    BLUE = auto()  #: `Blue` color.
+    ORANGE = auto()  #: `Orange` color.
+
+    @property
+    def char(self) -> str:
+        """Character representation of the color."""
+        return self.name[0]
 
     @classmethod
-    def colors(cls) -> Iterator:
+    def from_char(cls, char: str) -> "Color":
+        """
+        Return the corresponding :class:`Color` enum.
+
+        Parameters
+        ----------
+        char : {'N', 'W', 'G', 'R', 'Y', 'B', 'O'}
+            Character representing the color.
+
+            * 'N' means :attr:`Color.NONE`.
+            * 'W' means :attr:`Color.WHITE`.
+            * 'G' means :attr:`Color.GREEN`.
+            * 'R' means :attr:`Color.RED`.
+            * 'Y' means :attr:`Color.YELLOW`.
+            * 'B' means :attr:`Color.BLUE`.
+            * 'O' means :attr:`Color.ORANGE`.
+        """
+        if not isinstance(char, str):
+            raise TypeError(f"char must be str, not {type(char).__name__}")
+        try:
+            return char_color[char]
+        except KeyError:
+            raise ValueError(f"invalid color character, got '{char}'")
+
+    @classmethod
+    def colors(cls) -> Iterator["Color"]:
         """Iterate over valid colors."""
         for i in range(6):
             yield cls(i)
-
-    def __str__(self) -> str:
-        return self.name[0]
 
 
 class Face(IntEnum):
     """Face enumeration."""
     NONE = -1  #: No face.
-    UP = auto()  #: Up face.
-    FRONT = auto()  #: Front face.
-    RIGHT = auto()  #: Right face.
-    DOWN = auto()  #: Down face.
-    BACK = auto()  #: Back face.
-    LEFT = auto()  #: Left face.
+    UP = auto()  #: `Up` face.
+    FRONT = auto()  #: `Front` face.
+    RIGHT = auto()  #: `Right` face.
+    DOWN = auto()  #: `Down` face.
+    BACK = auto()  #: `Back` face.
+    LEFT = auto()  #: `Left` face.
+
+    @property
+    def char(self) -> str:
+        """Character representation of the face."""
+        return self.name[0]
+
+    @property
+    def axis(self) -> Axis:
+        """Face axis."""
+        if self == Face.NONE:
+            return Axis.NONE
+        return Layer[self.char].axis
+
+    @property
+    def opposite(self) -> "Face":
+        """Opposite face."""
+        return face_opposite[self]
+
+    @property
+    def _cubie_slice(self) -> tuple[int | slice]:
+        """Face slice for the cubie representation."""
+        return cubie_slice[self]
 
     @classmethod
-    def faces(cls) -> Iterator:
+    def from_char(cls, char: str) -> "Face":
+        """
+        Return the corresponding :class:`Face` enum.
+
+        Parameters
+        ----------
+        char : {'N', 'U', 'F', 'R', 'D', 'B', 'L'}
+            Character representing the color.
+
+            * 'N' means :attr:`Face.NONE`.
+            * 'U' means :attr:`Face.UP`.
+            * 'F' means :attr:`Face.FRONT`.
+            * 'R' means :attr:`Face.RIGHT`.
+            * 'D' means :attr:`Face.DOWN`.
+            * 'B' means :attr:`Face.BACK`.
+            * 'L' means :attr:`Face.LEFT`.
+        """
+        if not isinstance(char, str):
+            raise TypeError(f"char must be str, not {type(char).__name__}")
+        try:
+            return char_face[char]
+        except KeyError:
+            raise ValueError(f"invalid face character, got '{char}'")
+
+    @classmethod
+    def faces(cls) -> Iterator["Face"]:
         """Iterate over valid faces."""
         for i in range(6):
             yield cls(i)
 
-    # @property
-    # def cubie_slice(self) -> tuple:
-    #     """Slice for the Cubie representation."""
-    #     return cubie_slice[self]
 
-    # @property
-    # def perm(self) -> list:
-    #     """Face move permutation."""
-    #     return face_perm[self]
+class Cubie(IntEnum):
+    """Cubie enumeration."""
+    NONE = -1  #: No cubie.
+    # corners
+    UBL = auto()  #: `Up-Back-Left` corner.
+    UFR = auto()  #: `Up-Front-Right` corner.
+    DBR = auto()  #: `Down-Back-Right` corner.
+    DFL = auto()  #: `Down-Front-Left` corner.
+    UBR = auto()  #: `Up-Back-Right` corner.
+    UFL = auto()  #: `Up-Front-Left` corner.
+    DBL = auto()  #: `Down-Back-Left` corner.
+    DFR = auto()  #: `Down-Front-Right` corner.
+    # edges
+    UB = auto()  #: `Up-Back` edge.
+    UF = auto()  #: `Up-Front` edge.
+    DB = auto()  #: `Down-Back` edge.
+    DF = auto()  #: `Down-Front` edge.
+    UL = auto()  #: `Up-Left` edge.
+    UR = auto()  #: `Up-Right` edge.
+    DL = auto()  #: `Down-Left` edge.
+    DR = auto()  #: `Down-Right` edge.
+    BL = auto()  #: `Back-Left` edge.
+    BR = auto()  #: `Back-Right` edge.
+    FL = auto()  #: `Front-Left` edge.
+    FR = auto()  #: `Front-Right` edge.
+    # centers
+    U = auto()  #: `Up` center.
+    F = auto()  #: `Front` center.
+    R = auto()  #: `Right` center.
+    D = auto()  #: `Down` center.
+    B = auto()  #: `Back` center.
+    L = auto()  #: `Left` center.
+    # core
+    CORE = auto()  #: `Core`.
 
+    @property
+    def axis(self) -> Axis:
+        """
+        Cubie axis.
 
-cubie_slice = {
-    Face.NONE: (),
-    Face.UP: (0, slice(None), slice(None), 0),
-    Face.FRONT: (slice(None), 2, slice(None), 1),
-    Face.RIGHT: (slice(None), slice(None, None, -1), 2, 2),
-    Face.DOWN: (2, slice(None, None, -1), slice(None), 0),
-    Face.BACK: (slice(None), 0, slice(None, None, -1), 1),
-    Face.LEFT: (slice(None), slice(None), 0, 2),
-}
+        ===================== ==============
+        :class:`Axis`         :class:`Cubie`
+        ===================== ==============
+        :attr:`Axis.NONE`     :attr:`Cubie.NONE`, :attr:`Cubie.CORE`
+        :attr:`Axis.X`        :attr:`Cubie.R`, :attr:`Cubie.L`, :attr:`Cubie.UB`, :attr:`Cubie.UF`
+                              :attr:`Cubie.DB`, :attr:`Cubie.DF`
+        :attr:`Axis.Y`        :attr:`Cubie.U`, :attr:`Cubie.D`, :attr:`Cubie.BL`, :attr:`Cubie.BR`
+                              :attr:`Cubie.FL`, :attr:`Cubie.FR`
+        :attr:`Axis.Z`        :attr:`Cubie.F`, :attr:`Cubie.B`, :attr:`Cubie.UL`, :attr:`Cubie.UR`
+                              :attr:`Cubie.DL`, :attr:`Cubie.DR`
+        :attr:`Axis.DIAG_111` :attr:`Cubie.UBR`, :attr:`Cubie.UFL`, :attr:`Cubie.DBL`, :attr:`Cubie.DFR`
+        :attr:`Axis.DIAG_M11` :attr:`Cubie.UBL`, :attr:`Cubie.UFR`, :attr:`Cubie.DBR`, :attr:`Cubie.DFL`
+        ===================== ==============
+        """
+        return cubie_axis[self]
 
-face_perm = {
-    Face.NONE: [],
-    Face.UP: [[0, 4, 1, 5], [8, 13, 9, 12]],
-    Face.FRONT: [[1, 7, 3, 5], [9, 19, 11, 18]],
-    Face.RIGHT: [[1, 4, 2, 7], [13, 17, 15, 19]],
-    Face.DOWN: [[2, 6, 3, 7], [10, 14, 11, 15]],
-    Face.BACK: [[0, 6, 2, 4], [8, 16, 10, 17]],
-    Face.LEFT: [[0, 5, 3, 6], [12, 18, 14, 16]]
-}
+    @property
+    def _index(self) -> tuple[int, int, int]:
+        """
+        Cubie index.
+
+        Used as the index of the cubie representation array.
+        """
+        return cubie_index[self]
+
+    @property
+    def faces(self) -> list[Face]:
+        """Cubie visible faces."""
+        if self in (Cubie.NONE, Cubie.CORE):
+            return []
+        faces = [Face.from_char(char) for char in self.name]
+        if self.axis == Axis.DIAG_M11:
+            faces[1:] = faces[2], faces[1]
+        return faces
+
+    @property
+    def is_corner(self) -> bool:
+        """Whether the cubie is a corner."""
+        return 0 <= self < 8
+
+    @property
+    def is_edge(self) -> bool:
+        """Whether the cubie is an edge."""
+        return 8 <= self < 20
+
+    @property
+    def is_center(self) -> bool:
+        """Whether the cubie is a center."""
+        return 20 <= self < 26
+
+    @classmethod
+    def from_faces(cls, faces: list[Face]) -> "Cubie":
+        """
+        Return the corresponding :class:`Cubie` enum.
+
+        Parameters
+        ----------
+        faces : list[Face]
+            Visible faces of the cubie. If `faces` represent a corner,
+            they must be provided in clockwise order to verify that it's a valid corner.
+        """
+        if not isinstance(faces, list):
+            raise TypeError(f"faces must be list, not {type(faces).__name__}")
+        if len(faces) > 3:
+            raise ValueError(f"faces length must be at most 3, got {len(faces)}")
+        for face in faces:
+            if not isinstance(face, Face):
+                raise TypeError(f"faces elements must be Face, not {type(faces).__name__}")
+        min_faces = min([faces[i:] + faces[:i] for i in range(len(faces))]) if faces else []
+        try:
+            return faces_cubie[tuple(min_faces)]
+        except KeyError:
+            raise ValueError(f"invalid cubie faces, got {faces}")
+
+    @classmethod
+    def corners(cls) -> Iterator["Cubie"]:
+        """Iterate over corner cubies."""
+        for i in range(8):
+            yield cls(i)
+
+    @classmethod
+    def edges(cls) -> Iterator["Cubie"]:
+        """Iterate over edge cubies."""
+        for i in range(8, 20):
+            yield cls(i)
+
+    @classmethod
+    def centers(cls) -> Iterator["Cubie"]:
+        """Iterate over center cubies."""
+        for i in range(20, 26):
+            yield cls(i)
 
 
 class Move(IntEnum):
@@ -139,173 +348,211 @@ class Move(IntEnum):
     Z2 = auto()  #: `z2` rotation.
     Z3 = auto()  #: `z'` rotation.
 
+    @property
+    def string(self) -> str:
+        """String representation of the move."""
+        str = self.name
+        if str[0] in "XYZ":
+            str = str[0].lower() + str[1:]
+        if str[1] == "W":
+            str = self.name[0] + "w" + self.name[2:]
+        if str[-1] == "1":
+            str = str[:-1]
+        elif str[-1] == "3":
+            str = str[:-1] + "'"
+        return str
+
+    @property
+    def axis(self) -> Axis:
+        """Move axis."""
+        if self == Move.NONE:
+            return Axis.NONE
+        if self.is_rotation:
+            return Axis[self.name[0]]
+        return Layer[self.name[0]].axis
+
+    @property
+    def layers(self) -> list[Layer]:
+        """Move layers."""
+        if self == Move.NONE:
+            return [Layer.NONE]
+        if self.is_rotation:
+            if self.axis == Axis.X:
+                return [Layer.R, Layer.M, Layer.L]
+            if self.axis == Axis.Y:
+                return [Layer.U, Layer.E, Layer.D]
+            if self.axis == Axis.Z:
+                return [Layer.F, Layer.S, Layer.B]
+        layers = [Layer[self.name[0]]]
+        if self.is_wide:
+            if self.axis == Axis.X:
+                layers += [Layer.M]
+            if self.axis == Axis.Y:
+                layers += [Layer.E]
+            if self.axis == Axis.Z:
+                layers += [Layer.S]
+        return layers
+
+    @property
+    def shifts(self) -> list[int]:
+        """Permutation shift for each layer."""
+        if self == Move.NONE:
+            return [0]
+        shift = int(self.name[-1]) if self.name[-1] != "3" else -1
+        if self.is_rotation:
+            return [shift, shift if self.axis == Axis.Z else -shift, -shift]
+        shifts = [shift]
+        if self.is_wide:
+            if self.axis == Axis.Z:
+                shift = -shift
+            shifts += [-shift if Move[self.axis.name + "1"].layers[0].name == self.name[0] else shift]
+        return shifts
+
+    @property
+    def is_face(self) -> bool:
+        """Whether this is a face move."""
+        return 0 <= self < 18
+
+    @property
+    def is_slice(self) -> bool:
+        """Whether this is a slice move."""
+        return 18 <= self < 27
+
+    @property
+    def is_wide(self) -> bool:
+        """Whether this is a wide move."""
+        return 27 <= self < 45
+
+    @property
+    def is_rotation(self) -> bool:
+        """Whether the move is a rotation."""
+        return 45 <= self < 54
+
     @classmethod
-    def face_moves(cls) -> Iterator:
+    def from_str(cls, string: str) -> "Move":
+        """
+        Return the corresponding :class:`Move` enum.
+
+        Parameters
+        ----------
+        string : str
+            String representation of the move.
+        """
+        if not isinstance(string, str):
+            raise TypeError(f"string must be str, not {type(string).__name__}")
+        try:
+            return str_move[string]
+        except KeyError:
+            raise ValueError(f"invalid move string, got '{string}'")
+
+    @classmethod
+    def face_moves(cls) -> Iterator["Move"]:
         """Iterate over face moves."""
         for i in range(18):
             yield cls(i)
 
     @classmethod
-    def slice_moves(cls) -> Iterator:
+    def slice_moves(cls) -> Iterator["Move"]:
         """Iterate over slice moves."""
         for i in range(18, 27):
             yield cls(i)
 
     @classmethod
-    def wide_moves(cls) -> Iterator:
+    def wide_moves(cls) -> Iterator["Move"]:
         """Iterate over wide moves."""
         for i in range(27, 45):
             yield cls(i)
 
     @classmethod
-    def rotations(cls) -> Iterator:
+    def rotations(cls) -> Iterator["Move"]:
         """Iterate over rotations."""
         for i in range(45, 54):
             yield cls(i)
 
-    # @property
-    # def face(self) -> Face:
-    #     return move_face[self]
 
-    # @property
-    # def shift(self) -> int:
-    #     return move_shift[self]
-
-    # @property
-    # def str(self) -> str:
-    #     str = self.name
-    #     if self.name[1] == "1":
-    #         str = str[0]
-    #     elif self.name[1] == "3":
-    #         str = str[0] + "'"
-    #     return str
-
-
-# move_face = {move: Face[move.name[0]] for move in Move}
-# face_map[Move.NONE] = Face.NONE
-# move_shift = {move: int(move.name[1]) if move.name[1] != 3 else -1 for move in Move}
-# shift_map[Move.NONE] = 0
-
-
-class Cubie(IntEnum):
-    """Cubie enumeration."""
-    NONE = -1  #: No cubie.
-    # corners
-    UBL = auto()  #: Up-Back-Left corner.
-    UFR = auto()  #: Up-Front-Right corner.
-    DBR = auto()  #: Down-Back-Right corner.
-    DFL = auto()  #: Down-Front-Left corner.
-    UBR = auto()  #: Up-Back-Right corner.
-    UFL = auto()  #: Up-Front-Left corner.
-    DBL = auto()  #: Down-Back-Left corner.
-    DFR = auto()  #: Down-Front-Right corner.
-    # edges
-    UB = auto()  #: Up-Back edge.
-    UF = auto()  #: Up-Front edge.
-    DB = auto()  #: Down-Back edge.
-    DF = auto()  #: Down-Front edge.
-    UL = auto()  #: Up-Left edge.
-    UR = auto()  #: Up-Right edge.
-    DL = auto()  #: Down-Left edge.
-    DR = auto()  #: Down-Right edge.
-    BL = auto()  #: Back-Left edge.
-    BR = auto()  #: Back-Right edge.
-    FL = auto()  #: Front-Left edge.
-    FR = auto()  #: Front-Right edge.
-    # centers
-    U = auto()  #: Up center.
-    F = auto()  #: Front center.
-    R = auto()  #: Right center.
-    D = auto()  #: Down center.
-    B = auto()  #: Back center.
-    L = auto()  #: Left center.
-    # core
-    CORE = auto()  #: Core.
-
-    @classmethod
-    def corners(cls) -> Iterator:
-        """Iterate over corner cubies."""
-        for i in range(8):
-            yield cls(i)
-
-    @classmethod
-    def edges(cls) -> Iterator:
-        """Iterate over edge cubies."""
-        for i in range(8, 20):
-            yield cls(i)
-
-    @classmethod
-    def centers(cls) -> Iterator:
-        """Iterate over center cubies."""
-        for i in range(20, 26):
-            yield cls(i)
-
-    @property
-    def axis(self) -> int:  # TODO make private
-        """
-        Cubie axis.
-
-        For edges and centers:
-
-        * `0` along `Up` and `Down` faces.
-        * `1` along `Front` and `Back` faces.
-        * `2` along `Right` and `Left` faces.
-
-        For corners:
-
-        * `0` along `Up-Front-Left` and `Down-Back-Right` corners.
-        * `1` along `Up-Front-Right` and `Down-Back-Left` corners.
-        """
-        return cubie_axis[self]
-
-    @property
-    def index(self) -> tuple:  # TODO make private
-        """
-        Cubie index.
-
-        Used as the index of the cubie representation array.
-        """
-        return cubie_index[self]
-
-
-cubie_axis = {
-    Cubie.NONE: -1,
-    # corners
-    Cubie.UBL: 0,
-    Cubie.UFR: 0,
-    Cubie.DBR: 0,
-    Cubie.DFL: 0,
-    Cubie.UBR: 1,
-    Cubie.UFL: 1,
-    Cubie.DBL: 1,
-    Cubie.DFR: 1,
-    # edges
-    Cubie.UB: 2,
-    Cubie.UF: 2,
-    Cubie.DB: 2,
-    Cubie.DF: 2,
-    Cubie.UL: 1,
-    Cubie.UR: 1,
-    Cubie.DL: 1,
-    Cubie.DR: 1,
-    Cubie.BL: 0,
-    Cubie.BR: 0,
-    Cubie.FL: 0,
-    Cubie.FR: 0,
-    # centers
-    Cubie.U: 0,
-    Cubie.F: 1,
-    Cubie.R: 2,
-    Cubie.D: 0,
-    Cubie.B: 1,
-    Cubie.L: 2,
-    # core
-    Cubie.CORE: -1
+layer_axis = {
+    Layer.NONE: Axis.NONE,
+    Layer.U: Axis.Y,
+    Layer.F: Axis.Z,
+    Layer.R: Axis.X,
+    Layer.D: Axis.Y,
+    Layer.B: Axis.Z,
+    Layer.L: Axis.X,
+    Layer.M: Axis.X,
+    Layer.E: Axis.Y,
+    Layer.S: Axis.Z
 }
 
+layer_perm = {
+    Layer.NONE: [[Cubie.NONE]],
+    Layer.U: [[Cubie.UBL, Cubie.UBR, Cubie.UFR, Cubie.UFL], [Cubie.UB, Cubie.UR, Cubie.UF, Cubie.UL]],
+    Layer.F: [[Cubie.UFR, Cubie.DFR, Cubie.DFL, Cubie.UFL], [Cubie.UF, Cubie.FR, Cubie.DF, Cubie.FL]],
+    Layer.R: [[Cubie.UFR, Cubie.UBR, Cubie.DBR, Cubie.DFR], [Cubie.UR, Cubie.BR, Cubie.DR, Cubie.FR]],
+    Layer.D: [[Cubie.DBR, Cubie.DBL, Cubie.DFL, Cubie.DFR], [Cubie.DB, Cubie.DL, Cubie.DF, Cubie.DR]],
+    Layer.B: [[Cubie.UBL, Cubie.DBL, Cubie.DBR, Cubie.UBR], [Cubie.UB, Cubie.BL, Cubie.DB, Cubie.BR]],
+    Layer.L: [[Cubie.UBL, Cubie.UFL, Cubie.DFL, Cubie.DBL], [Cubie.UL, Cubie.FL, Cubie.DL, Cubie.BL]],
+    Layer.M: [[Cubie.U, Cubie.F, Cubie.D, Cubie.B], [Cubie.UB, Cubie.UF, Cubie.DF, Cubie.DB]],
+    Layer.E: [[Cubie.F, Cubie.R, Cubie.B, Cubie.L], [Cubie.BL, Cubie.FL, Cubie.FR, Cubie.BR]],
+    Layer.S: [[Cubie.U, Cubie.R, Cubie.D, Cubie.L], [Cubie.UL, Cubie.UR, Cubie.DR, Cubie.DL]]
+}
+
+face_opposite = {
+    Face.NONE: Face.NONE,
+    Face.UP: Face.DOWN,
+    Face.FRONT: Face.BACK,
+    Face.RIGHT: Face.LEFT,
+    Face.DOWN: Face.UP,
+    Face.BACK: Face.FRONT,
+    Face.LEFT: Face.RIGHT
+}
+
+face_cubie_slice = {
+    Face.NONE: (slice(None), slice(None), slice(None), slice(None)),
+    Face.UP: (0, slice(None), slice(None), Face.UP.axis),
+    Face.FRONT: (slice(None), 2, slice(None), Face.FRONT.axis),
+    Face.RIGHT: (slice(None), slice(None, None, -1), 2, Face.RIGHT.axis),
+    Face.DOWN: (2, slice(None, None, -1), slice(None), Face.DOWN.axis),
+    Face.BACK: (slice(None), 0, slice(None, None, -1), Face.BACK.axis),
+    Face.LEFT: (slice(None), slice(None), 0, Face.LEFT.axis)
+}
+
+cubie_axis = {
+    Cubie.NONE: Axis.NONE,
+    # corners
+    Cubie.UBL: Axis.DIAG_M11,
+    Cubie.UFR: Axis.DIAG_M11,
+    Cubie.DBR: Axis.DIAG_M11,
+    Cubie.DFL: Axis.DIAG_M11,
+    Cubie.UBR: Axis.DIAG_111,
+    Cubie.UFL: Axis.DIAG_111,
+    Cubie.DBL: Axis.DIAG_111,
+    Cubie.DFR: Axis.DIAG_111,
+    # edges
+    Cubie.UB: Axis.X,
+    Cubie.UF: Axis.X,
+    Cubie.DB: Axis.X,
+    Cubie.DF: Axis.X,
+    Cubie.UL: Axis.Z,
+    Cubie.UR: Axis.Z,
+    Cubie.DL: Axis.Z,
+    Cubie.DR: Axis.Z,
+    Cubie.BL: Axis.Y,
+    Cubie.BR: Axis.Y,
+    Cubie.FL: Axis.Y,
+    Cubie.FR: Axis.Y,
+    # centers
+    Cubie.U: Axis.Y,
+    Cubie.F: Axis.Z,
+    Cubie.R: Axis.X,
+    Cubie.D: Axis.Y,
+    Cubie.B: Axis.Z,
+    Cubie.L: Axis.X,
+    # core
+    Cubie.CORE: Axis.NONE
+}
 
 cubie_index = {
-    Cubie.NONE: (),
+    Cubie.NONE: (slice(None), slice(None), slice(None)),
     # corners
     Cubie.UBL: (0, 0, 0),
     Cubie.UFR: (0, 2, 2),
@@ -338,3 +585,9 @@ cubie_index = {
     # core
     Cubie.CORE: (1, 1, 1)
 }
+
+char_color = {color.char: color for color in Color}
+char_face = {face.char: face for face in Face}
+faces_cubie = {tuple(min([cb.faces[i:] + cb.faces[:i] for i in range(len(cb.faces))])if cb.faces else []): cb for cb in Cubie}
+str_move = {move.string: move for move in Move}
+str_move.update({move.string[0].lower() + move.string[2:]: move for move in Move.wide_moves()})
