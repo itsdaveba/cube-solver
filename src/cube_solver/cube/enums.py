@@ -119,7 +119,7 @@ class Face(IntEnum):
     @property
     def _cubie_slice(self) -> tuple[int | slice]:
         """Face slice for the cubie representation."""
-        return cubie_slice[self]
+        return face_cubie_slice[self]
 
     @classmethod
     def from_char(cls, char: str) -> "Face":
@@ -221,7 +221,9 @@ class Cubie(IntEnum):
     @property
     def faces(self) -> list[Face]:
         """Cubie visible faces."""
-        if self in (Cubie.NONE, Cubie.CORE):
+        if self == Cubie.NONE:
+            return [Face.NONE]
+        if self == Cubie.CORE:
             return []
         faces = [Face.from_char(char) for char in self.name]
         if self.axis == Axis.DIAG_M11:
