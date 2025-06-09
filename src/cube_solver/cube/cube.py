@@ -1,17 +1,23 @@
-# """Cube module."""
-# import numpy as np
+"""Cube module."""
+import numpy as np
 # # from copy import deepcopy
+from itertools import chain
 
 # from cube_solver.cube import utils
-# from cube_solver.cube.enums import Color
+from cube_solver.cube.enums import Axis, Color, Face, Cubie, Move
 
 
-# SIZE = 3
-# NUM_CORNERS = 8
-# NUM_EDGES = 12
+# TODO move to defs
+SIZE = 3
+NUM_CORNERS = 8
+NUM_EDGES = 12
 
-# SWAP_CUBIE = [[0, 2, 1], [2, 1, 0,], [1, 0, 2]]  # swap cubie along axis
-# REPR_ORDER = [Face.U, Face.L, Face.F, Face.R, Face.B, Face.D]
+SWAP_CUBIE = {  # swap cubie along axis
+    Axis.Y: [Axis.Y, Axis.X, Axis.Z],
+    Axis.Z: [Axis.X, Axis.Z, Axis.Y],
+    Axis.X: [Axis.Z, Axis.Y, Axis.X]
+}
+REPR_ORDER = [Face.UP, Face.LEFT, Face.FRONT, Face.RIGHT, Face.BACK, Face.DOWN]
 
 # FACTORIAL = np.cumprod([1] + list(range(1, NUM_EDGES + 1)))
 # CORNER_ORIENTATION_SIZE = 3 ** (NUM_CORNERS - 1)
@@ -20,162 +26,150 @@
 # EDGE_PERMUTATION_SIZE = FACTORIAL[NUM_EDGES] // 2
 
 
-# class Cube:
-#     def __init__(self, scramble: str | None = None, str_repr: str | None = None, random_state: bool = False):
-#         """
-#         Create `Cube` object.
+class Cube:
+    def __init__(self, scramble: str | None = None, repr: str | None = None, random_state: bool = False):
+        """
+        Create `Cube` object.
 
-#         Parameters
-#         ----------
-#         scramble : str or None, optional
-#             Initial scramble. If `None`, no scramble is applied.
-#         str_repr : str or None, optional
-#             Cube string representation. If not `None`, the `scramble` parameter is ignored and
-#             initializes the cube with the given string state. See `Notes` for the representation format.
-#         random_state : bool, optional
-#             If `True`, the `scramble` and `str_repr` parameters are ignored and
-#             creates a `Cube` object with a uniform random state.
+        Parameters
+        ----------
+        scramble : str or None, optional
+            Initial scramble. If `None`, no scramble is applied.
+        repr : str or None, optional
+            Cube string representation. If not `None`, the `scramble` parameter is ignored and
+            initializes the cube with the given string representation. See `Notes` for the representation format.
+        random_state : bool, optional
+            If `True`, the `scramble` and `repr` parameters are ignored and
+            creates a `Cube` object with a uniform random state.
 
-#         Notes
-#         -----
-#         The `str_repr` parameter must contain characters from `{'W', 'G', 'R', 'Y', 'B', 'O'}`,
-#         representing the colors `White`, `Green`, `Red`, `Yellow`, `Blue`, and `Orange`, repectively.
-#         The order of the `str_repr` parameter is::
+        Notes
+        -----
+        The `repr` parameter must contain characters from `{'W', 'G', 'R', 'Y', 'B', 'O'}`,
+        representing the colors :attr:`Color.WHITE`, :attr:`Color.GREEN`, :attr:`Color.RED`,
+        :attr:`Color.YELLOW`, :attr:`Color.BLUE`, and :attr:`Color.ORANGE`, respectively.
+        The order of the `repr` parameter is::
 
-#                        ------------
-#                        | 01 02 03 |
-#                        | 04 05 06 |
-#                        | 07 08 09 |
-#             ---------------------------------------------
-#             | 10 11 12 | 19 20 21 | 28 29 30 | 37 38 39 |
-#             | 13 14 15 | 22 23 24 | 31 32 33 | 40 41 42 |
-#             | 16 17 18 | 25 26 27 | 34 35 36 | 43 44 45 |
-#             ---------------------------------------------
-#                        | 46 47 48 |
-#                        | 49 50 51 |
-#                        | 52 53 54 |
-#                        ------------
+                       ------------
+                       | 01 02 03 |
+                       | 04 05 06 |
+                       | 07 08 09 |
+            ---------------------------------------------
+            | 10 11 12 | 19 20 21 | 28 29 30 | 37 38 39 |
+            | 13 14 15 | 22 23 24 | 31 32 33 | 40 41 42 |
+            | 16 17 18 | 25 26 27 | 34 35 36 | 43 44 45 |
+            ---------------------------------------------
+                       | 46 47 48 |
+                       | 49 50 51 |
+                       | 52 53 54 |
+                       ------------
 
-#         The default color scheme used for the `scramble` and `random_state` parameters is as follows:
+        The default color scheme used for the `scramble` and `random_state` parameters is as follows
+        (note: this may differ for the `repr` parameter):
 
-#         * Up face - White
-#         * Front face - Green
-#         * Right face - Red
-#         * Down face - Yellow
-#         * Back face - Blue
-#         * Left face - Orange
+        * :attr:`Face.UP`: :attr:`Color.WHITE`
+        * :attr:`Face.FRONT`: :attr:`Color.GREEN`
+        * :attr:`Face.RIGHT`: :attr:`Color.RED`
+        * :attr:`Face.DOWN`: :attr:`Color.YELLOW`
+        * :attr:`Face.BACK`: :attr:`Color.BLUE`
+        * :attr:`Face.LEFT`: :attr:`Color.ORANGE`
 
-#         Examples
-#         --------
-#         >>> from cube_solver import Cube
+        Examples
+        --------
+        >>> from cube_solver import Cube
 
-#         Initial scramble.
+        Initial scramble.
 
-#         >>> cube = Cube()
+        >>> cube = Cube("U F R")
+        >>> cube  # string representation of the cube state
+        WWRWWROORGGYOOYOOYGGBGGYGGYWWWRRBRRBGOOWBBWBBRRBYYBYYO
 
-#         Initial string representation.
+        Initial string representation.
 
-#         >>> cube = Cube()
+        >>> cube = Cube(repr="WWRWWROORGGYOOYOOYGGBGGYGGYWWWRRBRRBGOOWBBWBBRRBYYBYYO")
+        >>> print(cube)  # print a visual layout of the cube state
+                ---------
+                | W W R |
+                | W W R |
+                | O O R |
+        ---------------------------------
+        | G G Y | G G B | W W W | G O O |
+        | O O Y | G G Y | R R B | W B B |
+        | O O Y | G G Y | R R B | W B B |
+        ---------------------------------
+                | R R B |
+                | Y Y B |
+                | Y Y O |
+                ---------
 
-#         Initial random state.
+        Initial random state.
 
-#         >>> cube = Cube()
-#         """
-        # >>> cube = Cube("U F R")
-        # >>> cube
-        # WWRWWROORGGYOOYOOYGGBGGYGGYWWWRRBRRBGOOWBBWBBRRBYYBYYO
-        # >>> print(cube)
-        #         ---------
-        #         | W W R |
-        #         | W W R |
-        #         | O O R |
-        # ---------------------------------
-        # | G G Y | G G B | W W W | G O O |
-        # | O O Y | G G Y | R R B | W B B |
-        # | O O Y | G G Y | R R B | W B B |
-        # ---------------------------------
-        #         | R R B |
-        #         | Y Y B |
-        #         | Y Y O |
-        #         ---------
-
-        # Random state.
-
-        # >>> cube = Cube(random_state=True)
-        # >>> cube
-        # if scramble is not None and not isinstance(scramble, str):
-        #     raise TypeError(f"scramble must be str or None, not {type(scramble).__name__}")
-        # if str_state is not None and not isinstance(str_state, str):
-        #     raise TypeError(f"str_state must be str or None, not {type(str_state).__name__}")
-        # if not isinstance(random_state, bool):
-        #     raise TypeError(f"random_state must be bool, not {type(random_state).__name__}")
+        >>> cube = Cube(random_state=True)  # doctest: +SKIP
+        >>> cube.coords  # coordinates of the cube state (result might differ) # doctest: +SKIP
+        (0, 0, 0, 0)
+        """
+        if scramble is not None and not isinstance(scramble, str):
+            raise TypeError(f"scramble must be str or None, not {type(scramble).__name__}")
+        if repr is not None and not isinstance(repr, str):
+            raise TypeError(f"repr must be str or None, not {type(repr).__name__}")
+        if not isinstance(random_state, bool):
+            raise TypeError(f"random_state must be bool, not {type(random_state).__name__}")
 
         # self._state: str
         # """Cached string representation."""
         # self._coords: tuple
         # """Cached cube coordinates."""
-        # self._cubies: np.ndarray
-        # """
-        # Cubie representation of the cube.
-        # Used to generate the `str_state` representation.
+        self._cubies: np.ndarray
+        """
+        Cubie representation of the cube.
+        Used to generate and parse the string representation.
+        """
+        self._scheme: dict[Face, Color]
+        """
+        Color shceme of the cube.
+        Used to generate and parse the string representation.
+        """
+        self.orientation: np.ndarray
+        """
+        Orientation array.
 
-        # """
-        # self.orientation: np.ndarray
-        # """
-        # Orientation array.
+        The `orientation` array contains the orientation values of the `8` corners and `12` edges of the cube.
+        The first `8` elements represent the `corner` orientation values, and the remaining `12` elements represent the
+        `edge` orientation values.
 
-        # The `orientation` array contains the orientation values of the `8` corners and `12` edges of the cube.
-        # The first `8` elements represent the `corner` orientation values, and the remaining `12` elements represent the
-        # `edge` orientation values.
+        A corner is correctly oriented when the `top` or `bottom` facelet of the corner piece matches eihter the `top` or
+        `bottom` color of the cube. Corner orientation values are:
 
-        # A corner is correctly oriented when the `top` or `bottom` facelet of the corner piece matches eihter the `top` or
-        # `bottom` color of the cube. Corner orientation values are:
+        * `0` if the corner is `correctly` oriented.
+        * `1` if the corner is `twisted clockwise` relative to the correct orientation.
+        * `2` if the corner is `twisted counter-clockwise` relative to the correct orientation.
 
-        # * `0` if the corner is `correctly` oriented.
-        # * `1` if the corner is `twisted clockwise` relative to the correct orientation.
-        # * `2` if the corner is `twisted counter-clockwise` relative to the correct orientation.
+        An edge is correctly oriented if, when placed in its correct position using only
+        `U`, `D`, `R` and `L` face turns, it does not appear `flipped`. Edge orientation values are:
 
-        # An edge is correctly oriented if, when placed in its correct position using only
-        # `U`, `D`, `R` and `L` face turns, it does not appear `flipped`. Edge orientation values are:
+        * `0` if the edge is `correctly` oriented.
+        * `1` if the edge is incorrectly oriented (i.e. `flipped`).
+        """
+        self.permutation: np.ndarray
+        """
+        Permutation array.
 
-        # * `0` if the edge is `correctly` oriented.
-        # * `1` if the edge is incorrectly oriented (i.e. `flipped`).
-        # """
-        # # Examples
-        # # --------
-        # # >>> from cube_solver import Cube
-        # # >>> cube = Cube("U F R")
-        # # >>> cube.orientation
-        # # array([0, 1, 2, 1, 2, 2, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0])
-        # self.permutation: np.ndarray
-        # """
-        # Permutation array.
+        The `permutation` array contains the permutation values of the `8` corners and `12` edges of the cube.
+        The first `8` elements represent the `corner` permutation values, and the remaining `12` elements represent the
+        `edge` permutation values.
 
-        # The `permutation` array contains the permutation values of the `8` corners and `12` edges of the cube.
-        # The first `8` elements represent the `corner` permutation values, and the remaining `12` elements represent the
-        # `edge` permutation values.
+        The `solved state` permutation goes from `0` to `7` for the corners and from `8` to `19`
+        for the edges. The piece ordering in the solved state is:
 
-        # The `solved state` permutation goes from `0` to `7` for the corners and from `8` to `19`
-        # for the edges. The piece ordering in the solved state is:
-
-        # * Corners: [`UBL`, `UFR`, `DBR`, `DFL`, `UBR`, `UFL`, `DBL`, `DFR`]
-        # * Edges: [`UB`, `UF`, `DB`, `DF`, `UL`, `UR`, `DL`, `DR`, `BL`, `BR`, `FL`, `FR`]
-        # """
-        # # Examples
-        # # --------
-        # # >>> from cube_solver import Cube
-        # # >>> cube = Cube("U F R")
-        # # >>> cube.permutation
-        # # array([ 5,  4,  0,  7,  1,  3,  6,  2, 12, 18, 10, 19,  9, 13, 14, 17, 16,
-        # #         8, 11, 15])
-
-        # self.reset()
-        # if random_state:
-        #     self.set_random_state()
-        # elif state is not None:
-        #     self.set_state(state)
-        # elif scramble is not None:
-        #     self.apply_maneuver(scramble)
+        * Corners: [`UBL`, `UFR`, `DBR`, `DFL`, `UBR`, `UFL`, `DBL`, `DFR`]
+        * Edges: [`UB`, `UF`, `DB`, `DF`, `UL`, `UR`, `DL`, `DR`, `BL`, `BR`, `FL`, `FR`]
+        """
+        self.reset()
+        if random_state:
+            self.set_random_state()
+        elif repr is not None:
+            self._parse_repr(repr)
+        elif scramble is not None:
+            self.apply_maneuver(scramble)
 
 #     # @property
 #     # def coords(self) -> tuple:
@@ -227,40 +221,24 @@
 # #         """Return a copy of the Cube object."""
 # #         return deepcopy(self)
 
-    # def reset(self):
-    #     pass
-    #     """
-    #     Reset the cube to the solved state.
+    def reset(self):
+        """
+        Reset the cube to the solved state using the default color scheme.
 
-    #     Examples
-    #     --------
-    #     >>> from cube_solver import Cube
-    #     >>> cube = Cube()
-    #     >>> cube.reset()
-    #     """
-    #     # >>> cube.coords
-    #     # (0, 0, 0, 0)
-    #     # >>> cube
-    #     # WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY
-    #     # >>> print(cube)
-    #     #         ---------
-    #     #         | W W W |
-    #     #         | W W W |
-    #     #         | W W W |
-    #     # ---------------------------------
-    #     # | O O O | G G G | R R R | B B B |
-    #     # | O O O | G G G | R R R | B B B |
-    #     # | O O O | G G G | R R R | B B B |
-    #     # ---------------------------------
-    #     #         | Y Y Y |
-    #     #         | Y Y Y |
-    #     #         | Y Y Y |
-    #     #         ---------
-    #     self._state = None
-    #     self._coords = None
-    #     self._cubies = np.full((SIZE,) * 4, Color.NONE, dtype=int)
-    #     self.orientation = np.zeros(NUM_CORNERS + NUM_EDGES, dtype=int)
-    #     self.permutation = np.arange(NUM_CORNERS + NUM_EDGES, dtype=int)
+        Examples
+        --------
+        >>> from cube_solver import Cube
+        >>> cube = Cube(random_state=True)  # doctest: +SKIP
+        >>> cube.reset()  # doctest: +SKIP
+        >>> cube  # doctest: +SKIP
+        WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY
+        """
+        # self._state = None
+        # self._coords = None
+        self._cubies = np.full((SIZE,) * 3 + (3,), Color.NONE, dtype=int)
+        self._scheme = {face: color for face, color in zip(Face.faces(), Color.colors())}
+        self.orientation = np.zeros(NUM_CORNERS + NUM_EDGES, dtype=int)
+        self.permutation = np.arange(NUM_CORNERS + NUM_EDGES, dtype=int)
 
 #     def apply_move(self, move: Move):
 #         """

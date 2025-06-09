@@ -193,19 +193,15 @@ class Cubie(IntEnum):
         """
         Cubie axis.
 
-        ===================== ==============
-        :class:`Axis`         :class:`Cubie`
-        ===================== ==============
-        :attr:`Axis.NONE`     :attr:`Cubie.NONE`, :attr:`Cubie.CORE`
-        :attr:`Axis.X`        :attr:`Cubie.R`, :attr:`Cubie.L`, :attr:`Cubie.UB`, :attr:`Cubie.UF`
-                              :attr:`Cubie.DB`, :attr:`Cubie.DF`
-        :attr:`Axis.Y`        :attr:`Cubie.U`, :attr:`Cubie.D`, :attr:`Cubie.BL`, :attr:`Cubie.BR`
-                              :attr:`Cubie.FL`, :attr:`Cubie.FR`
-        :attr:`Axis.Z`        :attr:`Cubie.F`, :attr:`Cubie.B`, :attr:`Cubie.UL`, :attr:`Cubie.UR`
-                              :attr:`Cubie.DL`, :attr:`Cubie.DR`
-        :attr:`Axis.DIAG_111` :attr:`Cubie.UBR`, :attr:`Cubie.UFL`, :attr:`Cubie.DBL`, :attr:`Cubie.DFR`
-        :attr:`Axis.DIAG_M11` :attr:`Cubie.UBL`, :attr:`Cubie.UFR`, :attr:`Cubie.DBR`, :attr:`Cubie.DFL`
-        ===================== ==============
+        * :attr:`Axis.NONE`: :attr:`Cubie.NONE`, :attr:`Cubie.CORE`
+        * :attr:`Axis.X`: :attr:`Cubie.R`, :attr:`Cubie.L`, :attr:`Cubie.UB`,
+          :attr:`Cubie.UF`, :attr:`Cubie.DB`, :attr:`Cubie.DF`
+        * :attr:`Axis.Y`: :attr:`Cubie.U`, :attr:`Cubie.D`, :attr:`Cubie.BL`,
+          :attr:`Cubie.BR`, :attr:`Cubie.FL`, :attr:`Cubie.FR`
+        * :attr:`Axis.Z`: :attr:`Cubie.F`, :attr:`Cubie.B`, :attr:`Cubie.UL`,
+          :attr:`Cubie.UR`, :attr:`Cubie.DL`, :attr:`Cubie.DR`
+        * :attr:`Axis.DIAG_111`: :attr:`Cubie.UBR`, :attr:`Cubie.UFL`, :attr:`Cubie.DBL`, :attr:`Cubie.DFR`
+        * :attr:`Axis.DIAG_M11`: :attr:`Cubie.UBL`, :attr:`Cubie.UFR`, :attr:`Cubie.DBR`, :attr:`Cubie.DFL`
         """
         return cubie_axis[self]
 
