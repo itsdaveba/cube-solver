@@ -7,6 +7,7 @@ NUM_CORNERS = 8
 NUM_EDGES = 12
 NUM_AXIS_ELEMS = 4
 
+# TODO print to see how many times this is run
 # precomputed factorials and combinations
 FACTORIAL = np.cumprod([1] + list(range(1, NUM_EDGES + 1)))
 COMBINATION = np.zeros((np.max([NUM_CORNERS, NUM_EDGES]) + 1, NUM_AXIS_ELEMS + 1), dtype=int)
