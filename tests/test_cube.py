@@ -132,21 +132,31 @@ def test_enums(response):
 def test_utils(response):
     # orientation array
     with pytest.raises(TypeError, match=r"coord must be int, not NoneType"):
-        utils.get_orientation_array(None, None, None)
+        utils.get_orientation_array(None, None, None, None)
     with pytest.raises(TypeError, match=r"v must be int, not NoneType"):
-        utils.get_orientation_array(-1, None, None)
+        utils.get_orientation_array(-1, None, None, None)
     with pytest.raises(TypeError, match=r"n must be int, not NoneType"):
-        utils.get_orientation_array(-1, 0, None)
+        utils.get_orientation_array(-1, 0, None, None)
+    with pytest.raises(TypeError, match=r"force_modulo must be bool, not NoneType"):
+        utils.get_orientation_array(-1, 0, 0, None)
     with pytest.raises(ValueError, match=r"v must be positive \(got 0\)"):
         utils.get_orientation_array(-1, 0, 0)
     with pytest.raises(ValueError, match=r"n must be positive \(got 0\)"):
         utils.get_orientation_array(-1, 1, 0)
+    # foce_modulo = False
     with pytest.raises(ValueError, match=r"coord must be >= 0 and < 1 \(got -1\)"):
         utils.get_orientation_array(-1, 1, 1)
     assert np.all(utils.get_orientation_array(0, 1, 1) == [0])
     with pytest.raises(ValueError, match=r"coord must be >= 0 and < 65536 \(got 65536\)"):
         utils.get_orientation_array(65536, 4, 8)
     assert np.all(utils.get_orientation_array(58596, 4, 8) == [3, 2, 1, 0, 3, 2, 1, 0])
+    # force_module = True
+    with pytest.raises(ValueError, match=r"coord must be >= 0 and < 1 \(got -1\)"):
+        utils.get_orientation_array(-1, 1, 1, True)
+    assert np.all(utils.get_orientation_array(0, 1, 1, True) == [0])
+    with pytest.raises(ValueError, match=r"coord must be >= 0 and < 16384 \(got 16384\)"):
+        utils.get_orientation_array(16384, 4, 8, True)
+    assert np.all(utils.get_orientation_array(14649, 4, 8, True) == [3, 2, 1, 0, 3, 2, 1, 0])
 
     # permutation array
     with pytest.raises(TypeError, match=r"coord must be int, not NoneType"):

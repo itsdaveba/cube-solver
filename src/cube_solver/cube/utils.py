@@ -169,7 +169,7 @@ from .defs import FACTORIAL, COMBINATION
 #         return coord + math.factorial(len(combination)) * get_combination_coord(combination)
 
 
-def get_orientation_array(coord: int, v: int, n: int) -> np.ndarray:
+def get_orientation_array(coord: int, v: int, n: int, force_modulo: bool = False) -> np.ndarray:
     """
     Get orientation array.
 
@@ -178,14 +178,23 @@ def get_orientation_array(coord: int, v: int, n: int) -> np.ndarray:
     returns the `orientation` array of length `n`
     with orientation values between `0` and `v - 1`.
 
+    If `force_modulo` is `True`, given the `coord` number
+    between `0` and `v ^ (n - 1) - 1`, returns the
+    `orientation` array with total orientation `0` modulo `v`.
+
     Parameters
     ----------
     coord : int
         Orientation coordinate value between `0` and `v ^ n - 1`.
+        If `force_modulo` is `True`, orientation coordinate value
+        between `0` and `v ^ (n - 1) - 1`.
     v : int
         Number of possible orientation values.
     n : int
         Length of orientation array.
+    force_modulo : bool, optional
+        If `True`, returns the `orientation` array
+        with total orientation `0` modulo `v`.
 
     Returns
     -------
@@ -195,8 +204,10 @@ def get_orientation_array(coord: int, v: int, n: int) -> np.ndarray:
     Examples
     --------
     >>> from cube_solver.cube.utils import get_orientation_array
-    >>> get_orientation_array(21, 3, 3)
-    array([2, 1, 0])
+    >>> get_orientation_array(6, 3, 3)
+    array([0, 2, 0])
+    >>> get_orientation_array(6, 3, 3, force_modulo=True)
+    array([2, 0, 1])
     """
     if not isinstance(coord, int):
         raise TypeError(f"coord must be int, not {type(coord).__name__}")
@@ -204,26 +215,36 @@ def get_orientation_array(coord: int, v: int, n: int) -> np.ndarray:
         raise TypeError(f"v must be int, not {type(v).__name__}")
     if not isinstance(n, int):
         raise TypeError(f"n must be int, not {type(n).__name__}")
+    if not isinstance(force_modulo, bool):  # TODO add value errors with lims
+        raise TypeError(f"force_modulo must be bool, not {type(force_modulo).__name__}")
     if v <= 0:
         raise ValueError(f"v must be positive (got {v})")
     if n <= 0:
         raise ValueError(f"n must be positive (got {n})")
-    if coord < 0 or coord >= v ** n:
-        raise ValueError(f"coord must be >= 0 and < {v ** n} (got {coord})")
+    upper_lim = v ** n
+    if force_modulo:
+        upper_lim //= v
+    if coord < 0 or coord >= upper_lim:
+        raise ValueError(f"coord must be >= 0 and < {upper_lim} (got {coord})")
 
     orientation = np.zeros(n, dtype=int)
-    for i in range(len(orientation) - 1, -1, -1):
+    for i in range(len(orientation) - (2 if force_modulo else 1), -1, -1):
         coord, orientation[i] = divmod(coord, v)
+    if force_modulo:
+        orientation[-1] = -np.sum(orientation[:-1]) % v
     return orientation
 
 
 def get_permutation_array(coord: int, n: int, force_even_parity: bool = False) -> tuple[np.ndarray, bool]:
     """
-    Get permutation array.
+    Get permutation array and permutation parity.
 
     Given the `coord` number between `0` and `n! - 1`,
     returns the `permutation` array of length `n`
     with permutation values between `0` and `n - 1`.
+    The `permutation parity` is `True` if the `permutation` array
+    has `odd` parity, `False` if it has `even` parity.
+
     If `force_even_parity` is `True`, given the `coord` number
     between `0` and `n! / 2 - 1`, returns the
     `permutation` array with `even` parity.
@@ -247,8 +268,8 @@ def get_permutation_array(coord: int, n: int, force_even_parity: bool = False) -
     Examples
     --------
     >>> from cube_solver.cube.utils import get_permutation_array
-    >>> get_permutation_array(5, 3)
-    (array([2, 1, 0]), True)
+    >>> get_permutation_array(2, 3)
+    (array([1, 0, 2]), True)
     >>> get_permutation_array(2, 3, force_even_parity=True)
     (array([2, 0, 1]), False)
     """
@@ -343,8 +364,8 @@ def get_combination_array(coord: int, n: int) -> np.ndarray:
     Examples
     --------
     >>> from cube_solver.cube.utils import get_combination_array
-    >>> get_combination_array(19, 3)
-    array([3, 4, 5])
+    >>> get_combination_array(6, 3)
+    array([1, 2, 4])
     """
     if not isinstance(coord, int):
         raise TypeError(f"coord must be int, not {type(coord).__name__}")
@@ -378,7 +399,7 @@ def get_combination_array(coord: int, n: int) -> np.ndarray:
 
 def get_partial_permutation_array(coord: int, n: int) -> tuple[np.ndarray, np.ndarray]:
     """
-    Get partial permutation array.
+    Get partial permutation array and combination array.
 
     Given the `coord` number between `0` and `P(m, n) - 1`
     where `m - 1` is the maximum value of the `combination` array with `n <= m`,
@@ -404,8 +425,8 @@ def get_partial_permutation_array(coord: int, n: int) -> tuple[np.ndarray, np.nd
     Examples
     --------
     >>> from cube_solver.cube.utils import get_partial_permutation_array
-    >>> get_partial_permutation_array(119, 3)  # doctest: +SKIP
-    (array([2, 1, 0]), array([3, 4, 5]))
+    >>> get_partial_permutation_array(38, 3)
+    (array([1, 0, 2]), array([1, 2, 4]))
     """
     if not isinstance(coord, int):
         raise TypeError(f"coord must be int, not {type(coord).__name__}")
