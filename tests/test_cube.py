@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
-"""Tests for `cube_solver` package."""
+"""Tests for `cube` package."""
 
 import pytest
+import numpy as np
 
 from cube_solver import Cube
+from cube_solver.cube import utils
 from cube_solver.cube.enums import Axis, Layer, Color, Face, Cubie, Move
 
 
@@ -19,9 +21,15 @@ def response():
 
 
 def test_enums(response):
+    # axis
     assert hasattr(Axis, "NONE")
+    assert all(axis.is_edge for axis in Axis.edge_axes())
+    assert all(axis.is_corner for axis in Axis.corner_axes())
     assert len([*Axis.axes()]) == 5
+    assert len([*Axis.edge_axes()]) == 3
+    assert len([*Axis.corner_axes()]) == 2
 
+    # layer
     assert hasattr(Layer, "NONE")
     assert Layer.NONE.axis == Axis.NONE
     assert Layer.NONE.perm == [[Cubie.NONE]]
@@ -31,69 +39,89 @@ def test_enums(response):
     assert len([*Layer.outers()]) == 6
     assert len([*Layer.inners()]) == 3
 
+    # color
     assert hasattr(Color, "NONE")
     assert Color.NONE.char == 'N'
-    assert all(color == Color.from_char(color.char) for color in Color)
-    with pytest.raises(TypeError, match="char must be str, not NoneType"):
+    with pytest.raises(TypeError, match=r"char must be str, not NoneType"):
         Color.from_char(None)
-    with pytest.raises(ValueError, match="invalid color character, got 'None'"):
+    with pytest.raises(ValueError, match=r"invalid color character \(got 'None'\)"):
         Color.from_char("None")
+    assert all(color == Color.from_char(color.char) for color in Color)
     assert len([*Color.colors()]) == 6
 
+    # face
     assert hasattr(Face, "NONE")
     assert Face.NONE.char == 'N'
     assert Face.NONE.axis == Axis.NONE
+    assert Face.UP.axis == Axis.Y
     assert Face.NONE.opposite == Face.NONE
     assert Face.NONE._cubie_slice == (slice(None), slice(None), slice(None), slice(None))
-    assert all(face == Face.from_char(face.char) for face in Face)
-    with pytest.raises(TypeError, match="char must be str, not NoneType"):
+    with pytest.raises(TypeError, match=r"char must be str, not NoneType"):
         Face.from_char(None)
-    with pytest.raises(ValueError, match="invalid face character, got 'None'"):
+    with pytest.raises(ValueError, match=r"invalid face character \(got 'None'\)"):
         Face.from_char("None")
+    assert all(face == Face.from_char(face.char) for face in Face)
     assert len([*Face.faces()]) == 6
 
+    # cubie
     assert hasattr(Cubie, "NONE")
     assert Cubie.NONE.axis == Axis.NONE
-    assert Cubie.NONE._index == (slice(None), slice(None), slice(None))
+    assert Cubie.NONE._index == (1, 1, 1)
     assert Cubie.NONE.faces == [Face.NONE]
+    assert Cubie.CORE.faces == []
+    assert Cubie.UBL.faces == [Face.UP, Face.LEFT, Face.BACK]
+    assert Cubie.UBR.faces == [Face.UP, Face.BACK, Face.RIGHT]
     assert all(cubie.is_corner for cubie in Cubie.corners())
     assert all(cubie.is_edge for cubie in Cubie.edges())
     assert all(cubie.is_center for cubie in Cubie.centers())
-    assert all(cubie == Cubie.from_faces(cubie.faces) for cubie in Cubie)
-    with pytest.raises(TypeError, match="faces must be list, not NoneType"):
+    with pytest.raises(TypeError, match=r"faces must be list, not NoneType"):
         Cubie.from_faces(None)
-    with pytest.raises(TypeError, match="faces elements must be Face, not NoneType"):
+    with pytest.raises(TypeError, match=r"faces elements must be Face, not NoneType"):
         Cubie.from_faces([None])
-    with pytest.raises(ValueError, match=r"invalid cubie faces, got \[Face.NONE, Face.NONE\]"):
+    with pytest.raises(ValueError, match=r"invalid cubie faces \(got \[Face.NONE, Face.NONE\]\)"):
         Cubie.from_faces([Face.NONE, Face.NONE])
-    with pytest.raises(ValueError, match="faces length must be at most 3, got 4"):
+    with pytest.raises(ValueError, match=r"faces length must be at most 3 \(got 4\)"):
         Cubie.from_faces([Face.NONE, Face.NONE, Face.NONE, Face.NONE])
+    assert all(cubie == Cubie.from_faces(cubie.faces) for cubie in Cubie)
     assert len([*Cubie.cubies()]) == 27
     assert len([*Cubie.corners()]) == 8
     assert len([*Cubie.edges()]) == 12
     assert len([*Cubie.centers()]) == 6
 
+    # move
     assert hasattr(Move, "NONE")
     assert Move.NONE.string == "NONE"
+    assert Move.U1.string == "U"
+    assert Move.U2.string == "U2"
+    assert Move.U3.string == "U'"
+    assert Move.X1.string == "x"
+    assert Move.X2.string == "x2"
+    assert Move.X3.string == "x'"
+    assert Move.UW1.string == "Uw"
+    assert Move.UW2.string == "Uw2"
+    assert Move.UW3.string == "Uw'"
     assert Move.NONE.axis == Axis.NONE
-    assert Move.U1.axis == Axis.Y
     assert Move.X1.axis == Axis.X
+    assert Move.U1.axis == Axis.Y
     assert Move.NONE.layers == [Layer.NONE]
     assert Move.X1.layers == [Layer.R, Layer.L, Layer.M]
     assert Move.FW1.layers == [Layer.F, Layer.S]
+    assert Move.U1.layers == [Layer.U]
     assert Move.NONE.shifts == [0]
     assert Move.X1.shifts == [1, -1, -1]
     assert Move.FW1.shifts == [1, 1]
+    assert Move.RW1.shifts == [1, -1]
+    assert Move.U1.shifts == [1]
     assert all(move.is_face for move in Move.face_moves())
     assert all(move.is_slice for move in Move.slice_moves())
     assert all(move.is_wide for move in Move.wide_moves())
     assert all(move.is_rotation for move in Move.rotations())
+    with pytest.raises(TypeError, match=r"string must be str, not NoneType"):
+        Move.from_string(None)
+    with pytest.raises(ValueError, match=r"invalid move string \(got 'None'\)"):
+        Move.from_string("None")
     assert all(move == Move.from_string(move.string) for move in Move)
     assert all(move == Move.from_string(move.string[0].lower() + move.string[2:]) for move in Move.wide_moves())
-    with pytest.raises(TypeError, match="string must be str, not NoneType"):
-        Move.from_string(None)
-    with pytest.raises(ValueError, match="invalid move string, got 'None'"):
-        Move.from_string("None")
     assert len([*Move.moves()]) == 54
     assert len([*Move.face_moves()]) == 18
     assert len([*Move.slice_moves()]) == 9

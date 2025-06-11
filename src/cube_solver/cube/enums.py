@@ -12,16 +12,39 @@ class IntEnum(int, Enum):
 class Axis(IntEnum):
     """Axis enumeration."""
     NONE = -1  #: no axis.
+    # axes x, y, and z are also used fot the cubie representation (i.e. they must be defined before diagonal axes)
     Y = auto()  #: `Y` axis along :attr:`Face.UP` and :attr:`Face.DOWN`.
     Z = auto()  #: `Z` axis along :attr:`Face.FRONT` and :attr:`Face.BACK`.
     X = auto()  #: `X` axis along :attr:`Face.RIGHT` and :attr:`Face.LEFT`.
     DIAG_M11 = auto()  #: Diagonal axis along :attr:`Cubie.UFL` and :attr:`Cubie.DBR` corners.
     DIAG_111 = auto()  #: Diagonal axis along :attr:`Cubie.UFR` and :attr:`Cubie.DBL` corners.
 
+    @property
+    def is_edge(self) -> bool:
+        """Whether this is an edge axis."""
+        return 0 <= self < 3
+
+    @property
+    def is_corner(self) -> bool:
+        """Whether this is a corner axis."""
+        return 3 <= self < 5
+
     @classmethod
     def axes(cls) -> Iterator["Axis"]:
         """Iterate over valid axes."""
         for i in range(5):
+            yield cls(i)
+
+    @classmethod
+    def edge_axes(cls) -> Iterator["Axis"]:
+        """Iterate over edge axes."""
+        for i in range(3):
+            yield cls(i)
+
+    @classmethod
+    def corner_axes(cls) -> Iterator["Axis"]:
+        """Iterate over corner axes."""
+        for i in range(3, 5):
             yield cls(i)
 
 
@@ -109,13 +132,18 @@ class Color(IntEnum):
             * 'Y' means :attr:`Color.YELLOW`.
             * 'B' means :attr:`Color.BLUE`.
             * 'O' means :attr:`Color.ORANGE`.
+
+        Returns
+        -------
+        color : Color
+            :class:`Color` enum.
         """
         if not isinstance(char, str):
             raise TypeError(f"char must be str, not {type(char).__name__}")
         try:
             return char_color[char]
         except KeyError:
-            raise ValueError(f"invalid color character, got '{char}'")
+            raise ValueError(f"invalid color character (got '{char}')")
 
     @classmethod
     def colors(cls) -> Iterator["Color"]:
@@ -152,7 +180,7 @@ class Face(IntEnum):
         return face_opposite[self]
 
     @property
-    def _cubie_slice(self) -> tuple[int | slice]:
+    def _cubie_slice(self) -> tuple[int | slice, ...]:
         """Face slice for the cubie representation."""
         return face_cubie_slice[self]
 
@@ -173,13 +201,18 @@ class Face(IntEnum):
             * 'D' means :attr:`Face.DOWN`.
             * 'B' means :attr:`Face.BACK`.
             * 'L' means :attr:`Face.LEFT`.
+
+        Returns
+        -------
+        face : Face
+            :class:`Face` enum.
         """
         if not isinstance(char, str):
             raise TypeError(f"char must be str, not {type(char).__name__}")
         try:
             return char_face[char]
         except KeyError:
-            raise ValueError(f"invalid face character, got '{char}'")
+            raise ValueError(f"invalid face character (got '{char}')")
 
     @classmethod
     def faces(cls) -> Iterator["Face"]:
@@ -241,7 +274,7 @@ class Cubie(IntEnum):
         return cubie_axis[self]
 
     @property
-    def _index(self) -> tuple[int, int, int]:
+    def _index(self) -> tuple[int, ...]:
         """
         Cubie index.
 
@@ -283,14 +316,19 @@ class Cubie(IntEnum):
 
         Parameters
         ----------
-        faces : list[Face]
+        faces : list of Face
             Visible faces of the cubie. If `faces` represent a corner,
             they must be provided in clockwise order to verify that it's a valid corner.
+
+        Returns
+        -------
+        cubie : Cubie
+            :class:`Cubie` enum.
         """
         if not isinstance(faces, list):
             raise TypeError(f"faces must be list, not {type(faces).__name__}")
         if len(faces) > 3:
-            raise ValueError(f"faces length must be at most 3, got {len(faces)}")
+            raise ValueError(f"faces length must be at most 3 (got {len(faces)})")
         for face in faces:
             if not isinstance(face, Face):
                 raise TypeError(f"faces elements must be Face, not {type(faces[0]).__name__}")
@@ -298,7 +336,7 @@ class Cubie(IntEnum):
         try:
             return faces_cubie[tuple(min_faces)]
         except KeyError:
-            raise ValueError(f"invalid cubie faces, got {faces}")
+            raise ValueError(f"invalid cubie faces (got {faces})")
 
     @classmethod
     def cubies(cls) -> Iterator["Cubie"]:
@@ -393,7 +431,7 @@ class Move(IntEnum):
         str = self.name
         if str[0] in "XYZ":
             str = str[0].lower() + str[1:]
-        if str[1] == "W":
+        elif str[1] == "W":
             str = self.name[0] + "w" + self.name[2:]
         if str[-1] == "1":
             str = str[:-1]
@@ -466,13 +504,18 @@ class Move(IntEnum):
         ----------
         string : str
             String representation of the move.
+
+        Returns
+        -------
+        move : Move
+            :class:`Move` enum.
         """
         if not isinstance(string, str):
             raise TypeError(f"string must be str, not {type(string).__name__}")
         try:
             return str_move[string]
         except KeyError:
-            raise ValueError(f"invalid move string, got '{string}'")
+            raise ValueError(f"invalid move string (got '{string}')")
 
     @classmethod
     def moves(cls) -> Iterator["Move"]:
@@ -587,7 +630,7 @@ cubie_axis = {
 }
 
 cubie_index = {
-    Cubie.NONE: (slice(None), slice(None), slice(None)),
+    Cubie.NONE: (1, 1, 1),
     # corners
     Cubie.UBL: (0, 0, 0),
     Cubie.UFR: (0, 2, 2),
