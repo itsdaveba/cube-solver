@@ -129,6 +129,96 @@ def test_enums(response):
     assert len([*Move.rotations()]) == 9
 
 
+def test_utils(response):
+    # orientation array
+    with pytest.raises(TypeError, match=r"coord must be int, not NoneType"):
+        utils.get_orientation_array(None, None, None)
+    with pytest.raises(TypeError, match=r"v must be int, not NoneType"):
+        utils.get_orientation_array(-1, None, None)
+    with pytest.raises(TypeError, match=r"n must be int, not NoneType"):
+        utils.get_orientation_array(-1, 0, None)
+    with pytest.raises(ValueError, match=r"v must be positive \(got 0\)"):
+        utils.get_orientation_array(-1, 0, 0)
+    with pytest.raises(ValueError, match=r"n must be positive \(got 0\)"):
+        utils.get_orientation_array(-1, 1, 0)
+    with pytest.raises(ValueError, match=r"coord must be >= 0 and < 1 \(got -1\)"):
+        utils.get_orientation_array(-1, 1, 1)
+    assert np.all(utils.get_orientation_array(0, 1, 1) == [0])
+    with pytest.raises(ValueError, match=r"coord must be >= 0 and < 65536 \(got 65536\)"):
+        utils.get_orientation_array(65536, 4, 8)
+    assert np.all(utils.get_orientation_array(58596, 4, 8) == [3, 2, 1, 0, 3, 2, 1, 0])
+
+    # permutation array
+    with pytest.raises(TypeError, match=r"coord must be int, not NoneType"):
+        utils.get_permutation_array(None, None, None)
+    with pytest.raises(TypeError, match=r"n must be int, not NoneType"):
+        utils.get_permutation_array(-1, None, None)
+    with pytest.raises(TypeError, match=r"force_even_parity must be bool, not NoneType"):
+        utils.get_permutation_array(-1, 0, None)
+    # force_even_parity = False
+    with pytest.raises(ValueError, match=r"n must be positive \(got 0\)"):
+        utils.get_permutation_array(-1, 0)
+    with pytest.raises(ValueError, match=r"coord must be >= 0 and < 1 \(got -1\)"):
+        utils.get_permutation_array(-1, 1)
+    permutation, parity = utils.get_permutation_array(0, 1)
+    assert np.all(permutation == [0])
+    assert parity is False
+    with pytest.raises(ValueError, match=r"coord must be >= 0 and < 40320 \(got 40320\)"):
+        utils.get_permutation_array(40320, 8)
+    permutation, parity = utils.get_permutation_array(16702, 8)
+    assert np.all(permutation == [3, 2, 1, 0, 7, 6, 4, 5])
+    assert parity is True
+    # force_even_parity = True
+    with pytest.raises(ValueError, match=r"n must be > 1 \(got 1\)"):
+        utils.get_permutation_array(-1, 1, True)
+    with pytest.raises(ValueError, match=r"coord must be >= 0 and < 1 \(got -1\)"):
+        utils.get_permutation_array(-1, 2, True)
+    permutation, parity = utils.get_permutation_array(0, 2, True)
+    assert np.all(permutation == [0, 1])
+    assert parity is False
+    with pytest.raises(ValueError, match=r"coord must be >= 0 and < 20160 \(got 20160\)"):
+        utils.get_permutation_array(20160, 8, True)
+    permutation, parity = utils.get_permutation_array(16702, 8, True)
+    assert np.all(permutation == [6, 4, 2, 1, 7, 3, 5, 0])
+    assert parity is False
+    # no pre-computed factorial
+    permutation, parity = utils.get_permutation_array(16702, 13)
+    assert np.all(permutation == [0, 1, 2, 3, 4, 8, 7, 6, 5, 12, 11, 9, 10])
+    assert parity is True
+
+    # combination array
+    with pytest.raises(TypeError, match=r"coord must be int, not NoneType"):
+        utils.get_combination_array(None, None)
+    with pytest.raises(TypeError, match=r"n must be int, not NoneType"):
+        utils.get_combination_array(-1, None)
+    with pytest.raises(ValueError, match=r"n must be positive \(got 0\)"):
+        utils.get_combination_array(-1, 0)
+    with pytest.raises(ValueError, match=r"coord must be >= 0 \(got -1\)"):
+        utils.get_combination_array(-1, 1)
+    assert np.all(utils.get_combination_array(0, 1) == [0])
+    assert np.all(utils.get_combination_array(450, 4) == [0, 1, 10, 11])
+    assert np.all(utils.get_combination_array(450, 5) == [1, 6, 8, 9, 10])
+
+    # partial permutation array
+    with pytest.raises(TypeError, match=r"coord must be int, not NoneType"):
+        utils.get_partial_permutation_array(None, None)
+    with pytest.raises(TypeError, match=r"n must be int, not NoneType"):
+        utils.get_partial_permutation_array(-1, None)
+    with pytest.raises(ValueError, match=r"n must be positive \(got 0\)"):
+        utils.get_partial_permutation_array(-1, 0)
+    with pytest.raises(ValueError, match=r"coord must be >= 0 \(got -1\)"):
+        utils.get_partial_permutation_array(-1, 1)
+    partial_permutation, combination = utils.get_partial_permutation_array(0, 1)
+    assert np.all(partial_permutation == [0])
+    assert np.all(combination == [0])
+    partial_permutation, combination = utils.get_partial_permutation_array(450, 4)
+    assert np.all(partial_permutation == [3, 0, 1, 2])
+    assert np.all(combination == [1, 2, 3, 6])
+    partial_permutation, combination = utils.get_partial_permutation_array(450, 13)
+    assert np.all(partial_permutation == [0, 1, 2, 3, 4, 5, 6, 10, 11, 12, 7, 8, 9])
+    assert np.all(combination == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+
+
 def test_cube(response):
     """Sample pytest test function with the pytest fixture as an argument."""
     cube = Cube()
