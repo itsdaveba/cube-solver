@@ -31,10 +31,16 @@ def test_enums(response):
 
     # layer
     assert hasattr(Layer, "NONE")
+    assert Layer.NONE.char == "N"
     assert Layer.NONE.axis == Axis.NONE
     assert Layer.NONE.perm == [[Cubie.NONE]]
     assert all(layer.is_outer for layer in Layer.outers())
     assert all(layer.is_inner for layer in Layer.inners())
+    with pytest.raises(TypeError, match=r"char must be str, not NoneType"):
+        Layer.from_char(None)
+    with pytest.raises(ValueError, match=r"invalid face character \(got 'None'\)"):
+        Layer.from_char("None")
+    assert all(layer == Layer.from_char(layer.char) for layer in Layer)
     assert len([*Layer.layers()]) == 9
     assert len([*Layer.outers()]) == 6
     assert len([*Layer.inners()]) == 3
@@ -55,6 +61,7 @@ def test_enums(response):
     assert Face.NONE.axis == Axis.NONE
     assert Face.UP.axis == Axis.Y
     assert Face.NONE.opposite == Face.NONE
+    assert all([face.axis == face.opposite.axis for face in Face])
     assert Face.NONE._cubie_slice == (slice(None), slice(None), slice(None), slice(None))
     with pytest.raises(TypeError, match=r"char must be str, not NoneType"):
         Face.from_char(None)
@@ -104,9 +111,9 @@ def test_enums(response):
     assert Move.X1.axis == Axis.X
     assert Move.U1.axis == Axis.Y
     assert Move.NONE.layers == [Layer.NONE]
-    assert Move.X1.layers == [Layer.R, Layer.L, Layer.M]
-    assert Move.FW1.layers == [Layer.F, Layer.S]
-    assert Move.U1.layers == [Layer.U]
+    assert Move.X1.layers == [Layer.RIGHT, Layer.LEFT, Layer.MIDDLE]
+    assert Move.FW1.layers == [Layer.FRONT, Layer.STANDING]
+    assert Move.U1.layers == [Layer.UP]
     assert Move.NONE.shifts == [0]
     assert Move.X1.shifts == [1, -1, -1]
     assert Move.FW1.shifts == [1, 1]

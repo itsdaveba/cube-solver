@@ -11,7 +11,7 @@ class IntEnum(int, Enum):
 # TODO test different axis order
 class Axis(IntEnum):
     """Axis enumeration."""
-    NONE = -1  #: no axis.
+    NONE = -1  #: No axis.
     # axes x, y, and z are also used fot the cubie representation (i.e. they must be defined before diagonal axes)
     Y = auto()  #: `Y` axis along :attr:`Face.UP` and :attr:`Face.DOWN`.
     Z = auto()  #: `Z` axis along :attr:`Face.FRONT` and :attr:`Face.BACK`.
@@ -50,16 +50,21 @@ class Axis(IntEnum):
 
 class Layer(IntEnum):
     """Layer enumeration."""
-    NONE = -1  #: no layer.
-    U = auto()  #: `U` layer.
-    F = auto()  #: `F` layer.
-    R = auto()  #: `R` layer.
-    D = auto()  #: `D` layer.
-    B = auto()  #: `B` layer.
-    L = auto()  #: `L` layer.
-    M = auto()  #: `M` layer.
-    E = auto()  #: `E` layer.
-    S = auto()  #: `S` layer.
+    NONE = -1  #: No layer.
+    UP = auto()  #: `Up` layer.
+    FRONT = auto()  #: `Front` layer.
+    RIGHT = auto()  #: `Right` layer.
+    DOWN = auto()  #: `Down` layer.
+    BACK = auto()  #: `Back` layer.
+    LEFT = auto()  #: `Left` layer.
+    MIDDLE = auto()  #: `Middle` layer.
+    EQUATOR = auto()  #: `Equator` layer.
+    STANDING = auto()  #: `Standing` layer.
+
+    @property
+    def char(self) -> str:
+        """Character representation of the layer."""
+        return self.name[0]
 
     @property
     def axis(self) -> Axis:
@@ -80,6 +85,39 @@ class Layer(IntEnum):
     def is_inner(self) -> bool:
         """Whether this is an inner layer."""
         return 6 <= self < 9
+    
+    @classmethod
+    def from_char(cls, char: str) -> "Layer":
+        """
+        Return the corresponding :class:`Layer` enum.
+
+        Parameters
+        ----------
+        char : {'N', 'U', 'F', 'R', 'D', 'B', 'L', 'M', 'E', 'S'}
+            Character representing the layer.
+
+            * 'N' means :attr:`Layer.NONE`.
+            * 'U' means :attr:`Layer.UP`.
+            * 'F' means :attr:`Layer.FRONT`.
+            * 'R' means :attr:`Layer.RIGHT`.
+            * 'D' means :attr:`Layer.DOWN`.
+            * 'B' means :attr:`Layer.BACK`.
+            * 'L' means :attr:`Layer.LEFT`.
+            * 'M' means :attr:`Layer.MIDDLE`.
+            * 'E' means :attr:`Layer.EQUATOR`.
+            * 'S' means :attr:`Layer.STANDING`.
+
+        Returns
+        -------
+        layer : Layer
+            :class:`Layer` enum.
+        """
+        if not isinstance(char, str):
+            raise TypeError(f"char must be str, not {type(char).__name__}")
+        try:
+            return char_layer[char]
+        except KeyError:
+            raise ValueError(f"invalid face character (got '{char}')")
 
     @classmethod
     def layers(cls) -> Iterator["Layer"]:
@@ -172,7 +210,7 @@ class Face(IntEnum):
         """Face axis."""
         if self == Face.NONE:
             return Axis.NONE
-        return Layer[self.char].axis
+        return Layer[self.name].axis
 
     @property
     def opposite(self) -> "Face":
@@ -192,7 +230,7 @@ class Face(IntEnum):
         Parameters
         ----------
         char : {'N', 'U', 'F', 'R', 'D', 'B', 'L'}
-            Character representing the color.
+            Character representing the face.
 
             * 'N' means :attr:`Face.NONE`.
             * 'U' means :attr:`Face.UP`.
@@ -446,7 +484,7 @@ class Move(IntEnum):
             return Axis.NONE
         if self.is_rotation:
             return Axis[self.name[0]]
-        return Layer[self.name[0]].axis
+        return Layer.from_char(self.name[0]).axis
 
     @property
     def layers(self) -> list[Layer]:
@@ -455,7 +493,7 @@ class Move(IntEnum):
             return [Layer.NONE]
         if self.is_rotation:
             return [layer for layer in Layer.layers() if layer.axis == self.axis]
-        layers = [Layer[self.name[0]]]
+        layers = [Layer.from_char(self.name[0])]
         if self.is_wide:
             layers += [layer for layer in Layer.inners() if layer.axis == self.axis]
         return layers
@@ -472,7 +510,7 @@ class Move(IntEnum):
         if self.is_wide:
             if self.axis == Axis.Z:
                 shift = -shift
-            shifts += [-shift if Move[self.axis.name + "1"].layers[0].name == self.name[0] else shift]
+            shifts += [-shift if Move[self.axis.name + "1"].layers[0].char == self.name[0] else shift]
         return shifts
 
     @property
@@ -550,28 +588,28 @@ class Move(IntEnum):
 
 layer_axis = {
     Layer.NONE: Axis.NONE,
-    Layer.U: Axis.Y,
-    Layer.F: Axis.Z,
-    Layer.R: Axis.X,
-    Layer.D: Axis.Y,
-    Layer.B: Axis.Z,
-    Layer.L: Axis.X,
-    Layer.M: Axis.X,
-    Layer.E: Axis.Y,
-    Layer.S: Axis.Z
+    Layer.UP: Axis.Y,
+    Layer.FRONT: Axis.Z,
+    Layer.RIGHT: Axis.X,
+    Layer.DOWN: Axis.Y,
+    Layer.BACK: Axis.Z,
+    Layer.LEFT: Axis.X,
+    Layer.MIDDLE: Axis.X,
+    Layer.EQUATOR: Axis.Y,
+    Layer.STANDING: Axis.Z
 }
 
 layer_perm = {
     Layer.NONE: [[Cubie.NONE]],
-    Layer.U: [[Cubie.UBL, Cubie.UBR, Cubie.UFR, Cubie.UFL], [Cubie.UB, Cubie.UR, Cubie.UF, Cubie.UL]],
-    Layer.F: [[Cubie.UFR, Cubie.DFR, Cubie.DFL, Cubie.UFL], [Cubie.UF, Cubie.FR, Cubie.DF, Cubie.FL]],
-    Layer.R: [[Cubie.UFR, Cubie.UBR, Cubie.DBR, Cubie.DFR], [Cubie.UR, Cubie.BR, Cubie.DR, Cubie.FR]],
-    Layer.D: [[Cubie.DBR, Cubie.DBL, Cubie.DFL, Cubie.DFR], [Cubie.DB, Cubie.DL, Cubie.DF, Cubie.DR]],
-    Layer.B: [[Cubie.UBL, Cubie.DBL, Cubie.DBR, Cubie.UBR], [Cubie.UB, Cubie.BL, Cubie.DB, Cubie.BR]],
-    Layer.L: [[Cubie.UBL, Cubie.UFL, Cubie.DFL, Cubie.DBL], [Cubie.UL, Cubie.FL, Cubie.DL, Cubie.BL]],
-    Layer.M: [[Cubie.U, Cubie.F, Cubie.D, Cubie.B], [Cubie.UB, Cubie.UF, Cubie.DF, Cubie.DB]],
-    Layer.E: [[Cubie.F, Cubie.R, Cubie.B, Cubie.L], [Cubie.BL, Cubie.FL, Cubie.FR, Cubie.BR]],
-    Layer.S: [[Cubie.U, Cubie.R, Cubie.D, Cubie.L], [Cubie.UL, Cubie.UR, Cubie.DR, Cubie.DL]]
+    Layer.UP: [[Cubie.UBL, Cubie.UBR, Cubie.UFR, Cubie.UFL], [Cubie.UB, Cubie.UR, Cubie.UF, Cubie.UL]],
+    Layer.FRONT: [[Cubie.UFR, Cubie.DFR, Cubie.DFL, Cubie.UFL], [Cubie.UF, Cubie.FR, Cubie.DF, Cubie.FL]],
+    Layer.RIGHT: [[Cubie.UFR, Cubie.UBR, Cubie.DBR, Cubie.DFR], [Cubie.UR, Cubie.BR, Cubie.DR, Cubie.FR]],
+    Layer.DOWN: [[Cubie.DBR, Cubie.DBL, Cubie.DFL, Cubie.DFR], [Cubie.DB, Cubie.DL, Cubie.DF, Cubie.DR]],
+    Layer.BACK: [[Cubie.UBL, Cubie.DBL, Cubie.DBR, Cubie.UBR], [Cubie.UB, Cubie.BL, Cubie.DB, Cubie.BR]],
+    Layer.LEFT: [[Cubie.UBL, Cubie.UFL, Cubie.DFL, Cubie.DBL], [Cubie.UL, Cubie.FL, Cubie.DL, Cubie.BL]],
+    Layer.MIDDLE: [[Cubie.U, Cubie.F, Cubie.D, Cubie.B], [Cubie.UB, Cubie.UF, Cubie.DF, Cubie.DB]],
+    Layer.EQUATOR: [[Cubie.F, Cubie.R, Cubie.B, Cubie.L], [Cubie.BL, Cubie.FL, Cubie.FR, Cubie.BR]],
+    Layer.STANDING: [[Cubie.U, Cubie.R, Cubie.D, Cubie.L], [Cubie.UL, Cubie.UR, Cubie.DR, Cubie.DL]]
 }
 
 face_opposite = {
@@ -664,6 +702,7 @@ cubie_index = {
     Cubie.CORE: (1, 1, 1)
 }
 
+char_layer = {layer.char: layer for layer in Layer}
 char_color = {color.char: color for color in Color}
 char_face = {face.char: face for face in Face}
 faces_cubie = {tuple(min([cb.faces[i:] + cb.faces[:i] for i in range(len(cb.faces))])if cb.faces else []): cb for cb in Cubie}
