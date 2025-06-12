@@ -1,13 +1,13 @@
+"""Defs module."""
 import numpy as np
 
 NONE = -1
 
-SIZE = 3
-NUM_CORNERS = 8
-NUM_EDGES = 12
+SIZE = 3  #: Cube size.
+NUM_CORNERS = 8  #: Number of corners.
+NUM_EDGES = 12  #: Number of edges.
 NUM_AXIS_ELEMS = 4
 
-# TODO print to see how many times this is run
 # precomputed factorials and combinations
 FACTORIAL = np.cumprod([1] + list(range(1, NUM_EDGES + 1)))
 COMBINATION = np.zeros((np.max([NUM_CORNERS, NUM_EDGES]) + 1, NUM_AXIS_ELEMS + 1), dtype=int)
@@ -16,7 +16,22 @@ for i in range(1, NUM_AXIS_ELEMS + 1):
     COMBINATION[i:, i] = COMBINATION[i-1:-1, i-1].cumsum()
 
 # coordinate sizes
-CORNER_ORIENTATION_SIZE = 3 ** (NUM_CORNERS - 1)
+CORNER_ORIENTATION_SIZE = (3 ** (NUM_CORNERS - 1))
+"""Number of possible corner orientations. ``3 ^ 7``"""
 EDGE_ORIENTATION_SIZE = 2 ** (NUM_EDGES - 1)
-CORNER_PERMUTATION_SIZE = FACTORIAL[NUM_CORNERS]
-EDGE_PERMUTATION_SIZE = FACTORIAL[NUM_EDGES] // 2
+"""Number of possible edge orientations. ``2 ^ 11``"""
+CORNER_PERMUTATION_SIZE = FACTORIAL[NUM_CORNERS].item()
+"""Number of possible corner permutations. ``8!``"""
+EDGE_PERMUTATION_SIZE = FACTORIAL[NUM_EDGES].item() // 2
+"""Number of possible edge permutations. ``12! / 2``"""
+
+PARTIAL_CORNER_PERMUTATION_SIZE = FACTORIAL[NUM_CORNERS].item() // FACTORIAL[NUM_CORNERS - NUM_AXIS_ELEMS].item()
+PARTIAL_EDGE_PERMUTATION_SIZE = FACTORIAL[NUM_EDGES].item() // FACTORIAL[NUM_EDGES - NUM_AXIS_ELEMS].item()
+
+NUM_CUBE_POSITIONS = CORNER_ORIENTATION_SIZE * EDGE_ORIENTATION_SIZE * CORNER_PERMUTATION_SIZE * EDGE_PERMUTATION_SIZE
+"""
+Number of all possible cube positions. ``3 ^ 7 * 2 ^ 11 * 8! * 12! / 2``
+
+:attr:`CORNER_ORIENTATION_SIZE` *:attr:`EDGE_ORIENTATION_SIZE` *
+:attr:`CORNER_PERMUTATION_SIZE` * :attr:`EDGE_PERMUTATION_SIZE`
+"""
