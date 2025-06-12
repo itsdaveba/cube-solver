@@ -85,7 +85,7 @@ class Layer(IntEnum):
     def is_inner(self) -> bool:
         """Whether this is an inner layer."""
         return 6 <= self < 9
-    
+
     @classmethod
     def from_char(cls, char: str) -> "Layer":
         """
