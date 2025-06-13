@@ -96,16 +96,16 @@ class Layer(IntEnum):
         char : {'N', 'U', 'F', 'R', 'D', 'B', 'L', 'M', 'E', 'S'}
             Character representing the layer.
 
-            * 'N' means :attr:`Layer.NONE`.
-            * 'U' means :attr:`Layer.UP`.
-            * 'F' means :attr:`Layer.FRONT`.
-            * 'R' means :attr:`Layer.RIGHT`.
-            * 'D' means :attr:`Layer.DOWN`.
-            * 'B' means :attr:`Layer.BACK`.
-            * 'L' means :attr:`Layer.LEFT`.
-            * 'M' means :attr:`Layer.MIDDLE`.
-            * 'E' means :attr:`Layer.EQUATOR`.
-            * 'S' means :attr:`Layer.STANDING`.
+            * `'N'` means :attr:`Layer.NONE`.
+            * `'U'` means :attr:`Layer.UP`.
+            * `'F'` means :attr:`Layer.FRONT`.
+            * `'R'` means :attr:`Layer.RIGHT`.
+            * `'D'` means :attr:`Layer.DOWN`.
+            * `'B'` means :attr:`Layer.BACK`.
+            * `'L'` means :attr:`Layer.LEFT`.
+            * `'M'` means :attr:`Layer.MIDDLE`.
+            * `'E'` means :attr:`Layer.EQUATOR`.
+            * `'S'` means :attr:`Layer.STANDING`.
 
         Returns
         -------
@@ -163,13 +163,13 @@ class Color(IntEnum):
         char : {'N', 'W', 'G', 'R', 'Y', 'B', 'O'}
             Character representing the color.
 
-            * 'N' means :attr:`Color.NONE`.
-            * 'W' means :attr:`Color.WHITE`.
-            * 'G' means :attr:`Color.GREEN`.
-            * 'R' means :attr:`Color.RED`.
-            * 'Y' means :attr:`Color.YELLOW`.
-            * 'B' means :attr:`Color.BLUE`.
-            * 'O' means :attr:`Color.ORANGE`.
+            * `'N'` means :attr:`Color.NONE`.
+            * `'W'` means :attr:`Color.WHITE`.
+            * `'G'` means :attr:`Color.GREEN`.
+            * `'R'` means :attr:`Color.RED`.
+            * `'Y'` means :attr:`Color.YELLOW`.
+            * `'B'` means :attr:`Color.BLUE`.
+            * `'O'` means :attr:`Color.ORANGE`.
 
         Returns
         -------
@@ -232,13 +232,13 @@ class Face(IntEnum):
         char : {'N', 'U', 'F', 'R', 'D', 'B', 'L'}
             Character representing the face.
 
-            * 'N' means :attr:`Face.NONE`.
-            * 'U' means :attr:`Face.UP`.
-            * 'F' means :attr:`Face.FRONT`.
-            * 'R' means :attr:`Face.RIGHT`.
-            * 'D' means :attr:`Face.DOWN`.
-            * 'B' means :attr:`Face.BACK`.
-            * 'L' means :attr:`Face.LEFT`.
+            * `'N'` means :attr:`Face.NONE`.
+            * `'U'` means :attr:`Face.UP`.
+            * `'F'` means :attr:`Face.FRONT`.
+            * `'R'` means :attr:`Face.RIGHT`.
+            * `'D'` means :attr:`Face.DOWN`.
+            * `'B'` means :attr:`Face.BACK`.
+            * `'L'` means :attr:`Face.LEFT`.
 
         Returns
         -------
