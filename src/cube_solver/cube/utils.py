@@ -285,9 +285,9 @@ def get_permutation_parity(permutation: np.ndarray) -> bool:
     --------
     >>> import numpy as np
     >>> from cube_solver.cube.utils import get_permutation_parity
-    >>> get_permutation_parity(np.array([1, 0, 2])
+    >>> get_permutation_parity(np.array([1, 0, 2]))
     True
-    >>> get_permutation_parity(np.array([2, 0, 1])
+    >>> get_permutation_parity(np.array([2, 0, 1]))
     False
     """
     coord = get_permutation_coord(permutation)

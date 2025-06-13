@@ -70,7 +70,7 @@ def test_enums(response):
     assert Face.UP.axis == Axis.Y
     assert Face.NONE.opposite == Face.NONE
     assert all([face.axis == face.opposite.axis for face in Face])
-    assert Face.NONE._cubie_slice == (slice(None), slice(None), slice(None), slice(None))
+    assert Face.NONE._index == (slice(None), slice(None), slice(None), slice(None))
     with pytest.raises(TypeError, match=r"char must be str, not NoneType"):
         Face.from_char(None)
     with pytest.raises(ValueError, match=r"invalid face character \(got 'None'\)"):

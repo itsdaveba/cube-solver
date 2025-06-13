@@ -256,8 +256,8 @@ class Face(IntEnum):
         return face_opposite[self]
 
     @property
-    def _cubie_slice(self) -> tuple[int | slice, ...]:
-        """Face slice for the cubie representation."""
+    def _index(self) -> tuple[int | slice, ...]:
+        """Face index for the color representation array."""
         return face_cubie_slice[self]
 
     @classmethod
@@ -352,7 +352,7 @@ class Cubie(IntEnum):
         """
         Cubie index.
 
-        Used as the index of the cubie representation array.
+        Used as the index of the color representation array.
         """
         return cubie_index[self]
 
