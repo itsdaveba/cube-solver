@@ -7,7 +7,7 @@ import numpy as np
 
 from cube_solver import Cube
 from cube_solver.cube import utils
-from cube_solver.cube.enums import Axis, Layer, Color, Face, Cubie, Move
+from cube_solver.cube.enums import Axis, Orbit, Layer, Color, Face, Cubie, Move
 
 
 @pytest.fixture
@@ -23,11 +23,19 @@ def response():
 def test_enums(response):
     # axis
     assert hasattr(Axis, "NONE")
-    assert all(axis.is_edge for axis in Axis.edge_axes())
-    assert all(axis.is_corner for axis in Axis.corner_axes())
-    assert len([*Axis.axes()]) == 5
-    assert len([*Axis.edge_axes()]) == 3
-    assert len([*Axis.corner_axes()]) == 2
+    assert all(axis.is_cartesian for axis in Axis.cartesian_axes())
+    assert all(axis.is_diagonal for axis in Axis.diagonal_axes())
+    assert len([*Axis.axes()]) == 7
+    assert len([*Axis.cartesian_axes()]) == 3
+    assert len([*Axis.diagonal_axes()]) == 4
+
+    # orbit
+    assert hasattr(Orbit, "NONE")
+    assert all(orbit.is_slice for orbit in Orbit.slices())
+    assert all(orbit.is_tetrad for orbit in Orbit.tetrads())
+    assert len([*Orbit.orbits()]) == 5
+    assert len([*Orbit.slices()]) == 3
+    assert len([*Orbit.tetrads()]) == 2
 
     # layer
     assert hasattr(Layer, "NONE")
@@ -72,7 +80,7 @@ def test_enums(response):
 
     # cubie
     assert hasattr(Cubie, "NONE")
-    assert Cubie.NONE.axis == Axis.NONE
+    assert Cubie.NONE.orbit == Orbit.NONE
     assert Cubie.NONE._index == (1, 1, 1)
     assert Cubie.NONE.faces == [Face.NONE]
     assert Cubie.CORE.faces == []

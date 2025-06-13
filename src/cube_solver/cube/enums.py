@@ -8,42 +8,80 @@ class IntEnum(int, Enum):
     __repr__ = Enum.__str__
 
 
-# TODO test different axis order
 class Axis(IntEnum):
     """Axis enumeration."""
     NONE = -1  #: No axis.
-    # axes x, y, and z are also used fot the cubie representation (i.e. they must be defined before diagonal axes)
+    X = auto()  #: `X` axis along :attr:`Face.RIGHT` and :attr:`Face.LEFT`.
     Y = auto()  #: `Y` axis along :attr:`Face.UP` and :attr:`Face.DOWN`.
     Z = auto()  #: `Z` axis along :attr:`Face.FRONT` and :attr:`Face.BACK`.
-    X = auto()  #: `X` axis along :attr:`Face.RIGHT` and :attr:`Face.LEFT`.
-    DIAG_M11 = auto()  #: Diagonal axis along :attr:`Cubie.UFL` and :attr:`Cubie.DBR` corners.
     DIAG_111 = auto()  #: Diagonal axis along :attr:`Cubie.UFR` and :attr:`Cubie.DBL` corners.
+    DIAG_M11 = auto()  #: Diagonal axis along :attr:`Cubie.UFL` and :attr:`Cubie.DBR` corners.
+    DIAG_1M1 = auto()  #: Diagonal axis along :attr:`Cubie.UBL` and :attr:`Cubie.DFR` corners.
+    DIAG_11M = auto()  #: Diagonal axis along :attr:`Cubie.UBR` and :attr:`Cubie.DFL` corners.
 
     @property
-    def is_edge(self) -> bool:
-        """Whether this is an edge axis."""
+    def is_cartesian(self) -> bool:
+        """Whether this is a cartesian axis."""
         return 0 <= self < 3
 
     @property
-    def is_corner(self) -> bool:
-        """Whether this is a corner axis."""
-        return 3 <= self < 5
+    def is_diagonal(self) -> bool:
+        """Whether this is a diagonal axis."""
+        return 3 <= self < 7
 
     @classmethod
     def axes(cls) -> Iterator["Axis"]:
         """Iterate over valid axes."""
-        for i in range(5):
+        for i in range(7):
             yield cls(i)
 
     @classmethod
-    def edge_axes(cls) -> Iterator["Axis"]:
-        """Iterate over edge axes."""
+    def cartesian_axes(cls) -> Iterator["Axis"]:
+        """Iterate over cartesian axes."""
         for i in range(3):
             yield cls(i)
 
     @classmethod
-    def corner_axes(cls) -> Iterator["Axis"]:
-        """Iterate over corner axes."""
+    def diagonal_axes(cls) -> Iterator["Axis"]:
+        """Iterate over diagonal axes."""
+        for i in range(3, 7):
+            yield cls(i)
+
+
+class Orbit(IntEnum):
+    """Orbit enumeration."""
+    NONE = -1  #: No orbit.
+    SLICE_MIDDLE = auto()  #: `Middle` slice orbit.
+    SLICE_EQUATOR = auto()  #: `Equator` slice orbit.
+    SLICE_STANDING = auto()  #: `Standing` slice orbit.
+    TETRAD_111 = auto()  #: `Tetrad` orbit containing the :attr:`Cubie.UFR` corner.
+    TETRAD_M11 = auto()  #: `Tetrad` orbit containing the :attr:`Cubie.UFL` corner.
+
+    @property
+    def is_slice(self) -> bool:
+        """Whether this is a slice orbit."""
+        return 0 <= self < 3
+
+    @property
+    def is_tetrad(self) -> bool:
+        """Whether this is a tetrad orbit."""
+        return 3 <= self < 5
+
+    @classmethod
+    def orbits(cls) -> Iterator["Orbit"]:
+        """Iterate over valid orbits."""
+        for i in range(5):
+            yield cls(i)
+
+    @classmethod
+    def slices(cls) -> Iterator["Orbit"]:
+        """Iterate over slice orbits."""
+        for i in range(3):
+            yield cls(i)
+
+    @classmethod
+    def tetrads(cls) -> Iterator["Orbit"]:
+        """Iterate over tetrad orbits."""
         for i in range(3, 5):
             yield cls(i)
 
@@ -295,21 +333,19 @@ class Cubie(IntEnum):
     CORE = auto()  #: `Core`.
 
     @property
-    def axis(self) -> Axis:
+    def orbit(self) -> Orbit:
         """
-        Cubie axis.
+        Cubie orbit.
 
-        * :attr:`Axis.NONE`: :attr:`Cubie.NONE`, :attr:`Cubie.CORE`
-        * :attr:`Axis.X`: :attr:`Cubie.R`, :attr:`Cubie.L`, :attr:`Cubie.UB`,
-          :attr:`Cubie.UF`, :attr:`Cubie.DB`, :attr:`Cubie.DF`
-        * :attr:`Axis.Y`: :attr:`Cubie.U`, :attr:`Cubie.D`, :attr:`Cubie.BL`,
-          :attr:`Cubie.BR`, :attr:`Cubie.FL`, :attr:`Cubie.FR`
-        * :attr:`Axis.Z`: :attr:`Cubie.F`, :attr:`Cubie.B`, :attr:`Cubie.UL`,
-          :attr:`Cubie.UR`, :attr:`Cubie.DL`, :attr:`Cubie.DR`
-        * :attr:`Axis.DIAG_111`: :attr:`Cubie.UBR`, :attr:`Cubie.UFL`, :attr:`Cubie.DBL`, :attr:`Cubie.DFR`
-        * :attr:`Axis.DIAG_M11`: :attr:`Cubie.UBL`, :attr:`Cubie.UFR`, :attr:`Cubie.DBR`, :attr:`Cubie.DFL`
+        * :attr:`Orbit.NONE`: :attr:`Cubie.NONE`, :attr:`Cubie.CORE`, :attr:`Cubie.U`, :attr:`Cubie.F`,
+          :attr:`Cubie.R`, :attr:`Cubie.D`, :attr:`Cubie.B`, :attr:`Cubie.L`
+        * :attr:`Orbit.SLICE_MIDDLE`: :attr:`Cubie.UB`, :attr:`Cubie.UF`, :attr:`Cubie.DB`, :attr:`Cubie.DF`
+        * :attr:`Orbit.SLICE_EQUATOR`: :attr:`Cubie.BL`, :attr:`Cubie.BR`, :attr:`Cubie.FL`, :attr:`Cubie.FR`
+        * :attr:`Orbit.SLICE_STANDING`: :attr:`Cubie.UL`, :attr:`Cubie.UR`, :attr:`Cubie.DL`, :attr:`Cubie.DR`
+        * :attr:`Orbit.DIAG_111`: :attr:`Cubie.UBR`, :attr:`Cubie.UFL`, :attr:`Cubie.DBL`, :attr:`Cubie.DFR`
+        * :attr:`Orbit.DIAG_M11`: :attr:`Cubie.UBL`, :attr:`Cubie.UFR`, :attr:`Cubie.DBR`, :attr:`Cubie.DFL`
         """
-        return cubie_axis[self]
+        return cubie_orbit[self]
 
     @property
     def _index(self) -> tuple[int, ...]:
@@ -328,7 +364,7 @@ class Cubie(IntEnum):
         if self == Cubie.CORE:
             return []
         faces = [Face.from_char(char) for char in self.name]
-        if self.axis == Axis.DIAG_M11:
+        if self.orbit == Orbit.TETRAD_M11:
             faces[1:] = faces[2], faces[1]
         return faces
 
@@ -632,39 +668,39 @@ face_cubie_slice = {
     Face.LEFT: (slice(None), slice(None), 0, Face.LEFT.axis)
 }
 
-cubie_axis = {
-    Cubie.NONE: Axis.NONE,
+cubie_orbit = {
+    Cubie.NONE: Orbit.NONE,
     # corners
-    Cubie.UBL: Axis.DIAG_M11,
-    Cubie.UFR: Axis.DIAG_M11,
-    Cubie.DBR: Axis.DIAG_M11,
-    Cubie.DFL: Axis.DIAG_M11,
-    Cubie.UBR: Axis.DIAG_111,
-    Cubie.UFL: Axis.DIAG_111,
-    Cubie.DBL: Axis.DIAG_111,
-    Cubie.DFR: Axis.DIAG_111,
+    Cubie.UBL: Orbit.TETRAD_M11,
+    Cubie.UFR: Orbit.TETRAD_M11,
+    Cubie.DBR: Orbit.TETRAD_M11,
+    Cubie.DFL: Orbit.TETRAD_M11,
+    Cubie.UBR: Orbit.TETRAD_111,
+    Cubie.UFL: Orbit.TETRAD_111,
+    Cubie.DBL: Orbit.TETRAD_111,
+    Cubie.DFR: Orbit.TETRAD_111,
     # edges
-    Cubie.UB: Axis.X,
-    Cubie.UF: Axis.X,
-    Cubie.DB: Axis.X,
-    Cubie.DF: Axis.X,
-    Cubie.UL: Axis.Z,
-    Cubie.UR: Axis.Z,
-    Cubie.DL: Axis.Z,
-    Cubie.DR: Axis.Z,
-    Cubie.BL: Axis.Y,
-    Cubie.BR: Axis.Y,
-    Cubie.FL: Axis.Y,
-    Cubie.FR: Axis.Y,
+    Cubie.UB: Orbit.SLICE_MIDDLE,
+    Cubie.UF: Orbit.SLICE_MIDDLE,
+    Cubie.DB: Orbit.SLICE_MIDDLE,
+    Cubie.DF: Orbit.SLICE_MIDDLE,
+    Cubie.UL: Orbit.SLICE_STANDING,
+    Cubie.UR: Orbit.SLICE_STANDING,
+    Cubie.DL: Orbit.SLICE_STANDING,
+    Cubie.DR: Orbit.SLICE_STANDING,
+    Cubie.BL: Orbit.SLICE_EQUATOR,
+    Cubie.BR: Orbit.SLICE_EQUATOR,
+    Cubie.FL: Orbit.SLICE_EQUATOR,
+    Cubie.FR: Orbit.SLICE_EQUATOR,
     # centers
-    Cubie.U: Axis.Y,
-    Cubie.F: Axis.Z,
-    Cubie.R: Axis.X,
-    Cubie.D: Axis.Y,
-    Cubie.B: Axis.Z,
-    Cubie.L: Axis.X,
+    Cubie.U: Orbit.NONE,
+    Cubie.F: Orbit.NONE,
+    Cubie.R: Orbit.NONE,
+    Cubie.D: Orbit.NONE,
+    Cubie.B: Orbit.NONE,
+    Cubie.L: Orbit.NONE,
     # core
-    Cubie.CORE: Axis.NONE
+    Cubie.CORE: Orbit.NONE
 }
 
 cubie_index = {
