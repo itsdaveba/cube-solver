@@ -203,38 +203,38 @@ class Cube:
     #     return deepcopy(self)
 
     def __repr__(self) -> str:
-        """String representation of the `Cube` object."""
-        cubies = np.full_like(self._cubies, Color.NONE)
+        """String representation of the :class:`Cube` object."""
+        solved_colors = np.full_like(self._colors, (Color.NONE,) * NUM_DIMS)
         for face in Face.faces():
-            cubies[face._cubie_slice] = self._scheme[face]
+            solved_colors[face._index][face.axis.name] = self._color_scheme[face]
 
         # centers
-        for slot in Cubie.centers():
-            self._cubies[slot._index] = cubies[slot._index]
+        for center in Cubie.centers():
+            self._colors[center._index] = solved_colors[center._index]
 
         # corners and edges
-        for slot in chain(Cubie.corners(), Cubie.edges()):  # TODO what happens when permutation has -1?
-            orientation = self.orientation[slot]
-            permutation = Cubie(self.permutation[slot])
-            cubie = cubies[permutation._index]
-            if slot.is_corner:
-                if slot.axis != permutation.axis:
-                    cubie = cubie[SWAP_CUBIE[Axis.Y]]
-                if orientation:
-                    cubie = np.roll(cubie, orientation if slot.axis == Axis.DIAG_111 else -orientation)
+        for cubie in chain(Cubie.corners(), Cubie.edges()):  # TODO what happens when permutation has -1?
+            cubie_orientation = self.orientation[cubie]
+            cubie_permutation = Cubie(self.permutation[cubie])
+            cubie_colors = solved_colors[cubie_permutation._index]
+            if cubie.is_corner:
+                if cubie.orbit != cubie_permutation.orbit:
+                    cubie_colors = cubie_colors[SWAP_CUBIE[Axis.Y]]
+                if cubie_orientation:  # TODO is this neccesary? add orientaion != NONE
+                    cubie_colors = np.roll(cubie, cubie_orientation if cubie.orbit == Orbit.TETRAD_111 else -cubie_orientation)
             else:
-                axes = {slot.axis, permutation.axis}
-                if axes == {0, 2}:
-                    cubie = np.roll(cubie, 1 if slot.axis != 2 else -1)
-                elif axes == {1, 2}:
-                    cubie = cubie[SWAP_CUBIE[Axis.Y]]
-                elif axes == {0, 1}:
-                    cubie = cubie[SWAP_CUBIE[Axis.X]]
-                if orientation:
-                    cubie = cubie[SWAP_CUBIE[slot.axis]]
-            self._cubies[slot._index] = cubie
+                orbits = {cubie.orbit, cubie_permutation.orbit}
+                if orbits == {0, 2}:
+                    cubie_colors = np.roll(cubie, 1 if cubie.orbit != 2 else -1)
+                elif orbits == {1, 2}:
+                    cubie_colors = cubie_colors[SWAP_CUBIE[Axis.Y]]
+                elif orbits == {0, 1}:
+                    cubie_colors = cubie_colors[SWAP_CUBIE[Axis.X]]
+                if cubie_orientation:
+                    cubie_colors = cubie_colors[SWAP_CUBIE[cubie.orbit]]
+            self._colors[cubie._index] = cubie_colors
 
-        return "".join([Color(color).char for color in np.ravel([self._cubies[face._cubie_slice] for face in REPR_ORDER])])
+        return "".join([Color(c).char for c in np.ravel([self._colors[face._index][face.axis.name] for face in REPR_ORDER])])
 
     def __str__(self) -> str:
         """Print representation of the `Cube` object."""
@@ -271,41 +271,55 @@ class Cube:
             String representation of the cube.
         """
         if len(repr) != len(REPR_ORDER)*SIZE*SIZE:
-            raise ValueError(f"repr length must be {len(REPR_ORDER)*SIZE*SIZE}, got {len(repr)}")
-        if "N" in repr:
-            raise ValueError("invalid color character, got 'N'")
+            raise ValueError(f"repr length must be {len(REPR_ORDER)*SIZE*SIZE} (got {len(repr)})")
 
         face_repr = [repr[i:i+SIZE*SIZE] for i in range(0, len(REPR_ORDER)*SIZE*SIZE, SIZE*SIZE)]
         for face, _repr in zip(REPR_ORDER, face_repr):
-            self._cubies[face._cubie_slice] = np.reshape([*map(Color.from_char, _repr)], shape=(SIZE, SIZE))
+            self._colors[face._index][face.axis.name] = np.reshape([*map(Color.from_char, _repr)], shape=(SIZE, SIZE))
 
         # centers
-        self._scheme = {}
+        inv_color_scheme = {}
         for center in Cubie.centers():
-            self._scheme[Face.from_char(center.name)] = Color(self._cubies[center._index][center.axis])
-        inv_scheme = {val: key for key, val in self._scheme.items()}
+            face = Face.from_char(center.name)
+            color = Color(self._colors[center._index][center.axis.name])
+            self._color_scheme[face] = color
+            inv_color_scheme[color] = face
 
-        if len(set(self._scheme.values())) != len([*Color.colors()]):
-            raise ValueError(f"invalid cubie centers, got {[*self._scheme.values()]}")
+        # inv_scheme = {val: key for key, val in self._scheme.items() if val != Color.NONE}
+
+        # no_faces = [face for face, color in self._scheme.items() if color == Color.NONE]
+        # no_colors = list(set(Color.colors()) - {color for color in self._scheme.values()})
+        # if no_faces:
+        #     warnings.warn(f"undefined faces {no_faces}")
+        # if no_colors:
+        #     warnings.warn(f"missing face colors {no_colors}")
 
         # corners and edges
         for slot in chain(Cubie.corners(), Cubie.edges()):
-            faces = np.array([inv_scheme[color] for color in self._cubies[slot._index] if color != Color.NONE], dtype=Color)
-            if slot.is_corner:
-                if slot.axis == Axis.DIAG_M11:
-                    faces = faces[SWAP_CUBIE[Axis.Y]]
-                try:
-                    self.orientation[slot] = [face.axis for face in faces].index(Axis.Y)
-                except ValueError:
-                    raise ValueError(f"invalid cubie faces, got {faces.tolist()}")
-            else:
-                self.orientation[slot] = faces[0].axis > faces[1].axis
-            self.permutation[slot] = Cubie.from_faces([*faces])
+            faces = [inv_color_scheme[color] for color in self._colors[slot._index] if color != Color.NONE]  # TODO try to include the Color.NONE
+            if slot.orbit == Orbit.TETRAD_111:
+                faces[1:] = faces[2], faces[1]  # TODO swap
+            # if slot.is_corner:
+            #     if slot.axis == Axis.DIAG_M11:
+            #         faces = faces[SWAP_CUBIE[Axis.Y]]
+            #     self.orientation[slot] = [face.axis for face in faces].index(Axis.Y)
+            # else:
+            #     self.orientation[slot] = faces[0].axis > faces[1].axis
+            self.permutation[slot] = Cubie.from_faces(faces)
 
-        if len(set(self.permutation)) != NUM_CORNERS + NUM_EDGES:
-            raise ValueError(f"invalid cubie permutation")
-        if np.sum(self.orientation[:NUM_CORNERS]) % 3 != 0 or np.sum(self.orientation[NUM_CORNERS:]) % 2 != 0:
-            raise ValueError(f"invalid cubie orientation")
+        # if np.all(self.permutation != Cubie.NONE):
+        #     if np.sum(self.orientation[:NUM_CORNERS]) % 3 != 0 or np.sum(self.orientation[NUM_CORNERS:]) % 2 != 0:
+        #         warnings.warn("invalid cubie orientation")
+        #     if len(set(self.permutation)) != NUM_CORNERS + NUM_EDGES:
+        #         warnings.warn("invalid cubie permutation")
+        #         self.permutation_parity = None
+        #     elif utils.get_permutation_parity(self.permutation):
+        #         warnings.warn("invalid permutation parity")
+        #         self.permutation_parity = None
+        #     else:
+        #         self.permutation_parity = utils.get_permutation_parity(self.permutation[:NUM_CORNERS])  # TODO is it ok here?
+        # else:
+        #     warnings.warn("invalid string representation, setting undefined orientation and permutation values with -1")
 
     def reset(self):
         """
@@ -322,10 +336,12 @@ class Cube:
         # TODO check
         # self._state = None
         # self._coords = None
-        self._cubies = np.full((SIZE,) * 3 + (3,), Color.NONE, dtype=int)
-        self._scheme = {face: color for face, color in zip(Face.faces(), Color.colors())}
+        self._color_scheme = {face: color for face, color in zip(Face.faces(), Color.colors())}
+        dtype = [(axis.name, int) for axis in Axis.cartesian_axes()]
+        self._colors = np.full((SIZE,) * NUM_DIMS, (Color.NONE,) * NUM_DIMS, dtype=dtype)
         self.orientation = np.zeros(NUM_CORNERS + NUM_EDGES, dtype=int)
         self.permutation = np.arange(NUM_CORNERS + NUM_EDGES, dtype=int)
+        # self.permutation_parity = False  # TODO is this neccesary? maybe saves computation
 
     def set_random_state(self):
         """
