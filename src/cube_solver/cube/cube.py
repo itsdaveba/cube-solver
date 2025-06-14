@@ -29,25 +29,26 @@ REPR_ORDER = [Face.UP, Face.LEFT, Face.FRONT, Face.RIGHT, Face.BACK, Face.DOWN]
 class Cube:
     def __init__(self, scramble: str | None = None, repr: str | None = None, random_state: bool = False):
         """
-        Create `Cube` object.
+        Create :class:`Cube` object.
 
         Parameters
         ----------
         scramble : str or None, optional
-            Initial scramble. If `None`, no scramble is applied.
+            Initial scramble. If ``None``, no scramble is applied. Default is ``None``.
         repr : str or None, optional
-            Cube string representation. If not `None`, the `scramble` parameter is ignored and
-            initializes the cube with the given string representation. See `Notes` for the representation format.
+            Cube string representation. If not ``None``, the ``scramble`` parameter is ignored and
+            creates a cube with the given string representation. Default is ``None``.
+            See `Notes` for the string representation format.
         random_state : bool, optional
-            If `True`, the `scramble` and `repr` parameters are ignored and
-            creates a `Cube` object with a uniform random state.
+            If ``True``, the ``scramble`` and ``repr`` parameters are ignored and
+            creates a cube with a uniform random state. Default is ``False``.
 
         Notes
         -----
-        The `repr` parameter must contain characters from `{'W', 'G', 'R', 'Y', 'B', 'O'}`,
+        The ``repr`` parameter must contain characters from `{'W', 'G', 'R', 'Y', 'B', 'O'}`,
         representing the colors :attr:`Color.WHITE`, :attr:`Color.GREEN`, :attr:`Color.RED`,
         :attr:`Color.YELLOW`, :attr:`Color.BLUE`, and :attr:`Color.ORANGE`, respectively.
-        The order of the `repr` parameter is::
+        The order of the string representation is::
 
                        ------------
                        | 01 02 03 |
@@ -63,8 +64,7 @@ class Cube:
                        | 52 53 54 |
                        ------------
 
-        The default color scheme used for the `scramble` and `random_state` parameters is as follows
-        (note: this may differ for the `repr` parameter):
+        The default color scheme used for the cube is as follows (note: this may differ when using the ``repr`` parameter):
 
         * :attr:`Face.UP`: :attr:`Color.WHITE`
         * :attr:`Face.FRONT`: :attr:`Color.GREEN`
@@ -114,54 +114,51 @@ class Cube:
         if not isinstance(random_state, bool):
             raise TypeError(f"random_state must be bool, not {type(random_state).__name__}")
 
-        # self._state: str
-        # """Cached string representation."""
-        # self._coords: tuple
-        # """Cached cube coordinates."""
-        self._cubies: np.ndarray
-        """
-        Cubie representation of the cube.
-        Used to generate and parse the string representation.
-        """
-        self._scheme: dict[Face, Color]
+        self._color_scheme: dict[Face, Color]
         """
         Color shceme of the cube.
+        Used to generate and parse the string representation.
+        """
+        self._colors: np.ndarray
+        """
+        Color representation array of the cube.
         Used to generate and parse the string representation.
         """
         self.orientation: np.ndarray
         """
         Orientation array.
 
-        The `orientation` array contains the orientation values of the `8` corners and `12` edges of the cube.
-        The first `8` elements represent the `corner` orientation values, and the remaining `12` elements represent the
+        The ``orientation`` array contains the orientation values of the ``8`` corners and ``12`` edges of the cube.
+        The first ``8`` elements represent the `corner` orientation values, and the remaining ``12`` elements represent the
         `edge` orientation values.
 
         A corner is correctly oriented when the `top` or `bottom` facelet of the corner piece matches eihter the `top` or
         `bottom` color of the cube. Corner orientation values are:
 
-        * `0` if the corner is `correctly` oriented.
-        * `1` if the corner is `twisted clockwise` relative to the correct orientation.
-        * `2` if the corner is `twisted counter-clockwise` relative to the correct orientation.
+        * ``0`` if the corner is `correctly` oriented.
+        * ``1`` if the corner is `twisted clockwise` relative to the correct orientation.
+        * ``2`` if the corner is `twisted counter-clockwise` relative to the correct orientation.
 
         An edge is correctly oriented if, when placed in its correct position using only
-        `U`, `D`, `R` and `L` face turns, it does not appear `flipped`. Edge orientation values are:
+        :attr:`Face.UP`, :attr:`Face.DOWN`, :attr:`Face.RIGHT` and :attr:`Face.LEFT` face turns, it does not appear `flipped`.
+        Edge orientation values are:
 
-        * `0` if the edge is `correctly` oriented.
-        * `1` if the edge is incorrectly oriented (i.e. `flipped`).
+        * ``0`` if the edge is `correctly` oriented.
+        * ``1`` if the edge is incorrectly oriented (i.e. `flipped`).
         """
         self.permutation: np.ndarray
         """
         Permutation array.
 
-        The `permutation` array contains the permutation values of the `8` corners and `12` edges of the cube.
-        The first `8` elements represent the `corner` permutation values, and the remaining `12` elements represent the
+        The ``permutation`` array contains the permutation values of the ``8`` corners and ``12`` edges of the cube.
+        The first ``8`` elements represent the `corner` permutation values, and the remaining ``12`` elements represent the
         `edge` permutation values.
 
-        The `solved state` permutation goes from `0` to `7` for the corners and from `8` to `19`
-        for the edges. The piece ordering in the solved state is:
+        The `solved state` permutation goes from ``0`` to ``7`` for the corners,
+        and from ``8`` to ``19`` for the edges. The piece ordering in the solved state is:
 
-        * Corners: [`UBL`, `UFR`, `DBR`, `DFL`, `UBR`, `UFL`, `DBL`, `DFR`]
-        * Edges: [`UB`, `UF`, `DB`, `DF`, `UL`, `UR`, `DL`, `DR`, `BL`, `BR`, `FL`, `FR`]
+        * Corners: [``UBL``, ``UFR``, ``DBR``, ``DFL``, ``UBR``, ``UFL``, ``DBL``, ``DFR``]
+        * Edges: [``UB``, ``UF``, ``DB``, ``DF``, ``UL``, ``UR``, ``DL``, ``DR``, ``BL``, ``BR``, ``FL``, ``FR``]
         """
         self.reset()
         if random_state:
@@ -172,22 +169,12 @@ class Cube:
             self.apply_maneuver(scramble)
 
     @property
-    def coords(self) -> tuple:
+    def coords(self) -> tuple[int, ...]:
         """
         Cube coordinates.
 
         Corner orientation, edge orientation,
         corner permutation, and edge permutation coordinates.
-
-        Returns
-        -------
-        coords : tuple
-            Cube coordinates.
-
-        See Also
-        --------
-        get_coords()
-        set_coords()
 
         Examples
         --------
@@ -201,18 +188,15 @@ class Cube:
 
         Set cube coordinates.
 
-        >>> cube.coords = (0, 0, 0, 0)  # doctest: +SKIP
-        >>> cube.orientation  # doctest: +SKIP
-        array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-        >>> cube.permutation  # doctest: +SKIP
-        array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
-               17, 18, 19])
+        >>> cube.coords = (0, 0, 0, 0)  # solved state
+        >>> cube
+        WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY
         """
-        return (456, 673, 28179, 193381554)
+        return self.get_coords()
 
-    # @coords.setter
-    # def coords(self, coords: tuple):
-    #     self.reset()
+    @coords.setter
+    def coords(self, coords: tuple[int | tuple[int, ...], ...]):
+        self.set_coords(coords)
 
     # def copy(self) -> "Cube":
     #     """Return a copy of the Cube object."""
