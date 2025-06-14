@@ -11,13 +11,19 @@ class IntEnum(int, Enum):
 class Axis(IntEnum):
     """Axis enumeration."""
     NONE = -1  #: No axis.
-    X = auto()  #: `X` axis along :attr:`Face.RIGHT` and :attr:`Face.LEFT`.
-    Y = auto()  #: `Y` axis along :attr:`Face.UP` and :attr:`Face.DOWN`.
-    Z = auto()  #: `Z` axis along :attr:`Face.FRONT` and :attr:`Face.BACK`.
+    X = auto()  #: `X` axis along :attr:`Cubie.R` and :attr:`Cubie.L` centers.
+    Y = auto()  #: `Y` axis along :attr:`Cubie.U` and :attr:`Cubie.D` centers.
+    Z = auto()  #: `Z` axis along :attr:`Cubie.F` and :attr:`Cubie.B` centers.
     DIAG_111 = auto()  #: Diagonal axis along :attr:`Cubie.UFR` and :attr:`Cubie.DBL` corners.
     DIAG_M11 = auto()  #: Diagonal axis along :attr:`Cubie.UFL` and :attr:`Cubie.DBR` corners.
     DIAG_1M1 = auto()  #: Diagonal axis along :attr:`Cubie.UBL` and :attr:`Cubie.DFR` corners.
     DIAG_11M = auto()  #: Diagonal axis along :attr:`Cubie.UBR` and :attr:`Cubie.DFL` corners.
+    EDGE_011 = auto()  #: Edge axis along :attr:`Cubie.UF` and :attr:`Cubie.DB` edges.
+    EDGE_0M1 = auto()  #: Edge axis along :attr:`Cubie.UB` and :attr:`Cubie.DF` edges.
+    EDGE_101 = auto()  #: Edge axis along :attr:`Cubie.FR` and :attr:`Cubie.BL` edges.
+    EDGE_M01 = auto()  #: Edge axis along :attr:`Cubie.FL` and :attr:`Cubie.BR` edges.
+    EDGE_110 = auto()  #: Edge axis along :attr:`Cubie.UR` and :attr:`Cubie.DL` edges.
+    EDGE_M10 = auto()  #: Edge axis along :attr:`Cubie.UL` and :attr:`Cubie.DR` edges.
 
     @property
     def is_cartesian(self) -> bool:
@@ -28,6 +34,11 @@ class Axis(IntEnum):
     def is_diagonal(self) -> bool:
         """Whether this is a diagonal axis."""
         return 3 <= self < 7
+
+    @property
+    def is_edge(self) -> bool:
+        """Whether this is an edge axis."""
+        return 7 <= self < 13
 
     @classmethod
     def axes(cls) -> Iterator["Axis"]:
@@ -45,6 +56,12 @@ class Axis(IntEnum):
     def diagonal_axes(cls) -> Iterator["Axis"]:
         """Iterate over diagonal axes."""
         for i in range(3, 7):
+            yield cls(i)
+
+    @classmethod
+    def edge_axes(cls) -> Iterator["Axis"]:
+        """Iterate over edge axes."""
+        for i in range(7, 13):
             yield cls(i)
 
 
@@ -258,7 +275,7 @@ class Face(IntEnum):
     @property
     def _index(self) -> tuple[int | slice, ...]:
         """Face index for the color representation array."""
-        return face_cubie_slice[self]
+        return face_cubie_index[self]
 
     @classmethod
     def from_char(cls, char: str) -> "Face":
@@ -333,6 +350,13 @@ class Cubie(IntEnum):
     CORE = auto()  #: `Core`.
 
     @property
+    def axis(self) -> Axis:
+        """Cubie axis."""
+        if self.is_center:
+            return Layer.from_char(self.name).axis
+        return cubie_axis[self]
+
+    @property
     def orbit(self) -> Orbit:
         """
         Cubie orbit.
@@ -342,19 +366,12 @@ class Cubie(IntEnum):
         * :attr:`Orbit.SLICE_MIDDLE`: :attr:`Cubie.UB`, :attr:`Cubie.UF`, :attr:`Cubie.DB`, :attr:`Cubie.DF`
         * :attr:`Orbit.SLICE_EQUATOR`: :attr:`Cubie.BL`, :attr:`Cubie.BR`, :attr:`Cubie.FL`, :attr:`Cubie.FR`
         * :attr:`Orbit.SLICE_STANDING`: :attr:`Cubie.UL`, :attr:`Cubie.UR`, :attr:`Cubie.DL`, :attr:`Cubie.DR`
-        * :attr:`Orbit.DIAG_111`: :attr:`Cubie.UBR`, :attr:`Cubie.UFL`, :attr:`Cubie.DBL`, :attr:`Cubie.DFR`
-        * :attr:`Orbit.DIAG_M11`: :attr:`Cubie.UBL`, :attr:`Cubie.UFR`, :attr:`Cubie.DBR`, :attr:`Cubie.DFL`
+        * :attr:`Orbit.TETRAD_111`: :attr:`Cubie.UBR`, :attr:`Cubie.UFL`, :attr:`Cubie.DBL`, :attr:`Cubie.DFR`
+        * :attr:`Orbit.TETRAD_M11`: :attr:`Cubie.UBL`, :attr:`Cubie.UFR`, :attr:`Cubie.DBR`, :attr:`Cubie.DFL`
         """
+        if self.is_center:
+            return Orbit.NONE
         return cubie_orbit[self]
-
-    @property
-    def _index(self) -> tuple[int, ...]:
-        """
-        Cubie index.
-
-        Used as the index of the color representation array.
-        """
-        return cubie_index[self]
 
     @property
     def faces(self) -> list[Face]:
@@ -367,6 +384,15 @@ class Cubie(IntEnum):
         if self.orbit == Orbit.TETRAD_M11:
             faces[1:] = faces[2], faces[1]
         return faces
+
+    @property
+    def _index(self) -> tuple[int, ...]:
+        """
+        Cubie index.
+
+        Used as the index of the color representation array.
+        """
+        return cubie_index[self]
 
     @property
     def is_corner(self) -> bool:
@@ -658,14 +684,42 @@ face_opposite = {
     Face.LEFT: Face.RIGHT
 }
 
-face_cubie_slice = {
-    Face.NONE: (slice(None), slice(None), slice(None), slice(None)),
-    Face.UP: (0, slice(None), slice(None), Face.UP.axis),
-    Face.FRONT: (slice(None), 2, slice(None), Face.FRONT.axis),
-    Face.RIGHT: (slice(None), slice(None, None, -1), 2, Face.RIGHT.axis),
-    Face.DOWN: (2, slice(None, None, -1), slice(None), Face.DOWN.axis),
-    Face.BACK: (slice(None), 0, slice(None, None, -1), Face.BACK.axis),
-    Face.LEFT: (slice(None), slice(None), 0, Face.LEFT.axis)
+face_cubie_index = {
+    Face.NONE: (slice(None), slice(None), slice(None)),
+    Face.UP: (0, slice(None), slice(None)),
+    Face.FRONT: (slice(None), 2, slice(None)),
+    Face.RIGHT: (slice(None), slice(None, None, -1), 2),
+    Face.DOWN: (2, slice(None, None, -1), slice(None)),
+    Face.BACK: (slice(None), 0, slice(None, None, -1)),
+    Face.LEFT: (slice(None), slice(None), 0)
+}
+
+cubie_axis = {
+    Cubie.NONE: Axis.NONE,
+    # corners
+    Cubie.UBL: Axis.DIAG_1M1,
+    Cubie.UFR: Axis.DIAG_111,
+    Cubie.DBR: Axis.DIAG_M11,
+    Cubie.DFL: Axis.DIAG_11M,
+    Cubie.UBR: Axis.DIAG_11M,
+    Cubie.UFL: Axis.DIAG_M11,
+    Cubie.DBL: Axis.DIAG_111,
+    Cubie.DFR: Axis.DIAG_1M1,
+    # edges
+    Cubie.UB: Axis.EDGE_0M1,
+    Cubie.UF: Axis.EDGE_011,
+    Cubie.DB: Axis.EDGE_011,
+    Cubie.DF: Axis.EDGE_0M1,
+    Cubie.UL: Axis.EDGE_M10,
+    Cubie.UR: Axis.EDGE_110,
+    Cubie.DL: Axis.EDGE_110,
+    Cubie.DR: Axis.EDGE_M10,
+    Cubie.BL: Axis.EDGE_101,
+    Cubie.BR: Axis.EDGE_M01,
+    Cubie.FL: Axis.EDGE_M01,
+    Cubie.FR: Axis.EDGE_101,
+    # core
+    Cubie.CORE: Axis.NONE
 }
 
 cubie_orbit = {
@@ -692,13 +746,6 @@ cubie_orbit = {
     Cubie.BR: Orbit.SLICE_EQUATOR,
     Cubie.FL: Orbit.SLICE_EQUATOR,
     Cubie.FR: Orbit.SLICE_EQUATOR,
-    # centers
-    Cubie.U: Orbit.NONE,
-    Cubie.F: Orbit.NONE,
-    Cubie.R: Orbit.NONE,
-    Cubie.D: Orbit.NONE,
-    Cubie.B: Orbit.NONE,
-    Cubie.L: Orbit.NONE,
     # core
     Cubie.CORE: Orbit.NONE
 }

@@ -4,6 +4,7 @@ import numpy as np
 NONE = -1
 
 SIZE = 3  #: Cube size.
+NUM_DIMS = 3  #: Number of dimensions.
 NUM_CORNERS = 8  #: Number of corners.
 NUM_EDGES = 12  #: Number of edges.
 NUM_AXIS_ELEMS = 4

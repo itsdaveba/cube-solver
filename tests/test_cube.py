@@ -25,9 +25,11 @@ def test_enums(response):
     assert hasattr(Axis, "NONE")
     assert all(axis.is_cartesian for axis in Axis.cartesian_axes())
     assert all(axis.is_diagonal for axis in Axis.diagonal_axes())
+    assert all(axis.is_edge for axis in Axis.edge_axes())
     assert len([*Axis.axes()]) == 7
     assert len([*Axis.cartesian_axes()]) == 3
     assert len([*Axis.diagonal_axes()]) == 4
+    assert len([*Axis.edge_axes()]) == 6
 
     # orbit
     assert hasattr(Orbit, "NONE")
@@ -70,7 +72,7 @@ def test_enums(response):
     assert Face.UP.axis == Axis.Y
     assert Face.NONE.opposite == Face.NONE
     assert all([face.axis == face.opposite.axis for face in Face])
-    assert Face.NONE._index == (slice(None), slice(None), slice(None), slice(None))
+    assert Face.NONE._index == (slice(None), slice(None), slice(None))
     with pytest.raises(TypeError, match=r"char must be str, not NoneType"):
         Face.from_char(None)
     with pytest.raises(ValueError, match=r"invalid face character \(got 'None'\)"):
@@ -80,12 +82,15 @@ def test_enums(response):
 
     # cubie
     assert hasattr(Cubie, "NONE")
+    assert Cubie.NONE.axis == Axis.NONE
+    assert Cubie.U.axis == Axis.Y
     assert Cubie.NONE.orbit == Orbit.NONE
-    assert Cubie.NONE._index == (1, 1, 1)
+    assert Cubie.U.orbit == Orbit.NONE
     assert Cubie.NONE.faces == [Face.NONE]
     assert Cubie.CORE.faces == []
     assert Cubie.UBL.faces == [Face.UP, Face.LEFT, Face.BACK]
     assert Cubie.UBR.faces == [Face.UP, Face.BACK, Face.RIGHT]
+    assert Cubie.NONE._index == (1, 1, 1)
     assert all(cubie.is_corner for cubie in Cubie.corners())
     assert all(cubie.is_edge for cubie in Cubie.edges())
     assert all(cubie.is_center for cubie in Cubie.centers())
