@@ -366,8 +366,8 @@ class Cubie(IntEnum):
         * :attr:`Orbit.SLICE_MIDDLE`: :attr:`Cubie.UB`, :attr:`Cubie.UF`, :attr:`Cubie.DB`, :attr:`Cubie.DF`
         * :attr:`Orbit.SLICE_EQUATOR`: :attr:`Cubie.BL`, :attr:`Cubie.BR`, :attr:`Cubie.FL`, :attr:`Cubie.FR`
         * :attr:`Orbit.SLICE_STANDING`: :attr:`Cubie.UL`, :attr:`Cubie.UR`, :attr:`Cubie.DL`, :attr:`Cubie.DR`
-        * :attr:`Orbit.TETRAD_111`: :attr:`Cubie.UBR`, :attr:`Cubie.UFL`, :attr:`Cubie.DBL`, :attr:`Cubie.DFR`
-        * :attr:`Orbit.TETRAD_M11`: :attr:`Cubie.UBL`, :attr:`Cubie.UFR`, :attr:`Cubie.DBR`, :attr:`Cubie.DFL`
+        * :attr:`Orbit.TETRAD_111`: :attr:`Cubie.UBL`, :attr:`Cubie.UFR`, :attr:`Cubie.DBR`, :attr:`Cubie.DFL`
+        * :attr:`Orbit.TETRAD_M11`: :attr:`Cubie.UBR`, :attr:`Cubie.UFL`, :attr:`Cubie.DBL`, :attr:`Cubie.DFR`
         """
         if self.is_center:
             return Orbit.NONE
@@ -381,7 +381,7 @@ class Cubie(IntEnum):
         if self == Cubie.CORE:
             return []
         faces = [Face.from_char(char) for char in self.name]
-        if self.orbit == Orbit.TETRAD_M11:
+        if self.orbit == Orbit.TETRAD_111:
             faces[1:] = faces[2], faces[1]
         return faces
 
@@ -725,14 +725,14 @@ cubie_axis = {
 cubie_orbit = {
     Cubie.NONE: Orbit.NONE,
     # corners
-    Cubie.UBL: Orbit.TETRAD_M11,
-    Cubie.UFR: Orbit.TETRAD_M11,
-    Cubie.DBR: Orbit.TETRAD_M11,
-    Cubie.DFL: Orbit.TETRAD_M11,
-    Cubie.UBR: Orbit.TETRAD_111,
-    Cubie.UFL: Orbit.TETRAD_111,
-    Cubie.DBL: Orbit.TETRAD_111,
-    Cubie.DFR: Orbit.TETRAD_111,
+    Cubie.UBL: Orbit.TETRAD_111,
+    Cubie.UFR: Orbit.TETRAD_111,
+    Cubie.DBR: Orbit.TETRAD_111,
+    Cubie.DFL: Orbit.TETRAD_111,
+    Cubie.UBR: Orbit.TETRAD_M11,
+    Cubie.UFL: Orbit.TETRAD_M11,
+    Cubie.DBL: Orbit.TETRAD_M11,
+    Cubie.DFR: Orbit.TETRAD_M11,
     # edges
     Cubie.UB: Orbit.SLICE_MIDDLE,
     Cubie.UF: Orbit.SLICE_MIDDLE,
