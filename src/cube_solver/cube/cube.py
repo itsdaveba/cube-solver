@@ -169,7 +169,7 @@ class Cube:
             self.apply_maneuver(scramble)
 
     @property
-    def coords(self) -> tuple[int, ...]:
+    def coords(self) -> tuple[int, int, int, int]:
         """
         Cube coordinates.
 
@@ -192,11 +192,11 @@ class Cube:
         >>> cube
         WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY
         """
-        return self.get_coords()
+        return self._get_coords()
 
     @coords.setter
     def coords(self, coords: tuple[int | tuple[int, ...], ...]):
-        self.set_coords(coords)
+        self._set_coords(coords)
 
     # def copy(self) -> "Cube":
     #     """Return a copy of the Cube object."""
@@ -350,11 +350,10 @@ class Cube:
         Sets random corner orientation, edge orientation,
         corner permutation, and edge permutation coordinates.
         """
-        pass
-#         self.set_coord("co", np.random.randint(CORNER_ORIENTATION_SIZE))
-#         self.set_coord("eo", np.random.randint(EDGE_ORIENTATION_SIZE))
-#         self.set_coord("cp", np.random.randint(CORNER_PERMUTATION_SIZE))
-#         self.set_coord("ep", np.random.randint(EDGE_PERMUTATION_SIZE))
+        self.set_coord("co", np.random.randint(CORNER_ORIENTATION_SIZE))
+        self.set_coord("eo", np.random.randint(EDGE_ORIENTATION_SIZE))
+        self.set_coord("cp", np.random.randint(CORNER_PERMUTATION_SIZE))
+        self.set_coord("ep", np.random.randint(EDGE_PERMUTATION_SIZE))
 
     def apply_move(self, move: Move):
         """
@@ -474,305 +473,355 @@ class Cube:
         for move_str in maneuver.split():
             self.apply_move(Move.from_string(move_str))
 
-# #     def get_coord(self, coord_type: str) -> int | tuple:
-# #         """
-# #         Get cube coordinate value.
+    def get_coord(self, coord_type: str) -> int | tuple[int, ...]:  # TODO make tuple[int, ...]
+        """
+        Get cube coordinate value.
 
-# #         Parameters
-# #         ----------
-# #         coord_type : {'co', 'eo', 'cp', 'ep', 'pcp', 'pep'}
-# #             Get the specified cube coordinate.
+        Parameters
+        ----------
+        coord_type : {'co', 'eo', 'cp', 'ep', 'pcp', 'pep'}
+            Get the specified cube coordinate.
 
-# #             * 'co' means corner orientation.
-# #             * 'eo' means edge orientation.
-# #             * 'cp' means corner permutation.
-# #             * 'ep' means edge permutation.
-# #             * 'pcp' means partial corner permutation.
-# #             * 'pep' means partial edge permutation.
+            * 'co' means corner orientation.
+            * 'eo' means edge orientation.
+            * 'cp' means corner permutation.
+            * 'ep' means edge permutation.
+            * 'pcp' means partial corner permutation (a value for each corner `orbit`).
+            * 'pep' means partial edge permutation (a value for each edge `orbit`).
 
-# #         Returns
-# #         -------
-# #         coord : int or tuple
-# #             Cube coordinate value. For partial coordinate values, a value of `-1`
-# #             indicates an axis with no permutation values (e.g., `(-1, -1, 0)`),
-# #             meaning the permutation values for these axes are set to `-1`.
-# #             If only the value of the first axis is available (i.e., `(coord, -1, -1)`),
-# #             returns an `int` representing that partial coordinate value.
+        Returns
+        -------
+        coord : int or tuple of int
+            Cube coordinate value. For partial coordinate values, a value of ``-1``
+            indicates an `orbit` with no permutation values (e.g., ``(-1, -1, 0)``),
+            meaning the permutation values for that `orbit` are set to ``-1``.
+            If only the value of the first `orbit` is available (i.e., ``(coord, -1, -1)``),
+            returns an `int` representing that partial coordinate value.
 
-# #         See Also
-# #         --------
-# #         utils.get_orientation_coord
-# #         utils.get_permutation_coord
-# #         utils.get_combination_coord
-# #         utils.get_partial_permutation_coord
+            The `orbit` order for partial coordinate values is:
 
-# #         Examples
-# #         --------
-# #         >>> from cube_solver import Cube
-# #         >>> cube = Cube("U F R")
+            * Corner orbits: :attr:`Orbit.TETRAD_111`, :attr:`Orbit.TETRAD_M11`
+            * Edge orbits: :attr:`Orbit.SLICE_MIDDLE`, :attr:`Orbit.SLICE_EQUATOR`, :attr:`Orbit.SLICE_STANDING`
 
-# #         Get corner coordinates.
+        See Also
+        --------
+        set_coord
 
-# #         >>> cube.get_coord('co')
-# #         456
-# #         >>> cube.get_coord('cp')
-# #         28179
-# #         >>> cube.get_coord('pcp')
-# #         (1273, 391)
+        Examples
+        --------
+        >>> from cube_solver import Cube
+        >>> cube = Cube("U F R")
 
-# #         Get edge cordinates.
+        Get corner coordinates.
 
-# #         >>> cube.get_coord('eo')
-# #         673
-# #         >>> cube.get_coord('ep')
-# #         193381554
-# #         >>> cube.get_coord('pep')
-# #         (2633, 8640, 7262)
-# #         """
-# #         if not isinstance(coord_type, str):
-# #             raise TypeError(f"coord_type must be str, not {type(coord_type).__name__}")
+        >>> cube.get_coord('co')
+        456
+        >>> cube.get_coord('cp')
+        28179
+        >>> cube.get_coord('pcp')
+        (1273, 391)
 
-# #         if coord_type in ("co", "eo"):
-# #             orientation = self.orientation[:NUM_CORNERS-1] if coord_type == "co" else self.orientation[NUM_CORNERS:-1]
-# #             return utils.get_orientation_coord(orientation, 3 if coord_type == "co" else 2)
+        Get edge coordinates.
 
-# #         if coord_type in ("cp", "ep", "pcp", "pep"):
-# #             permutation = self.permutation[:NUM_CORNERS] if coord_type in ("cp", "pcp") else self.permutation[NUM_CORNERS:]
-# #             if coord_type in ("cp", "ep"):
-# #                 return utils.get_permutation_coord(permutation, coord_type == "ep")
-# #             num_axes = 2 if coord_type == "pcp" else 3
-# #             combinations = [np.where(np.array([AXIS[perm] for perm in permutation]) ==axis)[0] for axis in range(num_axes)]
-# #             coord = tuple(utils.get_partial_permutation_coord(permutation, combination) for combination in combinations)
-# #             if np.all([c == EMPTY for c in coord[1:]]):
-# #                 return coord[0]
-# #             return coord
+        >>> cube.get_coord('eo')
+        673
+        >>> cube.get_coord('ep')
+        193381554
+        >>> cube.get_coord('pep')
+        (2633, 8640, 7262)
+        """
+        # if not isinstance(coord_type, str):
+        #     raise TypeError(f"coord_type must be str, not {type(coord_type).__name__}")
 
-# #         raise ValueError(f"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', or 'pep' (got '{coord_type}')")
+        if coord_type in ("co", "eo"):
+            orientation = self.orientation[:NUM_CORNERS] if coord_type == "co" else self.orientation[NUM_CORNERS:]
+            return utils.get_orientation_coord(orientation, 3 if coord_type == "co" else 2)  # TODO add is_modulo
 
-# #     def get_coords(self, partial_corner_perm: bool = False, partial_edge_perm: bool = False) -> tuple:
-# #         """
-# #         Get cube coordinates.
+        if coord_type in ("cp", "ep", "pcp", "pep"):
+            permutation = self.permutation[:NUM_CORNERS] if coord_type in ("cp", "pcp") else self.permutation[NUM_CORNERS:]
+            if coord_type in ("cp", "ep"):
+                return utils.get_permutation_coord(permutation)  # TODO add is_even
+            # num_axes = 2 if coord_type == "pcp" else 3
+            # combinations = [np.where(np.array([AXIS[perm] for perm in permutation]) ==axis)[0] for axis in range(num_axes)]
+            # coord = tuple(utils.get_partial_permutation_coord(permutation, combination) for combination in combinations)
+            # if np.all([c == EMPTY for c in coord[1:]]):
+            #     return coord[0]
+            # return coord
 
-# #         Get the corner orientation, edge orientation,
-# #         (partial) corner permutation and (partial) edge permutation coordinates.
+        # raise ValueError(f"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', or 'pep' (got '{coord_type}')")
 
-# #         The permutation coordinates depend on the instance attributes
-# #         `partial_corner_perm` and `partial_edge_perm`.
+    def _get_coords(self, partial_corner_perm: bool = False, partial_edge_perm: bool = False) -> tuple[int | tuple[int, ...], ...]:  # TODO make tuple[int, ...]
+        """
+        Get cube coordinates.
 
-# #         Returns
-# #         -------
-# #         coords : tuple
-# #             Cube coordinates in the following order:
-# #             corner orientation, edge orientation, (partial) corner permutation, (partial) edge permutation.
-# #         partial_corner_perm : bool
-# #             If `True`,use the partial corner permutation coordinate,otherwise use the normal corner permutation coordinate.
-# #         partial_edge_perm : bool
-# #             If `True`, use the partial edge permutation coordinate, otherwise use the normal edge permutation coordinate.
+        Get the corner orientation, edge orientation,
+        (partial) corner permutation and (partial) edge permutation coordinates.
 
-# #         See Also
-# #         --------
-# #         utils.get_orientation_coord
-# #         utils.get_permutation_coord
-# #         utils.get_combination_coord
-# #         utils.get_partial_permutation_coord
+        Parameters
+        ----------
+        partial_corner_perm : bool, optional
+            If ``True``, returns the partial corner permutation coordinate,
+            otherwise returns the normal corner permutation coordinate. Default is ``False``.
+        partial_edge_perm : bool, optional
+            If ``True``, returns the partial edge permutation coordinate,
+            otherwise returns the normal edge permutation coordinate. Default is ``False``.
 
-# #         Examples
-# #         --------
-# #         >>> from cube_solver import Cube
-# #         >>> cube = Cube("U F R")
+        Returns
+        -------
+        coords : tuple of (int or tuple of int)
+            Cube coordinates in the following order:
+            corner orientation, edge orientation, (partial) corner permutation, (partial) edge permutation.
 
-# #         Get cube coordinates.
+        See Also
+        --------
+        get_coord
 
-# #         >>> cube.get_coords()
-# #         (456, 673, 28179, 193381554)
+        Examples
+        --------
+        >>> from cube_solver import Cube
+        >>> cube = Cube("U F R")
 
-# #         Get cube coordinates with partial corner permutation and partial edge permutation.
+        Get cube coordinates.
 
-# #         >>> cube.partial_corner_perm = True
-# #         >>> cube.partial_edge_perm = True
-# #         >>> cube.get_coords()
-# #         (456, 673, (1273, 391), (2633, 8640, 7262))
-# #         """
-# #         # print("getter")
-# #         return (self.get_coord("co"), self.get_coord("eo"),
-# #                 self.get_coord("pcp" if partial_corner_perm else "cp"),
-# #                 self.get_coord("pep" if partial_edge_perm else "ep"))
+        >>> cube.get_coords()
+        (456, 673, 28179, 193381554)
 
-#     def set_coord(self, coord_type: str, coord: int | tuple):
-#         """
-#         Set cube coordinate value.
+        Get cube coordinates with partial corner permutation and partial edge permutation.
 
-#         Parameters
-#         ----------
-#         coord_type : {'co', 'eo', 'cp', 'ep', 'pcp', 'pep'}
-#             Set the specified cube coordinate.
+        >>> cube.get_coords(partial_corner_perm=True, partial_edge_perm=True)
+        (456, 673, (1273, 391), (2633, 8640, 7262))
+        """
+        # print("getter")
+        return (self.get_coord("co"), self.get_coord("eo"),
+                self.get_coord("pcp" if partial_corner_perm else "cp"),
+                self.get_coord("pep" if partial_edge_perm else "ep"))
 
-#             * 'co' means corner orientation.
-#             * 'eo' means edge orientation.
-#             * 'cp' means corner permutation.
-#             * 'ep' means edge permutation.
-#             * 'pcp' means partial corner permutation.
-#             * 'pep' means partial edge permutation.
-#         coord : int or tuple
-#             Coordinate value or tuple of partial coordinate values.
-#             For partial coordinate values, you may pass `-1`
-#             to indicate an axis that should be ignored (e.g., `(0, -1, -1)`),
-#             the permutation values for these axes will be set to `-1`.
-#             If you pass an `int` as a partial coordinate value,
-#             the value will be applied only to the first axis (i.e., `(coord, -1, -1)`).
+    def set_coord(self, coord_type: str, coord: int | tuple[int, ...]):  # TODO add similad doc to get coord
+        """
+        Set cube coordinate value.
 
-#         See Also
-#         --------
-#         utils.get_orientation_array
-#         utils.get_permutation_array
-#         utils.get_combination_array
-#         utils.get_partial_permutation_array
+        Parameters
+        ----------
+        coord_type : {'co', 'eo', 'cp', 'ep', 'pcp', 'pep'}
+            Set the specified cube coordinate.
 
-#         Examples
-#         --------
-#         >>> from cube_solver import Cube
-#         >>> cube = Cube()
+            * 'co' means corner orientation.
+            * 'eo' means edge orientation.
+            * 'cp' means corner permutation.
+            * 'ep' means edge permutation.
+            * 'pcp' means partial corner permutation (a value for each corner `orbit`).
+            * 'pep' means partial edge permutation (a value for each edge `orbit`).
 
-#         Set corner coordinates.
+        coord : int or tuple of int
+            Cube coordinate value. For partial coordinate values, a value of ``-1``
+            indicates an `orbit` with no permutation values (e.g., ``(-1, -1, 0)``),
+            meaning the permutation values for that `orbit` are set to ``-1``.
+            If an `int` is passed as a partial coordinate value, the value
+            will be applied only to the first `orbit` (i.e., ``(coord, -1, -1)``).
 
-#         >>> cube.set_coord('co', 456)
-#         >>> cube.orientation[:8]
-#         array([0, 1, 2, 1, 2, 2, 0, 1])
-#         >>> cube.set_coord('cp', 28179)
-#         >>> cube.permutation[:8]
-#         array([5, 4, 0, 7, 1, 3, 6, 2])
-#         >>> cube.set_coord('pcp', (1273, 391))
-#         >>> cube.permutation[:8]
-#         array([5, 4, 0, 7, 1, 3, 6, 2])
+            The `orbit` order for partial coordinate values is:
 
-#         Set edge coordinates.
+            * Corner orbits: :attr:`Orbit.TETRAD_111`, :attr:`Orbit.TETRAD_M11`
+            * Edge orbits: :attr:`Orbit.SLICE_MIDDLE`, :attr:`Orbit.SLICE_EQUATOR`, :attr:`Orbit.SLICE_STANDING`
 
-#         >>> cube.set_coord('eo', 673)
-#         >>> cube.orientation[8:]
-#         array([0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0])
-#         >>> cube.set_coord('ep', 193381554)
-#         >>> cube.permutation[8:]
-#         array([12, 18, 10, 19,  9, 13, 14, 17, 16,  8, 11, 15])
-#         >>> cube.set_coord('pep', (2633, 8640, 7262))
-#         >>> cube.permutation[8:]
-#         array([12, 18, 10, 19,  9, 13, 14, 17, 16,  8, 11, 15])
+        # Notes
+        # -----
+        # Corner and edge permutation parities are always either both `odd` or both `even`.
+        # This constraint is enforced when setting the normal corner and edge permutation coordinates
+        # by modifying the edge permutation accordingly to ensure both parities match (i.e., the number of valid
+        # edge permutations is halved). For this reason, it is recommended to set the corner permutation coordinate
+        # before the edge permutation coordinate. The parity constraint is not enforced when setting
+        # partial permutation coordinates for either corners or edges.
 
-#         Set some partial coordinates with `-1`.
+        See Also
+        --------
+        get_coord
 
-#         >>> cube.set_coord('pcp', (1273, -1))      # same as cube.set_coord('pcp', 1273)
-#         >>> cube.permutation[:8]
-#         array([-1, -1,  0, -1,  1,  3, -1,  2])
-#         >>> cube.set_coord('pep', (2633, -1, -1))  # same as cube.set_coord('pep', 2633)
-#         >>> cube.permutation[8:]
-#         array([-1, 18, -1, 19, -1, -1, -1, 17, 16, -1, -1, -1])
-#         """
-#         if not isinstance(coord_type, str):
-#             raise TypeError(f"coord_type must be str, not {type(coord_type).__name__}")
-#         if not isinstance(coord, (int, tuple)):
-#             raise TypeError(f"coord must be int or tuple, not {type(coord).__name__}")
+        Examples
+        --------
+        >>> from cube_solver import Cube
+        >>> cube = Cube()
 
-#         if coord_type in ("co", "eo"):
-#             if isinstance(coord, int):
-#                 v = 3 if coord_type == "co" else 2
-#                 orientation = self.orientation[:NUM_CORNERS] if coord_type == "co" else self.orientation[NUM_CORNERS:]
-#                 orientation[:-1] = utils.get_orientation_array(coord, v, len(orientation) - 1)
-#                 orientation[-1] = -np.sum(orientation[:-1]) % v
-#             else:
-#                 raise ValueError(f"coord must be int for coord_type '{coord_type}', not {type(coord).__name__}")
+        Set corner coordinates.
 
-#         elif coord_type in ("cp", "ep", "pcp", "pep"):
-#             permutation = self.permutation[:NUM_CORNERS] if coord_type in ("cp", "pcp") else self.permutation[NUM_CORNERS:]
-#             if coord_type in ("cp", "ep"):
-#                 if isinstance(coord, int):
-#                     if coord_type == "cp":
-#                         permutation[:], corner_parity = utils.get_permutation_array(coord, NUM_CORNERS)
-#                         edge_parity = utils.get_permutation_parity(self.permutation[NUM_CORNERS:])
-#                     elif coord_type == "ep":
-#                         corner_parity = utils.get_permutation_parity(self.permutation[:NUM_CORNERS])
-#                         permutation[:], edge_parity = utils.get_permutation_array(coord, NUM_EDGES, even_parity=True)
-#                         permutation += NUM_CORNERS
-#                     if corner_parity != edge_parity:
-#                         self.permutation[-2:] = self.permutation[[-1, -2]]
-#                 else:
-#                     raise ValueError(f"coord must be int for coord_type '{coord_type}', not {type(coord).__name__}")
-#             else:  # TODO test this and print representation
-#                 if isinstance(coord, int):
-#                     coord = (coord, EMPTY, EMPTY)
-#                 permutation[:] = EMPTY
-#                 axis_offset = CORNER_AXIS_OFFSET if coord_type == "pcp" else EDGE_AXIS_OFFSET
-#                 for axis in range(2 if coord_type == "pcp" else 3):
-#                     if coord[axis] != EMPTY:
-#                         partial_permutation, combination = utils.get_partial_permutation_array(coord[axis], NUM_AXIS_ELEMS)
-#                         permutation[combination] = partial_permutation + axis_offset[axis]
+        >>> cube.set_coord('co', 456)
+        >>> cube.orientation[:8]
+        array([0, 1, 2, 1, 2, 2, 0, 1])
+        >>> cube.set_coord('cp', 28179)
+        >>> cube.permutation[:8]
+        array([5, 4, 0, 7, 1, 3, 6, 2])
+        >>> cube.set_coord('pcp', (1273, 391))
+        >>> cube.permutation[:8]
+        array([5, 4, 0, 7, 1, 3, 6, 2])
 
-#         else:
-#             raise ValueError(f"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', or 'pep' (got '{coord_type}')")
+        Set edge coordinates.
 
-#         self._coords = ()
+        >>> cube.set_coord('eo', 673)
+        >>> cube.orientation[8:]
+        array([0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0])
+        >>> cube.set_coord('ep', 193381554)
+        >>> cube.permutation[8:]
+        array([12, 18, 10, 19,  9, 13, 14, 17, 16,  8, 11, 15])
+        >>> cube.set_coord('pep', (2633, 8640, 7262))
+        >>> cube.permutation[8:]
+        array([12, 18, 10, 19,  9, 13, 14, 17, 16,  8, 11, 15])
 
-#     def set_coords(self, coords: tuple, partial_corner_perm: bool = False, partial_edge_perm: bool = False):
-#         """
-#         Set cube coordinates.
+        Set some partial coordinates with ``-1``.
 
-#         Set the corner orientation, edge orientation,
-#         (partial) corner permutation and (partial) edge permutation coordinates.
+        >>> cube.set_coord('pcp', (1273, -1))      # same as cube.set_coord('pcp', 1273)
+        >>> cube.permutation[:8]
+        array([-1, -1,  0, -1,  1,  3, -1,  2])
+        >>> cube.set_coord('pep', (2633, -1, -1))  # same as cube.set_coord('pep', 2633)
+        >>> cube.permutation[8:]
+        array([-1, 18, -1, 19, -1, -1, -1, 17, 16, -1, -1, -1])
+        """
+        # if not isinstance(coord_type, str):  # TODO add that orientation is also not enforced for partial permutation
+        #     raise TypeError(f"coord_type must be str, not {type(coord_type).__name__}")
+        # if not isinstance(coord, (int, tuple)):
+        #     raise TypeError(f"coord must be int or tuple, not {type(coord).__name__}")
 
-#         Parameters
-#         ----------
-#         coords : tuple
-#             Cube coordinates in the following order:
-#             corner orientation, edge orientation, (partial) corner permutation, (partial) edge permutation.
-#         partial_corner_perm : bool
-#             If `True`, use the partial corner permutation coordinate, otherwise use the normal corner permutation coordinate.
-#         partial_edge_perm : bool
-#             If `True`, use the partial edge permutation coordinate, otherwise use the normal edge permutation coordinate.
+        if coord_type in ("co", "eo"):
+            # if not isinstance(coord, int):
+            #     raise TypeError(f"coord must be int for coord_type '{coord_type}', not {type(coord).__name__}")
+            orientation = self.orientation[:NUM_CORNERS] if coord_type == "co" else self.orientation[NUM_CORNERS:]
+            orientation[:] = utils.get_orientation_array(coord, 3 if coord_type == "co" else 2, len(orientation))  # TODO add force_modulo
+        elif coord_type in ("cp", "ep", "pcp", "pep"):
+            permutation = self.permutation[:NUM_CORNERS] if coord_type in ("cp", "pcp") else self.permutation[NUM_CORNERS:]
+            if coord_type in ("cp", "ep"):
+                # if not isinstance(coord, int):
+                #     raise TypeError(f"coord must be int for coord_type '{coord_type}', not {type(coord).__name__}")
+                # if coord_type == "cp":
+                permutation[:], _ = utils.get_permutation_array(coord, len(permutation))
+                if coord_type == "ep":
+                    permutation += NUM_CORNERS
+                # elif coord_type == "ep":
+                #     permutation[:], permutation_parity = utils.get_permutation_array(coord, NUM_EDGES, force_even_parity=True)
+                #     permutation += NUM_CORNERS
+                # if permutation_parity != self.permutation_parity:
+                #     self.permutation[-2:] = self.permutation[[-1, -2]]
+                #     if coord_type == "cp":
+                #         self.permutation_parity = permutation_parity
+            # else:  # TODO test this and print representation
+            #     if isinstance(coord, int):
+            #         coord_tuple = (coord, NONE)
+            #         if coord_type == "pep":
+            #             coord_tuple += (NONE,)
+            #     else:
+            #         coord_tuple = coord
+            #     axes = [*Axis.corner_axes()] if coord_type == "pcp" else [*Axis.edge_axes()]
+            #     if len(coord_tuple) != len(axes):
+            #         raise ValueError(f"coord tuple length must be {len(axes)} (got {len(coord_tuple)})")
+            #     for coord in coord_tuple:
+            #         if not isinstance(coord, int):
+            #             raise TypeError(f"coord tuple elements must be int, not {type(coord).__name__}")
+            #     axis_coord = {axis: coord for axis, coord in zip(axes, coord_tuple)}
+            #     perm = np.full_like(permutation, Cubie.NONE)
+            #     axis_offset = CORNER_AXIS_OFFSET if coord_type == "pcp" else EDGE_AXIS_OFFSET
+            #     for axis, coord in axis_coord.items():
+            #         if coord != NONE:
+            #             partial_permutation, combination = utils.get_partial_permutation_array(coord, NUM_AXIS_ELEMS)
+            #             if combination[-1] >= len(perm):
+            #                 raise ValueError(f"partial coord must be >= 0 and < {math.perm(len(perm), NUM_AXIS_ELEMS)} (got {coord})")
+            #             if not np.all(perm[combination] == Cubie.NONE):
+            #                 raise ValueError(f"invalid partial coordinates, overlapping detected (got {coord_tuple})")
+            #             perm[combination] = partial_permutation + axis_offset[axis]
+            #     permutation[:] = perm
+            #     if np.all(permutation != Cubie.NONE):
+            #         permutation_parity = utils.get_permutation_parity(permutation)
+            #         if permutation_parity != self.permutation_parity:
+            #             self.permutation[-2:] = self.permutation[[-1, -2]]
+            #             if coord_type == "pcp":
+            #                 self.permutation_parity = permutation_parity
+            #     else:
+            #         self.permutation_parity = None
+            #         self.orientation[:NUM_CORNERS] = np.where(permutation == Cubie.NONE, NONE, self.orientation[:NUM_CORNERS])
+                # self.permutation_parity = False  # TODO calculate parity if all different from -1
+                # self.orientation = np.where(self.permutation == Cubie.NONE, NONE, self.orientation)  # TODO document
+                # self.orientation = np.where((self.permutation != Cubie.NONE) & (self.orientation == NONE), 0, self.orientation)
 
-#         See Also
-#         --------
-#         utils.get_orientation_array
-#         utils.get_permutation_array
-#         utils.get_combination_array
-#         utils.get_partial_permutation_array
+                # if isinstance(coord, int):
+                #     coord = (coord, NONE, NONE)
+                # for c in coord:
+                #     if not isinstance(c, int):
+                #         raise TypeError(f"coord tuple elements must be int, not {type(c).__name__}")
+                # axes = [*Axis.corner_axes()]
+                # if len(coord) != len(axes):
+                #     raise ValueError(f"coord tuple length must be {len(axes)} (got {len(coord)})")
+                # axis_coord = {axis: c for axis, c in zip(Axis.corner_axes(), coord)}
+                # permutation[:] = NONE
+                # axis_offset = CORNER_AXIS_OFFSET if coord_type == "pcp" else EDGE_AXIS_OFFSET
+                # for axis in Axis.corner_axes() if coord_type == "pcp" else Axis.edge_axes():
+                #     if axis_coord[axis] != NONE:
+                #         partial_permutation, combination = utils.get_partial_permutation_array(axis_coord[axis], NUM_AXIS_ELEMS)
+                #         if not np.all(permutation[combination] == NONE):
+                #             raise ValueError(f"invalid partial coordinates, overlapping detected (got {coord})")
+                #         permutation[combination] = partial_permutation + axis_offset[axis]
 
-#         Examples
-#         --------
-#         >>> from cube_solver import Cube
-#         >>> cube = Cube()
+        # else:
+        #     raise ValueError(f"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', or 'pep' (got '{coord_type}')")
 
-#         Set cube coordinates.
+        # self._coords = ()
 
-#         >>> coords = (456, 673, 28179, 193381554)
-#         >>> cube.set_coords(coords)
-#         >>> cube.orientation
-#         array([0, 1, 2, 1, 2, 2, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0])
-#         >>> cube.permutation
-#         array([ 5,  4,  0,  7,  1,  3,  6,  2, 12, 18, 10, 19,  9, 13, 14, 17, 16,
-#                 8, 11, 15])
+    def _set_coords(self, coords: tuple[int | tuple[int, ...], ...], partial_corner_perm: bool = False, partial_edge_perm: bool = False):  # TODO change tuple
+        """
+        Set cube coordinates.
 
-#         Set cube coordinates with partial corner permutation and partial edge permutation.
+        Set the corner orientation, edge orientation,
+        (partial) corner permutation and (partial) edge permutation coordinates.
 
-#         >>> cube.partial_corner_perm = True
-#         >>> cube.partial_edge_perm = True
-#         >>> coords = (456, 673, (1273, 391), (2633, 8640, 7262))
-#         >>> cube.set_coords(coords)
-#         >>> cube.orientation
-#         array([0, 1, 2, 1, 2, 2, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0])
-#         >>> cube.permutation
-#         array([ 5,  4,  0,  7,  1,  3,  6,  2, 12, 18, 10, 19,  9, 13, 14, 17, 16,
-#                 8, 11, 15])
-#         """
-#         # print("setter")
-#         if not isinstance(coords, tuple):
-#             raise TypeError(f"coords must be tuple, not {type(coords).__name__}")
-#         if not isinstance(partial_corner_perm, bool):
-#             raise TypeError(f"partial_corner_perm must be bool, not {type(partial_corner_perm).__name__}")
-#         if not isinstance(partial_edge_perm, bool):
-#             raise TypeError(f"partial_edge_perm must be bool, not {type(partial_edge_perm).__name__}")
+        Parameters
+        ----------
+        coords : tuple of (int or tuple of int)
+            Cube coordinates in the following order:
+            corner orientation, edge orientation, (partial) corner permutation, (partial) edge permutation.
+        partial_corner_perm : bool, optional
+            If ``True``, sets the partial corner permutation coordinate,
+            otherwise sets the normal corner permutation coordinate. Default is ``False``.
+        partial_edge_perm : bool, optional
+            If ``True``, sets the partial edge permutation coordinate,
+            otherwise sets the normal edge permutation coordinate. Default is ``False``.
 
-#         self.set_coord("co", coords[0])
-#         self.set_coord("eo", coords[1])
-#         self.set_coord("pcp" if partial_corner_perm else "cp", coords[2])
-#         self.set_coord("pep" if partial_edge_perm else "ep", coords[3])
+        See Also
+        --------
+        set_coord
+
+        Examples
+        --------
+        >>> from cube_solver import Cube
+        >>> cube = Cube()
+
+        Set cube coordinates.
+
+        >>> coords = (456, 673, 28179, 193381554)
+        >>> cube.set_coords(coords)
+        >>> cube.orientation
+        array([0, 0, 1, 2, 1, 2, 2, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1])
+        >>> cube.permutation
+        array([ 5,  4,  0,  7,  1,  3,  6,  2, 12, 18, 10, 19,  9, 13, 14, 17, 16,
+                8, 11, 15])
+
+        Set cube coordinates with partial corner permutation and partial edge permutation.
+
+        >>> coords = (456, 673, (1273, 391), (2633, 8640, 7262))
+        >>> cube.set_coords(coords, partial_corner_perm=True, partial_edge_perm=True)
+        >>> cube.orientation
+        array([0, 0, 1, 2, 1, 2, 2, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1])
+        >>> cube.permutation
+        array([ 5,  4,  0,  7,  1,  3,  6,  2, 12, 18, 10, 19,  9, 13, 14, 17, 16,
+                8, 11, 15])
+        """
+        # print("setter")
+        # if not isinstance(coords, tuple):
+        #     raise TypeError(f"coords must be tuple, not {type(coords).__name__}")
+        # if not isinstance(partial_corner_perm, bool):
+        #     raise TypeError(f"partial_corner_perm must be bool, not {type(partial_corner_perm).__name__}")
+        # if not isinstance(partial_edge_perm, bool):
+        #     raise TypeError(f"partial_edge_perm must be bool, not {type(partial_edge_perm).__name__}")
+
+        self.set_coord("co", coords[0])
+        self.set_coord("eo", coords[1])
+        self.set_coord("pcp" if partial_corner_perm else "cp", coords[2])
+        self.set_coord("pep" if partial_edge_perm else "ep", coords[3])
 
 
 # # def generate_scramble(length: int = 25) -> str:
