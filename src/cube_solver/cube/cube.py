@@ -1,29 +1,35 @@
 """Cube module."""
+import math
+import warnings
 import numpy as np
-# # from copy import deepcopy
 from itertools import chain
 
-# from cube_solver.cube import utils
-from cube_solver.cube.enums import Axis, Color, Face, Cubie, Move
+from .defs import NONE, SIZE, NUM_DIMS, NUM_CORNERS, NUM_EDGES, NUM_ORBIT_ELEMS
+from .defs import CORNER_ORIENTATION_SIZE, EDGE_ORIENTATION_SIZE, CORNER_PERMUTATION_SIZE, EDGE_PERMUTATION_SIZE
+from .enums import Axis, Orbit, Color, Face, Cubie, Move
+from . import utils
 
 
-# TODO move to defs
-SIZE = 3
-NUM_CORNERS = 8
-NUM_EDGES = 12
+def fromatwarning(message, category, *args, **kwargs):
+    return f"{category.__name__}: {message}\n"
 
+
+warnings.simplefilter("always")
+warnings.formatwarning = fromatwarning
+
+# TODO make all public just to check documentation
+
+
+REPR_ORDER = [Face.UP, Face.LEFT, Face.FRONT, Face.RIGHT, Face.BACK, Face.DOWN]
+ORBIT_OFFSET = {Orbit.SLICE_MIDDLE: 8, Orbit.SLICE_EQUATOR: 16, Orbit.SLICE_STANDING: 12,
+                Orbit.TETRAD_111: 0, Orbit.TETRAD_M11: 4}   # TODO improve when testing differnt order of cubies
+CORNER_AXIS_OFFSET = {Axis.DIAG_M11: 0, Axis.DIAG_111: 4}
+EDGE_AXIS_OFFSET = {Axis.Y: 16, Axis.Z: 12, Axis.X: 8}
 SWAP_CUBIE = {  # swap cubie along axis
     Axis.Y: [Axis.Y, Axis.X, Axis.Z],
     Axis.Z: [Axis.X, Axis.Z, Axis.Y],
     Axis.X: [Axis.Z, Axis.Y, Axis.X]
 }
-REPR_ORDER = [Face.UP, Face.LEFT, Face.FRONT, Face.RIGHT, Face.BACK, Face.DOWN]
-
-# FACTORIAL = np.cumprod([1] + list(range(1, NUM_EDGES + 1)))
-# CORNER_ORIENTATION_SIZE = 3 ** (NUM_CORNERS - 1)
-# EDGE_ORIENTATION_SIZE = 2 ** (NUM_EDGES - 1)
-# CORNER_PERMUTATION_SIZE = FACTORIAL[NUM_CORNERS]
-# EDGE_PERMUTATION_SIZE = FACTORIAL[NUM_EDGES] // 2
 
 
 class Cube:
