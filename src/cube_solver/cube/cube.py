@@ -216,22 +216,38 @@ class Cube:
         for cubie in chain(Cubie.corners(), Cubie.edges()):  # TODO what happens when permutation has -1?
             cubie_orientation = self.orientation[cubie]
             cubie_permutation = Cubie(self.permutation[cubie])
-            cubie_colors = solved_colors[cubie_permutation._index]
+            cubie_colors = solved_colors[cubie_permutation._index].copy()
             if cubie.is_corner:
-                if cubie.orbit != cubie_permutation.orbit:
-                    cubie_colors = cubie_colors[SWAP_CUBIE[Axis.Y]]
-                if cubie_orientation:  # TODO is this neccesary? add orientaion != NONE
-                    cubie_colors = np.roll(cubie, cubie_orientation if cubie.orbit == Orbit.TETRAD_111 else -cubie_orientation)
+                if cubie.orbit != cubie_permutation.orbit:  # TODO can be Cubie.NONE
+                    cubie_colors["X"], cubie_colors["Z"] = cubie_colors["Z"], cubie_colors["X"]
+                if cubie.orbit == Orbit.TETRAD_111:
+                    if cubie_orientation == 1:  # TODO can be NONE
+                        cubie_colors["X"], cubie_colors["Y"], cubie_colors["Z"] = cubie_colors["Y"], cubie_colors["Z"], cubie_colors["X"]
+                    elif cubie_orientation == 2:
+                        cubie_colors["X"], cubie_colors["Y"], cubie_colors["Z"] = cubie_colors["Z"], cubie_colors["X"], cubie_colors["Y"]
+                else:
+                    if cubie_orientation == 1:
+                        cubie_colors["X"], cubie_colors["Y"], cubie_colors["Z"] = cubie_colors["Z"], cubie_colors["X"], cubie_colors["Y"]
+                    elif cubie_orientation == 2:
+                        cubie_colors["X"], cubie_colors["Y"], cubie_colors["Z"] = cubie_colors["Y"], cubie_colors["Z"], cubie_colors["X"]
             else:
                 orbits = {cubie.orbit, cubie_permutation.orbit}
-                if orbits == {0, 2}:
-                    cubie_colors = np.roll(cubie, 1 if cubie.orbit != 2 else -1)
-                elif orbits == {1, 2}:
-                    cubie_colors = cubie_colors[SWAP_CUBIE[Axis.Y]]
-                elif orbits == {0, 1}:
-                    cubie_colors = cubie_colors[SWAP_CUBIE[Axis.X]]
+                if orbits == {Orbit.SLICE_MIDDLE, Orbit.SLICE_EQUATOR}:
+                    if cubie.orbit == Orbit.SLICE_MIDDLE:
+                        cubie_colors["X"], cubie_colors["Y"], cubie_colors["Z"] = cubie_colors["Y"], cubie_colors["Z"], cubie_colors["X"]
+                    else:
+                        cubie_colors["X"], cubie_colors["Y"], cubie_colors["Z"] = cubie_colors["Z"], cubie_colors["X"], cubie_colors["Y"]
+                elif orbits == {Orbit.SLICE_MIDDLE, Orbit.SLICE_STANDING}:
+                    cubie_colors["X"], cubie_colors["Y"], cubie_colors["Z"] = cubie_colors["Z"], cubie_colors["Y"], cubie_colors["X"]
+                elif orbits == {Orbit.SLICE_EQUATOR, Orbit.SLICE_STANDING}:
+                    cubie_colors["X"], cubie_colors["Y"], cubie_colors["Z"] = cubie_colors["X"], cubie_colors["Z"], cubie_colors["Y"]
                 if cubie_orientation:
-                    cubie_colors = cubie_colors[SWAP_CUBIE[cubie.orbit]]
+                    if cubie.orbit == Orbit.SLICE_MIDDLE:
+                        cubie_colors["X"], cubie_colors["Y"], cubie_colors["Z"] = cubie_colors["X"], cubie_colors["Z"], cubie_colors["Y"]
+                    elif cubie.orbit == Orbit.SLICE_EQUATOR:
+                        cubie_colors["X"], cubie_colors["Y"], cubie_colors["Z"] = cubie_colors["Z"], cubie_colors["Y"], cubie_colors["X"]
+                    elif cubie.orbit == Orbit.SLICE_STANDING:
+                        cubie_colors["X"], cubie_colors["Y"], cubie_colors["Z"] = cubie_colors["Y"], cubie_colors["X"], cubie_colors["Z"]
             self._colors[cubie._index] = cubie_colors
 
         return "".join([Color(c).char for c in np.ravel([self._colors[face._index][face.axis.name] for face in REPR_ORDER])])
@@ -278,7 +294,7 @@ class Cube:
             self._colors[face._index][face.axis.name] = np.reshape([*map(Color.from_char, _repr)], shape=(SIZE, SIZE))
 
         # centers
-        inv_color_scheme = {}
+        inv_color_scheme = {color: Face.NONE for color in Color.colors()}
         for center in Cubie.centers():
             face = Face.from_char(center.name)
             color = Color(self._colors[center._index][center.axis.name])
@@ -295,17 +311,39 @@ class Cube:
         #     warnings.warn(f"missing face colors {no_colors}")
 
         # corners and edges
-        for slot in chain(Cubie.corners(), Cubie.edges()):
-            faces = [inv_color_scheme[color] for color in self._colors[slot._index] if color != Color.NONE]  # TODO try to include the Color.NONE
-            if slot.orbit == Orbit.TETRAD_111:
-                faces[1:] = faces[2], faces[1]  # TODO swap
-            # if slot.is_corner:
-            #     if slot.axis == Axis.DIAG_M11:
-            #         faces = faces[SWAP_CUBIE[Axis.Y]]
-            #     self.orientation[slot] = [face.axis for face in faces].index(Axis.Y)
-            # else:
-            #     self.orientation[slot] = faces[0].axis > faces[1].axis
-            self.permutation[slot] = Cubie.from_faces(faces)
+        for cubie in chain(Cubie.corners(), Cubie.edges()):
+            cubie_faces = [inv_color_scheme[self._colors[cubie._index][axis]] for axis in (Axis.Y, Axis.Z, Axis.X) if self._colors[cubie._index][axis] != Color.NONE]  # TODO try to include the Color.NONE
+            try:
+                if cubie.is_corner:
+                    if cubie.orbit == Orbit.TETRAD_111:
+                        cubie_faces[1:] = cubie_faces[2], cubie_faces[1]  # TODO swap
+                    self.orientation[cubie] = [face.axis for face in cubie_faces].index(Axis.Y)
+                else:
+                    axis_importance = [(Axis.Y, Axis.Z, Axis.X).index(face.axis) for face in cubie_faces]  # TODO make def of tuple
+                    self.orientation[cubie] = axis_importance[0] > axis_importance[1]
+                self.permutation[cubie] = Cubie.from_faces(cubie_faces)
+            except Exception:
+                self.orientation[cubie] = NONE
+                self.permutation[cubie] = Cubie.NONE
+
+        if np.any(self.permutation == Cubie.NONE):
+            warnings.warn("invalid string representation, setting undefined orientation and permutation values with -1")
+        else:
+            if np.sum(self.orientation[:NUM_CORNERS]) % 3 != 0:
+                warnings.warn("invalid corner orientation")
+            if np.sum(self.orientation[NUM_CORNERS:]) % 2 != 0:
+                warnings.warn("invalid edge orientation")
+            is_valid_corner_perm = len(set(self.permutation[:NUM_CORNERS])) == NUM_CORNERS
+            is_valid_edge_perm = len(set(self.permutation[NUM_CORNERS:])) == NUM_EDGES
+            if not is_valid_corner_perm:
+                warnings.warn("invalid corner permutation")
+            if not is_valid_edge_perm:
+                warnings.warn("invalid edge permutation")
+            if is_valid_corner_perm and is_valid_edge_perm:
+                corner_parity = utils.get_permutation_parity(self.permutation[:NUM_CORNERS])
+                edge_parity = utils.get_permutation_parity(self.permutation[NUM_CORNERS:])
+                if corner_parity != edge_parity:
+                    warnings.warn("invalid cube parity")
 
         # if np.all(self.permutation != Cubie.NONE):
         #     if np.sum(self.orientation[:NUM_CORNERS]) % 3 != 0 or np.sum(self.orientation[NUM_CORNERS:]) % 2 != 0:
