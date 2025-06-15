@@ -359,15 +359,11 @@ class Cube:
         >>> cube  # doctest: +SKIP
         WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY
         """
-        # TODO check
-        # self._state = None
-        # self._coords = None
         self._color_scheme = {face: color for face, color in zip(Face.faces(), Color.colors())}
-        dtype = [(axis.name, int) for axis in Axis.cartesian_axes()]
-        self._colors = np.full((SIZE,) * NUM_DIMS, (Color.NONE,) * NUM_DIMS, dtype=dtype)
+        self._colors = np.full((SIZE,) * NUM_DIMS, (Color.NONE,) * NUM_DIMS, dtype=COLORS_TYPE)
         self.orientation = np.zeros(NUM_CORNERS + NUM_EDGES, dtype=int)
         self.permutation = np.arange(NUM_CORNERS + NUM_EDGES, dtype=int)
-        # self.permutation_parity = False  # TODO is this neccesary? maybe saves computation
+        self.permutation_parity = False
 
     def set_random_state(self):
         """

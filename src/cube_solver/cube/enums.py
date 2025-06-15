@@ -429,10 +429,13 @@ class Cubie(IntEnum):
             raise TypeError(f"faces must be list, not {type(faces).__name__}")
         if len(faces) > 3:
             raise ValueError(f"faces length must be at most 3 (got {len(faces)})")
-        for face in faces:
+        min_faces = []
+        for i, face in enumerate(faces):
             if not isinstance(face, Face):
                 raise TypeError(f"faces elements must be Face, not {type(faces[0]).__name__}")
-        min_faces = min([faces[i:] + faces[:i] for i in range(len(faces))]) if faces else []
+            min_faces.append(faces[i:] + faces[:i])
+        if min_faces:
+            min_faces = min(min_faces)
         try:
             return faces_cubie[tuple(min_faces)]
         except KeyError:
