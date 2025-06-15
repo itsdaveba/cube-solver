@@ -385,24 +385,24 @@ class Cube:
             cubies = np.roll(layer.perm, shift, axis=1)
             orientation = self.orientation[cubies]
             if shift % 2 == 1:
-                if layer.axis == Axis.Z:
+                if move.axis == Axis.Z:
                     orientation = (orientation + [[1, 2, 1, 2], [1, 1, 1, 1]]) % ([3], [2])  # corners and edges
-                elif layer.axis == Axis.X:
+                elif move.axis == Axis.X:
                     orientation[0] = (orientation[0] + [2, 1, 2, 1]) % 3  # corners
             self.orientation[layer.perm] = orientation
             self.permutation[layer.perm] = self.permutation[cubies]
 
         elif move.is_slice:
             shift = move.shifts[0]
-            base_move = Move[move.axis.name + "1"].layers[move.axis == Axis.Z].name
-            self.apply_move(Move[base_move + "W" + str(-shift % 4)])
-            self.apply_move(Move[base_move + str(shift % 4)])
+            base_move = Move[move.axis.name + "1"].layers[move.axis == Axis.Z].char
+            self.apply_move(Move[base_move + "W" + str(-shift % 4)])  # wide move
+            self.apply_move(Move[base_move + str(shift % 4)])  # face move
 
         elif move.is_wide:
             shift = move.shifts[0]
-            mult = 1 if Move[move.axis.name + "1"].layers[0].name == move.name[0] else -1
-            self.apply_move(Move[move.axis.name + str(mult * shift % 4)])
-            self.apply_move(Move[Face.from_char(move.name[0]).opposite.char + str(shift % 4)])
+            mult = 1 if Move[move.axis.name + "1"].layers[0].char == move.name[0] else -1
+            self.apply_move(Move[move.axis.name + str(mult * shift % 4)])  # rotation
+            self.apply_move(Move[Face.from_char(move.name[0]).opposite.char + str(shift % 4)])  # face move
 
         elif move.is_rotation:
             layers_perm = [layer.perm for layer in move.layers]
@@ -411,37 +411,33 @@ class Cube:
             rotation.update({Cubie(key): Cubie(val) for key, val in zip(np.ravel(layers_shifted), np.ravel(layers_perm))})
 
             # centers
-            scheme = self._scheme.copy()
+            color_scheme = self._color_scheme.copy()
             for center in Cubie.centers():
-                self._scheme[Face.from_char(rotation[center].name)] = scheme[Face.from_char(center.name)]
+                self._color_scheme[Face.from_char(rotation[center].name)] = color_scheme[Face.from_char(center.name)]
 
             # corners and edges
             cubies = [*Cubie.corners()] + [*Cubie.edges()]
-            slots = [rotation[cubie] for cubie in cubies]
+            rotations = [rotation[cubie] for cubie in cubies]
             orientation = self.orientation[cubies]
             permutation = self.permutation[cubies]
             if move.shifts[0] % 2 == 1:
                 is_corner = np.array([cubie.is_corner for cubie in cubies])
-                cubie_axis = np.array([cubie.axis for cubie in cubies])
-                perm_axis = np.array([Cubie(perm).axis for perm in permutation])
-                corner_comp = edge_comp = [perm_axis, cubie_axis]
+                cubie_orbits = np.array([cubie.orbit for cubie in cubies])
+                perm_orbits = np.array([Cubie(perm).orbit for perm in permutation])
+                corner_comp = edge_comp = [perm_orbits, cubie_orbits]
                 if move.axis == Axis.X:
-                    corner_comp = [cubie_axis, Axis.DIAG_111]
-                    edge_comp = [Axis.X, Axis.X]
+                    corner_comp = [cubie_orbits, Orbit.TETRAD_M11]
+                    edge_comp = [Orbit.SLICE_MIDDLE, Orbit.SLICE_MIDDLE]
                 elif move.axis == Axis.Y:
-                    edge_comp = [Axis.Y, Axis.Y]
+                    edge_comp = [Orbit.SLICE_EQUATOR, Orbit.SLICE_EQUATOR]
                 elif move.axis == Axis.Z:
-                    corner_comp = [cubie_axis, Axis.DIAG_M11]
-                axis_comp = perm_axis != np.where(is_corner, corner_comp[0], edge_comp[0])
-                condition = cubie_axis == np.where(is_corner, corner_comp[1], edge_comp[1])
+                    corner_comp = [cubie_orbits, Orbit.TETRAD_111]
+                axis_comp = perm_orbits != np.where(is_corner, corner_comp[0], edge_comp[0])
+                condition = cubie_orbits == np.where(is_corner, corner_comp[1], edge_comp[1])
                 incr = np.where(condition, axis_comp, np.where(is_corner, -axis_comp.astype(int), ~axis_comp))
                 orientation = (orientation + incr) % np.where(is_corner, 3, 2)
-            self.orientation[slots] = orientation
-            self.permutation[slots] = [rotation[perm] for perm in permutation]
-
-        else:
-            raise ValueError(f"invalid move, got {repr(move)}")
-        # self._coords = ()
+            self.orientation[rotations] = orientation
+            self.permutation[rotations] = [rotation[perm] for perm in permutation]
 
     def apply_maneuver(self, maneuver: str):
         """
