@@ -64,6 +64,9 @@ class Cube:
                        | 52 53 54 |
                        ------------
 
+        If the ``orientation`` or ``permutation`` values could not be determined correctly from the
+        string representation, the orientation array and permutation array will have a ``-1`` for those locations.
+
         The default color scheme used for the cube is as follows (note: this may differ when using the ``repr`` parameter):
 
         * :attr:`Face.UP`: :attr:`Color.WHITE`
@@ -105,7 +108,7 @@ class Cube:
 
         >>> cube = Cube(random_state=True)
         >>> cube.coords  # coordinates of the cube state (result might differ) # doctest: +SKIP
-        (456, 673, 28179, 193381554)
+        (167, 48, 22530, 203841327)
         """
         if scramble is not None and not isinstance(scramble, str):
             raise TypeError(f"scramble must be str or None, not {type(scramble).__name__}")
@@ -159,6 +162,16 @@ class Cube:
 
         * Corners: [``UBL``, ``UFR``, ``DBR``, ``DFL``, ``UBR``, ``UFL``, ``DBL``, ``DFR``]
         * Edges: [``UB``, ``UF``, ``DB``, ``DF``, ``UL``, ``UR``, ``DL``, ``DR``, ``BL``, ``BR``, ``FL``, ``FR``]
+        """
+        self.permutation_parity: bool | None
+        """
+        Permutation parity.
+
+        The ``permutation_parity`` indicates the parity of both `corner` and `edge` permutations
+        (i.e. both parities are always the same), ``True`` for ``odd`` parity, ``False`` for ``even`` parity.,
+        and ``None`` if the parity cannot be determined.
+
+        The `solved state` permutation parity starts with ``even`` corner and endge parity.
         """
         self.reset()
         if random_state:
