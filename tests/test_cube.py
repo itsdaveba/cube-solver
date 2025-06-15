@@ -402,29 +402,101 @@ def test_utils(response):
     assert np.all(comb == combination)
 
 
-def check_repr(cube: Cube):
-    assert np.all(cube.orientation == Cube(repr=repr(cube)).orientation)
-    assert np.all(cube.permutation == Cube(repr=repr(cube)).permutation)
-    assert cube.permutation_parity == Cube(repr=repr(cube)).permutation_parity
+def check_cube(cube: Cube, orientation: list[int], permutation: list[int], check_coords: bool = True):
+    # state
+    assert np.all(cube.orientation == orientation)
+    assert np.all(cube.permutation == permutation)
+    # assert cube.permutation_parity == permutation_parity
+    # repr
+    _cube = Cube(repr=repr(cube))
+    assert np.all(cube.orientation == _cube.orientation)
+    assert np.all(cube.permutation == _cube.permutation)
+    # assert cube.permutation_parity == Cube(repr=repr(cube)).permutation_parity
+    # coords
+    if check_coords:
+        _cube.coords = cube.coords
+        assert np.all(cube.orientation == _cube.orientation)
+        assert np.all(cube.permutation == _cube.permutation)
+    # assert cube.permutation_parity == _cube.permutation_parity
 
 
 def test_cube(response):
-    """Sample pytest test function with the pytest fixture as an argument."""
     cube = Cube()
     assert repr(cube) == "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY"
+    check_cube(cube,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
 
+    # apply_move
+    with pytest.raises(TypeError, match=r"move must be Move, not NoneType"):
+        cube.apply_move(None)
+
+    # apply_maneuver
+    with pytest.raises(TypeError, match=r"maneuver must be str, not NoneType"):
+        cube.apply_maneuver(None)
+
+    # scramble
+    with pytest.raises(TypeError, match=r"scramble must be str or None, not int"):
+        Cube(0)
     cube = Cube("U F2 R' D B2 L' M E2 S' Uw Fw2 Rw' Dw Bw2 Lw' u f2 r' d b2 l' x y2 z'")
     assert repr(cube) == "YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO"
-    with pytest.raises(TypeError, match="scramble must be str or None, not int"):
-        Cube(0)
-    with pytest.raises(TypeError, match="maneuver must be str, not NoneType"):
-        cube.apply_maneuver(None)
-    with pytest.raises(TypeError, match="move must be Move, not NoneType"):
-        cube.apply_move(None)
-    with pytest.raises(ValueError, match="invalid move, got Move.NONE"):
-        cube.apply_move(Move.NONE)
+    check_cube(cube,
+               [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+               [4, 3, 1, 6, 7, 0, 2, 5, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
 
+    # repr
+    with pytest.raises(TypeError, match=r"repr must be str or None, not int"):
+        Cube(repr=0)
+    with pytest.raises(ValueError, match=r"repr length must be 54 \(got 4\)"):
+        Cube(repr="None")
+    with pytest.warns(UserWarning, match=r"invalid string representation, setting undefined orientation and permutation values with -1"):
+        # original            Y
+        cube = Cube(repr="YGWYNOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO")  # missing center  # TODO remove cube = ?
+    check_cube(cube,  # TODO couble check coords
+               [-1, 0, -1, 0, 0, -1, 2, -1, 0, 0, -1, 0, -1, -1, 1, 0, 0, -1, 0, 0],
+               [-1, 3, -1, 6, 7, -1, 2, -1, 18, 10, -1, 14, -1, -1, 19, 15, 11, -1, 16, 17], False)
+    with pytest.warns(UserWarning, match=r"invalid corner orientation"):
+        # original        Y        B                            O
+        cube = Cube(repr="OGWYYOBWWYGRGRRWGBYBGBGBRRYRYOOOBGOGGRBYBWYRBWWROWWOYO")
+    assert repr(cube) == "OGWYYOBWWYGRGRRWGBYBGBGBRRYRYOOOBGOGGRBYBWYRBWWROWWOYO"
+    check_cube(cube,
+               [1, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+               [4, 3, 1, 6, 7, 0, 2, 5, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
+    with pytest.warns(UserWarning, match=r"invalid edge orientation"):
+        # original         G                                   R
+        cube = Cube(repr="YRWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGGOYBWYRBWWROWWOYO")
+    assert repr(cube) == "YRWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGGOYBWYRBWWROWWOYO"
+    check_cube(cube,
+               [0, 0, 2, 0, 0, 1, 2, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+               [4, 3, 1, 6, 7, 0, 2, 5, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
+    with pytest.warns(UserWarning, match=r"invalid corner permutation"):
+        # original        Y        B                            O
+        cube = Cube(repr="WGWYYOBWWOGRGRRWGBYBGBGBRRYRYOOOBGOGGRBYBWYRBWWROWWOYO")
+    assert repr(cube) == "WGWYYOBWWOGRGRRWGBYBGBGBRRYRYOOOBGOGGRBYBWYRBWWROWWOYO"
+    check_cube(cube,
+               [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+               [2, 3, 1, 6, 7, 0, 2, 5, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17], False)
+    with pytest.warns(UserWarning, match=r"invalid edge permutation"):
+        # original         G
+        cube = Cube(repr="YBWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO")
+    assert repr(cube) == "YBWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO"
+    check_cube(cube,
+               [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+               [4, 3, 1, 6, 7, 0, 2, 5, 16, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17], False)
+    with pytest.warns(UserWarning, match=r"invalid cube parity"):
+        # original         G     W           B                 R
+        cube = Cube(repr="YWWYYOBGWBGRGRRWGBYRGBGBRRYRYOOOBGOGGBOYBWYRBWWROWWOYO")
+    assert repr(cube) == "YWWYYOBGWBGRGRRWGBYRGBGBRRYRYOOOBGOGGBOYBWYRBWWROWWOYO"
+    check_cube(cube,
+               [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+               [4, 3, 1, 6, 7, 0, 2, 5, 10, 18, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
     cube = Cube(repr="YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO")
+    assert repr(cube) == "YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO"
+    check_cube(cube,
+               [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+               [4, 3, 1, 6, 7, 0, 2, 5, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
+
+    # string  # TODO debug this
     assert str(cube) == """        ---------
         | Y G W |
         | Y Y O |
