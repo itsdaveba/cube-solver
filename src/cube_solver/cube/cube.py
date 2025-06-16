@@ -549,25 +549,28 @@ class Cube:
         >>> cube.get_coord('pep')
         (2633, 8640, 7262)
         """
-        # if not isinstance(coord_type, str):
-        #     raise TypeError(f"coord_type must be str, not {type(coord_type).__name__}")
+        if not isinstance(coord_type, str):
+            raise TypeError(f"coord_type must be str, not {type(coord_type).__name__}")
 
         if coord_type in ("co", "eo"):
             orientation = self.orientation[:NUM_CORNERS] if coord_type == "co" else self.orientation[NUM_CORNERS:]
-            return utils.get_orientation_coord(orientation, 3 if coord_type == "co" else 2)  # TODO add is_modulo
+            return utils.get_orientation_coord(orientation, 3 if coord_type == "co" else 2, is_modulo=True)
 
         if coord_type in ("cp", "ep", "pcp", "pep"):
             permutation = self.permutation[:NUM_CORNERS] if coord_type in ("cp", "pcp") else self.permutation[NUM_CORNERS:]
             if coord_type in ("cp", "ep"):
-                return utils.get_permutation_coord(permutation)  # TODO add is_even
-            # num_axes = 2 if coord_type == "pcp" else 3
-            # combinations = [np.where(np.array([AXIS[perm] for perm in permutation]) ==axis)[0] for axis in range(num_axes)]
-            # coord = tuple(utils.get_partial_permutation_coord(permutation, combination) for combination in combinations)
-            # if np.all([c == EMPTY for c in coord[1:]]):
-            #     return coord[0]
-            # return coord
+                coord = utils.get_permutation_coord(permutation)
+                if coord_type == "ep":
+                    return coord // 2
+                return coord
+            orbits = [*Orbit.tetrads()] if coord_type == "pcp" else [*Orbit.slices()]
+            combs = [np.where(np.array([Cubie(perm).orbit for perm in permutation]) == orbit)[0] for orbit in orbits]
+            coord = tuple(utils.get_partial_permutation_coord(permutation[comb], comb) if len(comb) else -1 for comb in combs)
+            if all(c == NONE for c in coord[1:]):
+                return coord[0]
+            return coord
 
-        # raise ValueError(f"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', or 'pep' (got '{coord_type}')")
+        raise ValueError(f"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' (got '{coord_type}')")
 
     def _get_coords(self, partial_corner_perm: bool = False, partial_edge_perm: bool = False) -> tuple[int | tuple[int, ...], ...]:  # TODO make tuple[int, ...]
         """
