@@ -492,7 +492,7 @@ class Cube:
         for move_str in maneuver.split():
             self.apply_move(Move.from_string(move_str))
 
-    def get_coord(self, coord_type: str) -> int | tuple[int, ...]:  # TODO make tuple[int, ...]
+    def get_coord(self, coord_type: str) -> int | tuple[int, ...]:
         """
         Get cube coordinate value.
 
@@ -572,7 +572,10 @@ class Cube:
 
         raise ValueError(f"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' (got '{coord_type}')")
 
-    def _get_coords(self, partial_corner_perm: bool = False, partial_edge_perm: bool = False) -> tuple[int | tuple[int, ...], ...]:  # TODO make tuple[int, ...]
+    def _get_coords(
+            self,
+            partial_corner_perm: bool = False,
+            partial_edge_perm: bool = False) -> tuple[int | tuple[int, ...], ...]:
         """
         Get cube coordinates.
 
@@ -618,7 +621,7 @@ class Cube:
                 self.get_coord("pcp" if partial_corner_perm else "cp"),
                 self.get_coord("pep" if partial_edge_perm else "ep"))
 
-    def set_coord(self, coord_type: str, coord: int | tuple[int, ...]):  # TODO add similad doc to get coord
+    def set_coord(self, coord_type: str, coord: int | tuple[int, ...]):
         """
         Set cube coordinate value.
 
@@ -763,7 +766,11 @@ class Cube:
         else:
             raise ValueError(f"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' (got '{coord_type}')")
 
-    def _set_coords(self, coords: tuple[int | tuple[int, ...], ...], partial_corner_perm: bool = False, partial_edge_perm: bool = False):  # TODO change tuple
+    def _set_coords(
+            self,
+            coords: tuple[int | tuple[int, ...], ...],
+            partial_corner_perm: bool = False,
+            partial_edge_perm: bool = False):
         """
         Set cube coordinates.
 
