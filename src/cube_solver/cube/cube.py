@@ -761,6 +761,10 @@ class Cube:
             Cube coordinates in the following order:
             `corner orientation`, `edge orientation`, `(partial) corner permutation`, `(partial) edge permutation`.
 
+        See Also
+        --------
+        get_coord
+
         Examples
         --------
         >>> from cube_solver import Cube
@@ -802,6 +806,10 @@ class Cube:
         partial_edge_perm : bool, optional
             If ``True``, sets the `partial edge permutation` coordinate,
             otherwise sets the normal `edge permutation` coordinate. Default is ``False``.
+
+        See Also
+        --------
+        set_coord
 
         Examples
         --------
