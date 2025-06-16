@@ -12,7 +12,7 @@ from cube_solver.cube.enums import Axis, Orbit, Layer, Color, Face, Cubie, Move
 
 @pytest.fixture
 def response():
-    """Sample pytest fixture.
+    """Sample pytest fixture.  # TODO double check this
 
     See more at: http://doc.pytest.org/en/latest/fixture.html
     """
@@ -544,6 +544,8 @@ def test_cube(response):
                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
 
+    # TODO add get_coords and set_coords
+
     # set_coord
     with pytest.raises(TypeError, match=r"coord_type must be str, not NoneType"):
         cube.set_coord(None, None)
@@ -1022,7 +1024,7 @@ def test_cube(response):
 
     # TODO remove extra tests
 
-    move = Move.Y1
+    move = Move.Y1  # TODO add testing orientation, permutation and parity
 
     cube.reset()
     cube.set_coord("pcp", 0)
