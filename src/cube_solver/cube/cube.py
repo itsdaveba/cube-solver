@@ -408,9 +408,9 @@ class Cube:
             orientation = self.orientation[cubies]
             if shift % 2 == 1:
                 if move.axis == Axis.Z:
-                    orientation = (orientation + [[1, 2, 1, 2], [1, 1, 1, 1]]) % ([3], [2])  # corners and edges
+                    orientation = np.where(orientation != NONE, (orientation + [[1, 2, 1, 2], [1] * 4]) % ([3], [2]), NONE)
                 elif move.axis == Axis.X:
-                    orientation[0] = (orientation[0] + [2, 1, 2, 1]) % 3  # corners
+                    orientation[0] = np.where(orientation[0] != NONE, (orientation[0] + [2, 1, 2, 1]) % 3, NONE)
             self.orientation[layer.perm] = orientation
             self.permutation[layer.perm] = self.permutation[cubies]
 
@@ -431,6 +431,7 @@ class Cube:
             layers_shifted = [np.roll(layer, shift, axis=1) for layer, shift in zip(layers_perm, move.shifts)]
             rotation = {center: center for center in Cubie.centers()}
             rotation.update({Cubie(key): Cubie(val) for key, val in zip(np.ravel(layers_shifted), np.ravel(layers_perm))})
+            rotation[Cubie.NONE] = Cubie.NONE
 
             # centers
             color_scheme = self._color_scheme.copy()
@@ -452,12 +453,12 @@ class Cube:
                     edge_comp = [Orbit.SLICE_MIDDLE, Orbit.SLICE_MIDDLE]
                 elif move.axis == Axis.Y:
                     edge_comp = [Orbit.SLICE_EQUATOR, Orbit.SLICE_EQUATOR]
-                elif move.axis == Axis.Z:
+                else:
                     corner_comp = [cubie_orbits, Orbit.TETRAD_111]
                 axis_comp = perm_orbits != np.where(is_corner, corner_comp[0], edge_comp[0])
                 condition = cubie_orbits == np.where(is_corner, corner_comp[1], edge_comp[1])
                 incr = np.where(condition, axis_comp, np.where(is_corner, -axis_comp.astype(int), ~axis_comp))
-                orientation = (orientation + incr) % np.where(is_corner, 3, 2)
+                orientation = np.where(orientation != NONE, (orientation + incr) % np.where(is_corner, 3, 2), NONE)
             self.orientation[rotations] = orientation
             self.permutation[rotations] = [rotation[perm] for perm in permutation]
 
