@@ -25,13 +25,7 @@ ORBIT_OFFSET = {   # TODO improve when testing differnt order of cubies
     Orbit.TETRAD_M11: 4
 }
 
-
-def fromatwarning(message, category, *args, **kwargs):
-    return f"{category.__name__}: {message}\n"
-
-
 warnings.simplefilter("always")
-warnings.formatwarning = fromatwarning
 
 
 class Cube:
@@ -433,6 +427,8 @@ class Cube:
                     orientation[0] = np.where(orientation[0] != NONE, (orientation[0] + [2, 1, 2, 1]) % 3, NONE)
             self.orientation[layer.perm] = orientation
             self.permutation[layer.perm] = self.permutation[cubies]
+            if self.permutation_parity is not None:
+                self.permutation_parity = not self.permutation_parity
 
         elif move.is_slice:
             shift = move.shifts[0]
@@ -777,6 +773,11 @@ class Cube:
         >>> cube.get_coords(partial_corner_perm=True, partial_edge_perm=True)
         (456, 673, (1273, 391), (7262, 2633, 8640))
         """
+        if not isinstance(partial_corner_perm, bool):
+            raise TypeError(f"partial_corner_perm must be bool, not {type(partial_corner_perm).__name__}")
+        if not isinstance(partial_edge_perm, bool):
+            raise TypeError(f"partial_edge_perm must be bool, not {type(partial_edge_perm).__name__}")
+
         return (self.get_coord("co"), self.get_coord("eo"),
                 self.get_coord("pcp" if partial_corner_perm else "cp"),
                 self.get_coord("pep" if partial_edge_perm else "ep"))
@@ -827,12 +828,14 @@ class Cube:
         >>> cube
         WWRWWROORGGYOOYOOYGGBGGYGGYWWWRRBRRBGOOWBBWBBRRBYYBYYO
         """
-        # if not isinstance(coords, tuple):
-        #     raise TypeError(f"coords must be tuple, not {type(coords).__name__}")
-        # if not isinstance(partial_corner_perm, bool):
-        #     raise TypeError(f"partial_corner_perm must be bool, not {type(partial_corner_perm).__name__}")
-        # if not isinstance(partial_edge_perm, bool):
-        #     raise TypeError(f"partial_edge_perm must be bool, not {type(partial_edge_perm).__name__}")
+        if not isinstance(coords, tuple):
+            raise TypeError(f"coords must be tuple, not {type(coords).__name__}")
+        if not isinstance(partial_corner_perm, bool):
+            raise TypeError(f"partial_corner_perm must be bool, not {type(partial_corner_perm).__name__}")
+        if not isinstance(partial_edge_perm, bool):
+            raise TypeError(f"partial_edge_perm must be bool, not {type(partial_edge_perm).__name__}")
+        if len(coords) < 4:
+            raise ValueError(f"coords tuple length must be 4 (got {len(coords)})")
 
         self.set_coord("co", coords[0])
         self.set_coord("eo", coords[1])
