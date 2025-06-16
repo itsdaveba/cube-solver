@@ -1020,6 +1020,8 @@ def test_cube(response):
                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 18])
 
+    # TODO remove extra tests
+
     move = Move.Y1
 
     cube.reset()

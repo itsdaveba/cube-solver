@@ -193,7 +193,7 @@ class Cube:
             self.apply_maneuver(scramble)
 
     @property
-    def coords(self) -> tuple[int, int, int, int]:
+    def coords(self) -> tuple[int, ...]:
         """
         Cube coordinates.
 
@@ -216,7 +216,8 @@ class Cube:
         >>> cube
         WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY
         """
-        return self._get_coords()
+        coords = self._get_coords()
+        return tuple(coord if isinstance(coord, int) else coord[0] for coord in coords)
 
     @coords.setter
     def coords(self, coords: tuple[int | tuple[int, ...], ...]):
@@ -732,8 +733,9 @@ class Cube:
                     coord_tuple = (coord,) + (NONE,) * (len(orbits) - 1)
                 else:
                     coord_tuple = coord
-                if len(coord_tuple) != len(orbits):
-                    raise ValueError(f"coord tuple length must be {len(orbits)} for coord_type '{coord_type}' (got {len(coord_tuple)})")
+                size = len(coord_tuple)
+                if size != len(orbits):
+                    raise ValueError(f"coord tuple length must be {len(orbits)} for coord_type '{coord_type}' (got {size})")
                 perm = np.full_like(permutation, Cubie.NONE)
                 for coord, orbit in zip(coord_tuple, orbits):
                     if not isinstance(coord, int):
