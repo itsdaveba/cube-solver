@@ -8,7 +8,7 @@ class IntEnum(int, Enum):
     __repr__ = Enum.__str__
 
 
-class Axis(IntEnum):
+class Axis(IntEnum):  # TODO test different axis order and for other enums
     """Axis enumeration."""
     NONE = -1  #: No axis.
     X = auto()  #: `X` axis along :attr:`Cubie.R` and :attr:`Cubie.L` centers.

@@ -28,7 +28,7 @@ SWAP_COLORS = {  # swap colors along axis
     Axis.Y: [Axis.Z.name, Axis.Y.name, Axis.X.name],
     Axis.Z: [Axis.Y.name, Axis.X.name, Axis.Z.name]
 }
-ORBIT_OFFSET = {
+ORBIT_OFFSET = {   # TODO improve when testing differnt order of cubies
     Orbit.SLICE_MIDDLE: 8,
     Orbit.SLICE_EQUATOR: 16,
     Orbit.SLICE_STANDING: 12,
@@ -702,7 +702,7 @@ class Cube:
         >>> cube.permutation[8:]
         array([-1, 18, -1, 19, -1, -1, -1, 17, 16, -1, -1, -1])
         """
-        if not isinstance(coord_type, str):
+        if not isinstance(coord_type, str):  # TODO add that orientation is also not enforced for partial permutation
             raise TypeError(f"coord_type must be str, not {type(coord_type).__name__}")
         if not isinstance(coord, (int, tuple)):
             raise TypeError(f"coord must be int or tuple, not {type(coord).__name__}")
@@ -750,7 +750,7 @@ class Cube:
                         perm[combination] = partial_permuttion + ORBIT_OFFSET[orbit]
                 permutation[:] = perm
                 if np.any(self.permutation == Cubie.NONE):
-                    self.orientation = np.where(self.permutation == Cubie.NONE, NONE, self.orientation)
+                    self.orientation = np.where(self.permutation == Cubie.NONE, NONE, self.orientation)  # TODO document
                     self.permutation_parity = None
                 else:
                     corner_parity = utils.get_permutation_parity(self.permutation[:NUM_CORNERS])
@@ -758,7 +758,7 @@ class Cube:
                     if corner_parity != edge_parity:
                         if coord_type == "pcp":
                             self.permutation[-2:] = self.permutation[[-1, -2]]
-                            self.permutation_parity = corner_parity
+                            self.permutation_parity = corner_parity  # TODO document that first corner
                         else:
                             warnings.warn("invalid cube parity")
                             self.permutation_parity = None
@@ -768,6 +768,7 @@ class Cube:
         else:
             raise ValueError(f"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' (got '{coord_type}')")
 
+    # TODO test
     def _set_coords(
             self,
             coords: tuple[int | tuple[int, ...], ...],
