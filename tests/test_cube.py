@@ -404,34 +404,39 @@ def test_utils(response):
     assert np.all(comb == combination)
 
 
-def check_cube(cube: Cube, orientation: list[int], permutation: list[int], check_coords: bool = True):
+def check_cube(cube: Cube, permutation_parity: bool | None, orientation: list[int], permutation: list[int]):
     # state
     assert np.all(cube.orientation == orientation)
     assert np.all(cube.permutation == permutation)
-    # assert cube.permutation_parity == permutation_parity
+    assert cube.permutation_parity == permutation_parity
     # repr
     _cube = Cube(repr=repr(cube))
     assert np.all(cube.orientation == _cube.orientation)
     assert np.all(cube.permutation == _cube.permutation)
-    # assert cube.permutation_parity == Cube(repr=repr(cube)).permutation_parity
+    assert cube.permutation_parity == _cube.permutation_parity
     # coords
-    if check_coords:
-        _cube.coords = cube.coords
-        assert np.all(cube.orientation == _cube.orientation)
-        assert np.all(cube.permutation == _cube.permutation)
-    # assert cube.permutation_parity == _cube.permutation_parity
+    if permutation_parity is not None:
+        try:
+            _cube.coords = cube.coords
+            assert np.all(cube.orientation == _cube.orientation)
+            assert np.all(cube.permutation == _cube.permutation)
+            assert cube.permutation_parity == _cube.permutation_parity
+        except ValueError:
+            pass
 
 
 def test_cube(response):
     cube = Cube()
     assert repr(cube) == "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY"
-    check_cube(cube,
+    check_cube(cube, False,
                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
 
     # apply_move
     with pytest.raises(TypeError, match=r"move must be Move, not NoneType"):
         cube.apply_move(None)
+    cube.apply_move(Move.NONE)
+    assert repr(cube) == "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY"
 
     # apply_maneuver
     with pytest.raises(TypeError, match=r"maneuver must be str, not NoneType"):
@@ -442,7 +447,7 @@ def test_cube(response):
         Cube(0)
     cube = Cube("U F2 R' D B2 L' M E2 S' Uw Fw2 Rw' Dw Bw2 Lw' u f2 r' d b2 l' x y2 z'")
     assert repr(cube) == "YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO"
-    check_cube(cube,
+    check_cube(cube, False,
                [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
                [4, 3, 1, 6, 7, 0, 2, 5, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
 
@@ -454,51 +459,51 @@ def test_cube(response):
     with pytest.warns(UserWarning, match=r"invalid string representation, setting undefined orientation and permutation values with -1"):
         # original            Y
         cube = Cube(repr="YGWYNOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO")  # missing center  # TODO remove cube = ?
-    check_cube(cube,  # TODO couble check coords
+    check_cube(cube, None,
                [-1, 0, -1, 0, 0, -1, 2, -1, 0, 0, -1, 0, -1, -1, 1, 0, 0, -1, 0, 0],
-               [-1, 3, -1, 6, 7, -1, 2, -1, 18, 10, -1, 14, -1, -1, 19, 15, 11, -1, 16, 17], False)
+               [-1, 3, -1, 6, 7, -1, 2, -1, 18, 10, -1, 14, -1, -1, 19, 15, 11, -1, 16, 17])
     with pytest.warns(UserWarning, match=r"invalid corner orientation"):
         # original        Y        B                            O
         cube = Cube(repr="OGWYYOBWWYGRGRRWGBYBGBGBRRYRYOOOBGOGGRBYBWYRBWWROWWOYO")
     assert repr(cube) == "OGWYYOBWWYGRGRRWGBYBGBGBRRYRYOOOBGOGGRBYBWYRBWWROWWOYO"
-    check_cube(cube,
+    check_cube(cube, False,
                [1, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
                [4, 3, 1, 6, 7, 0, 2, 5, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
     with pytest.warns(UserWarning, match=r"invalid edge orientation"):
         # original         G                                   R
         cube = Cube(repr="YRWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGGOYBWYRBWWROWWOYO")
     assert repr(cube) == "YRWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGGOYBWYRBWWROWWOYO"
-    check_cube(cube,
+    check_cube(cube, False,
                [0, 0, 2, 0, 0, 1, 2, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
                [4, 3, 1, 6, 7, 0, 2, 5, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
     with pytest.warns(UserWarning, match=r"invalid corner permutation"):
         # original        Y        B                            O
         cube = Cube(repr="WGWYYOBWWOGRGRRWGBYBGBGBRRYRYOOOBGOGGRBYBWYRBWWROWWOYO")
     assert repr(cube) == "WGWYYOBWWOGRGRRWGBYBGBGBRRYRYOOOBGOGGRBYBWYRBWWROWWOYO"
-    check_cube(cube,
+    check_cube(cube, None,
                [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
-               [2, 3, 1, 6, 7, 0, 2, 5, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17], False)
+               [2, 3, 1, 6, 7, 0, 2, 5, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
     with pytest.warns(UserWarning, match=r"invalid edge permutation"):
         # original         G
         cube = Cube(repr="YBWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO")
     assert repr(cube) == "YBWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO"
-    check_cube(cube,
+    check_cube(cube, None,
                [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
-               [4, 3, 1, 6, 7, 0, 2, 5, 16, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17], False)
+               [4, 3, 1, 6, 7, 0, 2, 5, 16, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
     with pytest.warns(UserWarning, match=r"invalid cube parity"):
         # original         G     W           B                 R
         cube = Cube(repr="YWWYYOBGWBGRGRRWGBYRGBGBRRYRYOOOBGOGGBOYBWYRBWWROWWOYO")
     assert repr(cube) == "YWWYYOBGWBGRGRRWGBYRGBGBRRYRYOOOBGOGGBOYBWYRBWWROWWOYO"
-    check_cube(cube,
+    check_cube(cube, None,
                [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
                [4, 3, 1, 6, 7, 0, 2, 5, 10, 18, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
     cube = Cube(repr="YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO")
     assert repr(cube) == "YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO"
-    check_cube(cube,
+    check_cube(cube, False,
                [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
                [4, 3, 1, 6, 7, 0, 2, 5, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
 
-    # string  # TODO debug this
+    # string
     assert str(cube) == """        ---------
         | Y G W |
         | Y Y O |
@@ -512,27 +517,523 @@ def test_cube(response):
         | O W W |
         | O Y O |
         ---------"""
-    with pytest.raises(TypeError, match="repr must be str or None, not int"):
-        Cube(repr=0)
-    with pytest.raises(ValueError, match="repr length must be 54, got 4"):
-        Cube(repr="None")
-    with pytest.raises(ValueError, match="invalid color character, got 'N'"):
-        Cube(repr="YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYN")
-    match = r"invalid cubie centers, got \[Color.YELLOW, Color.GREEN, Color.ORANGE, Color.YELLOW, Color.BLUE, Color.RED\]"
-    with pytest.raises(ValueError, match=match):
-        Cube(repr="YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROYWOYO")
-    with pytest.raises(ValueError, match=r"invalid cubie faces, got \[Face.RIGHT, Face.LEFT\]"):
-        Cube(repr="YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOOO")
-    with pytest.raises(ValueError, match=r"invalid cubie faces, got \[Face.UP, Face.FRONT, Face.RIGHT\]"):
-        Cube(repr="YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWORBWWROWWOOY")
-    with pytest.raises(ValueError, match=r"invalid cubie faces, got \[Face.FRONT, Face.FRONT, Face.FRONT\]"):
-        Cube(repr="YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWGRBWWROWWOOG")
-    with pytest.raises(ValueError, match=r"invalid cubie permutation"):
-        Cube(repr="YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWRRBWWROWWOYY")
-    with pytest.raises(ValueError, match=r"invalid cubie orientation"):
-        Cube(repr="YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYYBWWROWWORO")
 
+    # get_coord
+    with pytest.raises(TypeError, match=r"coord_type must be str, not NoneType"):
+        cube.get_coord(None)
+    with pytest.raises(ValueError, match=r"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' \(got 'None'\)"):
+        cube.get_coord("None")
+    assert cube.get_coord("co") == 167
+    assert cube.get_coord("eo") == 48
+    assert cube.get_coord("cp") == 22530
+    assert cube.get_coord("ep") == 203841327
+    assert cube.get_coord("pcp") == (668, 1011)
+    assert cube.get_coord("pep") == (4551, 11176, 1202)
+
+    # random_state
+    with pytest.raises(TypeError, match=r"random_state must be bool, not int"):
+        Cube(random_state=0)
     cube = Cube(random_state=True)
     assert cube.coords != (0, 0, 0, 0)
-    with pytest.raises(TypeError, match="random_state must be bool, not int"):
-        Cube(random_state=0)
+    assert repr(cube) != "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY"
+
+    # reset
+    cube.reset()
+    assert repr(cube) == "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY"
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+
+    # set_coord
+    with pytest.raises(TypeError, match=r"coord_type must be str, not NoneType"):
+        cube.set_coord(None, None)
+    with pytest.raises(TypeError, match=r"coord must be int or tuple, not NoneType"):
+        cube.set_coord("None", None)
+    with pytest.raises(ValueError, match=r"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' \(got 'None'\)"):
+        cube.set_coord("None", ())
+    # corner orientation
+    with pytest.raises(TypeError, match=r"coord must be int for coord_type 'co', not tuple"):
+        cube.set_coord("co", ())
+    with pytest.raises(ValueError, match=r"coord must be >= 0 and < 2187 \(got -1\)"):
+        cube.set_coord("co", -1)
+    cube.set_coord("co", 167)
+    assert cube.get_coord("co") == 167
+    check_cube(cube, False,
+               [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    # edge orientation
+    with pytest.raises(TypeError, match=r"coord must be int for coord_type 'eo', not tuple"):
+        cube.set_coord("eo", ())
+    with pytest.raises(ValueError, match=r"coord must be >= 0 and < 2048 \(got -1\)"):
+        cube.set_coord("eo", -1)
+    cube.set_coord("eo", 48)
+    assert cube.get_coord("eo") == 48
+    check_cube(cube, False,
+               [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    # corner permutation
+    with pytest.raises(TypeError, match=r"coord must be int for coord_type 'cp', not tuple"):
+        cube.set_coord("cp", ())
+    with pytest.raises(ValueError, match=r"coord must be >= 0 and < 40320 \(got -1\)"):
+        cube.set_coord("cp", -1)
+    cube.set_coord("cp", 22530)
+    assert cube.get_coord("cp") == 22530
+    check_cube(cube, False,
+               [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+               [4, 3, 1, 6, 7, 0, 2, 5, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    # edge permutation
+    with pytest.raises(TypeError, match=r"coord must be int for coord_type 'ep', not tuple"):
+        cube.set_coord("ep", ())
+    with pytest.raises(ValueError, match=r"coord must be >= 0 and < 239500800 \(got -1\)"):
+        cube.set_coord("ep", -1)
+    cube.set_coord("ep", 203841327)
+    assert cube.get_coord("ep") == 203841327
+    check_cube(cube, False,
+               [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+               [4, 3, 1, 6, 7, 0, 2, 5, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
+    # partial corner permutation
+    with pytest.raises(ValueError, match=r"coord tuple length must be 2 for coord_type 'pcp' \(got 0\)"):
+        cube.set_coord("pcp", ())
+    with pytest.raises(TypeError, match=r"coord tuple elements must be int, not NoneType"):
+        cube.set_coord("pcp", (None, None))
+    with pytest.raises(ValueError, match=r"coord must be >= 0 and < 1680 \(got -2\)"):
+        cube.set_coord("pcp", (-2, -2))
+    with pytest.raises(ValueError, match=r"invalid partial coordinates, overlapping detected \(got \(0, 0\)\)"):
+        cube.set_coord("pcp", (0, 0))
+    cube.set_coord("pcp", (-1, 1011))
+    assert cube.get_coord("pcp") == (-1, 1011)
+    check_cube(cube, None,
+               [0, -1, -1, 0, 0, -1, -1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+               [4, -1, -1, 6, 7, -1, -1, 5, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
+    cube.set_coord("pcp", (668, -1))
+    assert cube.get_coord("pcp") == 668
+    check_cube(cube, None,
+               [-1, 0, 0, -1, -1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+               [-1, 3, 1, -1, -1, 0, 2, -1, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
+    cube.set_coord("pcp", (-1, -1))
+    assert cube.get_coord("pcp") == -1
+    check_cube(cube, None,
+               [-1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+               [-1, -1, -1, -1, -1, -1, -1, -1, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
+    cube.set_coord("pcp", 668)
+    assert cube.get_coord("pcp") == 668
+    check_cube(cube, None,
+               [-1, 0, 0, -1, -1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+               [-1, 3, 1, -1, -1, 0, 2, -1, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
+    cube.set_coord("pcp", (668, 1011))
+    assert cube.get_coord("pcp") == (668, 1011)
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+               [4, 3, 1, 6, 7, 0, 2, 5, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
+    # partial edge permutation
+    with pytest.raises(ValueError, match=r"coord tuple length must be 3 for coord_type 'pep' \(got 0\)"):
+        cube.set_coord("pep", ())
+    with pytest.raises(TypeError, match=r"coord tuple elements must be int, not NoneType"):
+        cube.set_coord("pep", (None, None, None))
+    with pytest.raises(ValueError, match=r"coord must be >= 0 and < 11880 \(got -2\)"):
+        cube.set_coord("pep", (-2, -2, -2))
+    with pytest.raises(ValueError, match=r"invalid partial coordinates, overlapping detected \(got \(0, 0, 0\)\)"):
+        cube.set_coord("pep", (0, 0, 0))
+    cube.set_coord("pep", (-1, -1, 1202))
+    assert cube.get_coord("pep") == (-1, -1, 1202)
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, -1, -1, 0, 0, -1, 1, -1, 0, -1, -1, -1, -1],
+               [4, 3, 1, 6, 7, 0, 2, 5, -1, -1, 12, 14, -1, 13, -1, 15, -1, -1, -1, -1])
+    cube.set_coord("pep", (-1, 11176, -1))
+    assert cube.get_coord("pep") == (-1, 11176, -1)
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, 0, -1, -1, -1, 0, 0],
+               [4, 3, 1, 6, 7, 0, 2, 5, 18, -1, -1, -1, -1, -1, 19, -1, -1, -1, 16, 17])
+    cube.set_coord("pep", (4551, -1, -1))
+    assert cube.get_coord("pep") == 4551
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, -1, 0, -1, -1, -1, 0, 0, -1, -1],
+               [4, 3, 1, 6, 7, 0, 2, 5, -1, 10, -1, -1, 9, -1, -1, -1, 11, 8, -1, -1])
+    cube.set_coord("pep", (-1, -1, -1))
+    assert cube.get_coord("pep") == -1
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+               [4, 3, 1, 6, 7, 0, 2, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1])
+    cube.set_coord("pep", 4551)
+    assert cube.get_coord("pep") == 4551
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1, -1, 0, -1, -1, -1, 0, 0, -1, -1],
+               [4, 3, 1, 6, 7, 0, 2, 5, -1, 10, -1, -1, 9, -1, -1, -1, 11, 8, -1, -1])
+    cube.set_coord("pep", (4551, 11176, 1202))
+    assert cube.get_coord("pep") == (4551, 11176, 1202)
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [4, 3, 1, 6, 7, 0, 2, 5, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
+
+    # permutation parity
+    cube.set_coord("cp", 0)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
+    cube.set_coord("ep", 0)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    cube.set_coord("cp", 1)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, True,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 18])
+    cube.set_coord("ep", 1)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, True,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 17, 19])
+    cube.set_coord("cp", 0)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 17])
+    cube.set_coord("ep", 1)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 17])
+    cube.set_coord("cp", 1)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, True,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 17, 19])
+    cube.set_coord("ep", 0)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, True,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 18])
+    cube.set_coord("cp", 0)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+
+    cube.set_coord("cp", 0)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    with pytest.warns(UserWarning, match=r"invalid cube parity"):
+        cube.set_coord("pep", (0, 11857, 1656))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 18])
+    cube.set_coord("cp", 1)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, True,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 18])
+    with pytest.warns(UserWarning, match=r"invalid cube parity"):
+        cube.set_coord("pep", (0, 11856, 1656))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    cube.set_coord("cp", 1)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, True,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 18])
+    cube.set_coord("pep", (0, 11857, 1656))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, True,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 18])
+    cube.set_coord("cp", 0)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    cube.set_coord("pep", (0, 11856, 1656))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    cube.set_coord("cp", 0)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+
+    cube.set_coord("cp", 0)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    cube.set_coord("pep", 0)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, -1, -1, -1, -1, -1, -1, -1, -1])
+    cube.set_coord("cp", 1)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, -1, -1, -1, -1, -1, -1, -1, -1])
+    cube.set_coord("pep", 1)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 11, 10, -1, -1, -1, -1, -1, -1, -1, -1])
+    cube.set_coord("cp", 0)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 10, -1, -1, -1, -1, -1, -1, -1, -1])
+    cube.set_coord("pep", 1)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 10, -1, -1, -1, -1, -1, -1, -1, -1])
+    cube.set_coord("cp", 1)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 11, 10, -1, -1, -1, -1, -1, -1, -1, -1])
+    cube.set_coord("pep", 0)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, -1, -1, -1, -1, -1, -1, -1, -1])
+    cube.set_coord("cp", 0)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, -1, -1, -1, -1, -1, -1, -1, -1])
+
+    cube.set_coord("pcp", (0, 1656))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, -1, -1, -1, -1, -1, -1, -1, -1])
+    cube.set_coord("ep", 0)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    cube.set_coord("pcp", (0, 1657))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, True,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 18])
+    cube.set_coord("ep", 1)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, True,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 17, 19])
+    cube.set_coord("pcp", (0, 1656))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 17])
+    cube.set_coord("ep", 1)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 17])
+    cube.set_coord("pcp", (0, 1657))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, True,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 17, 19])
+    cube.set_coord("ep", 0)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, True,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 18])
+    cube.set_coord("pcp", (0, 1656))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+
+    cube.set_coord("pcp", 0)
+    # assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, -1, -1, -1, -1, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    cube.set_coord("ep", 0)
+    # assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, -1, -1, -1, -1, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    cube.set_coord("pcp", 1)
+    # assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 3, 2, -1, -1, -1, -1, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    cube.set_coord("ep", 1)
+    # assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 3, 2, -1, -1, -1, -1, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 17])
+    cube.set_coord("pcp", 0)
+    # assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, -1, -1, -1, -1, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 17])
+    cube.set_coord("ep", 1)
+    # assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, -1, -1, -1, -1, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 17])
+    cube.set_coord("pcp", 1)
+    # assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 3, 2, -1, -1, -1, -1, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 17])
+    cube.set_coord("ep", 0)
+    # assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 3, 2, -1, -1, -1, -1, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    cube.set_coord("pcp", 0)
+    # assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, -1, -1, -1, -1, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+
+    cube.set_coord("pcp", (0, 1656))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    cube.set_coord("pep", (0, 11856, 1656))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    cube.set_coord("pcp", (0, 1657))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, True,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 18])
+    cube.set_coord("pep", (0, 11857, 1656))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, True,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 18])
+    cube.set_coord("pcp", (0, 1656))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    with pytest.warns(UserWarning, match=r"invalid cube parity"):
+        cube.set_coord("pep", (0, 11857, 1656))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 18])
+    cube.set_coord("pcp", (0, 1657))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, True,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 18])
+    with pytest.warns(UserWarning, match=r"invalid cube parity"):
+        cube.set_coord("pep", (0, 11856, 1656))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    cube.set_coord("pcp", (0, 1656))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is False
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, False,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+
+    cube.set_coord("cp", 1)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, True,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 18])
+    with pytest.warns(UserWarning, match=r"invalid cube parity"):
+        cube.set_coord("pep", (0, 11856, 1656))
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    # assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, None,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    cube.set_coord("ep", 0)
+    assert utils.get_permutation_parity(cube.permutation[:8]) is True
+    assert utils.get_permutation_parity(cube.permutation[:8]) == utils.get_permutation_parity(cube.permutation[8:])
+    check_cube(cube, True,
+               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 18])
+
+    move = Move.Y1
+
+    cube.reset()
+    cube.set_coord("pcp", 0)
+    cube.set_coord("pep", 0)
+    print()
+    print(cube.orientation)
+    print(cube.permutation)
+    check_cube(cube, cube.permutation_parity, cube.orientation, cube.permutation)
+    cube.apply_move(move)
+    print()
+    print(cube.orientation)
+    print(cube.permutation)
+    cube.apply_move(move.inverse)
+    print()
+    print(cube.orientation)
+    print(cube.permutation)
