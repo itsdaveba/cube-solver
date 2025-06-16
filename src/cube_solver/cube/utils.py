@@ -392,7 +392,7 @@ def get_combination_coord(combination: np.ndarray) -> int:
         raise TypeError(f"combination elements must be int, not {combination.dtype}")
     if np.any(combination < 0):
         raise ValueError(f"combination values must be >= 0 (got {combination})")
-    if not np.all(np.diff(combination) > 0):
+    if np.any(np.diff(combination) <= 0):
         raise ValueError(f"combination values must be in increasing order (got {combination})")
 
     try:
