@@ -21,18 +21,20 @@ warnings.formatwarning = fromatwarning
 
 
 REPR_ORDER = [Face.UP, Face.LEFT, Face.FRONT, Face.RIGHT, Face.BACK, Face.DOWN]
-ORBIT_OFFSET = {Orbit.SLICE_MIDDLE: 8, Orbit.SLICE_EQUATOR: 16, Orbit.SLICE_STANDING: 12,
-                Orbit.TETRAD_111: 0, Orbit.TETRAD_M11: 4}   # TODO improve when testing differnt order of cubies
-CORNER_AXIS_OFFSET = {Axis.DIAG_M11: 0, Axis.DIAG_111: 4}
-EDGE_AXIS_OFFSET = {Axis.Y: 16, Axis.Z: 12, Axis.X: 8}
+COLORS_TYPE = [(axis.name, int) for axis in Axis.cartesian_axes()]
+AXIS_ORIENTATION_ORDER = (Axis.Y, Axis.Z, Axis.X)
 SWAP_COLORS = {  # swap colors along axis
     Axis.X: [Axis.X.name, Axis.Z.name, Axis.Y.name],
     Axis.Y: [Axis.Z.name, Axis.Y.name, Axis.X.name],
     Axis.Z: [Axis.Y.name, Axis.X.name, Axis.Z.name]
 }
-
-COLORS_TYPE = [(axis.name, int) for axis in Axis.cartesian_axes()]
-ORIENTATION_AXIS_ORDER = (Axis.Y, Axis.Z, Axis.X)
+ORBIT_OFFSET = {
+    Orbit.SLICE_MIDDLE: 8,
+    Orbit.SLICE_EQUATOR: 16,
+    Orbit.SLICE_STANDING: 12,
+    Orbit.TETRAD_111: 0,
+    Orbit.TETRAD_M11: 4
+}
 
 
 class Cube:
@@ -306,16 +308,16 @@ class Cube:
 
         # corners and edges
         for cubie in chain(Cubie.corners(), Cubie.edges()):
-            cubie_colors = [self._colors[cubie._index][axis.name] for axis in ORIENTATION_AXIS_ORDER]
+            cubie_colors = [self._colors[cubie._index][axis.name] for axis in AXIS_ORIENTATION_ORDER]
             cubie_faces = np.array([inv_color_scheme[color] for color in cubie_colors if color != Color.NONE], dtype=Face)
             try:
                 if cubie.is_corner:
                     if cubie.orbit == Orbit.TETRAD_111:
-                        x, z = [ORIENTATION_AXIS_ORDER.index(axis) for axis in (Axis.X, Axis.Z)]
+                        x, z = [AXIS_ORIENTATION_ORDER.index(axis) for axis in (Axis.X, Axis.Z)]
                         cubie_faces[x], cubie_faces[z] = cubie_faces[z], cubie_faces[x]  # swap along `Y` axis
                     self.orientation[cubie] = [face.axis for face in cubie_faces].index(Axis.Y)
                 else:
-                    axis_importance = [ORIENTATION_AXIS_ORDER.index(face.axis) for face in cubie_faces]
+                    axis_importance = [AXIS_ORIENTATION_ORDER.index(face.axis) for face in cubie_faces]
                     self.orientation[cubie] = np.diff(axis_importance)[0] < 0
                 self.permutation[cubie] = Cubie.from_faces(cubie_faces.tolist())
             except Exception:
