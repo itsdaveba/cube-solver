@@ -566,9 +566,9 @@ class Cube:
             orbits = [*Orbit.tetrads()] if coord_type == "pcp" else [*Orbit.slices()]
             combs = [np.where(np.array([Cubie(perm).orbit for perm in permutation]) == orbit)[0] for orbit in orbits]
             coord = tuple(utils.get_partial_permutation_coord(permutation[comb], comb) if len(comb) else -1 for comb in combs)
-            if all(c == NONE for c in coord[1:]):
-                return coord[0]
-            return coord
+            if any(c != NONE for c in coord[1:]):
+                return coord
+            return coord[0]
 
         raise ValueError(f"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' (got '{coord_type}')")
 
@@ -697,92 +697,71 @@ class Cube:
         >>> cube.permutation[8:]
         array([-1, 18, -1, 19, -1, -1, -1, 17, 16, -1, -1, -1])
         """
-        # if not isinstance(coord_type, str):  # TODO add that orientation is also not enforced for partial permutation
-        #     raise TypeError(f"coord_type must be str, not {type(coord_type).__name__}")
-        # if not isinstance(coord, (int, tuple)):
-        #     raise TypeError(f"coord must be int or tuple, not {type(coord).__name__}")
+        if not isinstance(coord_type, str):
+            raise TypeError(f"coord_type must be str, not {type(coord_type).__name__}")
+        if not isinstance(coord, (int, tuple)):
+            raise TypeError(f"coord must be int or tuple, not {type(coord).__name__}")
 
         if coord_type in ("co", "eo"):
-            # if not isinstance(coord, int):
-            #     raise TypeError(f"coord must be int for coord_type '{coord_type}', not {type(coord).__name__}")
+            if not isinstance(coord, int):
+                raise TypeError(f"coord must be int for coord_type '{coord_type}', not {type(coord).__name__}")
             orientation = self.orientation[:NUM_CORNERS] if coord_type == "co" else self.orientation[NUM_CORNERS:]
-            orientation[:] = utils.get_orientation_array(coord, 3 if coord_type == "co" else 2, len(orientation))  # TODO add force_modulo
+            v = 3 if coord_type == "co" else 2
+            orientation[:] = utils.get_orientation_array(coord, v, len(orientation), force_modulo=True)
         elif coord_type in ("cp", "ep", "pcp", "pep"):
             permutation = self.permutation[:NUM_CORNERS] if coord_type in ("cp", "pcp") else self.permutation[NUM_CORNERS:]
             if coord_type in ("cp", "ep"):
-                # if not isinstance(coord, int):
-                #     raise TypeError(f"coord must be int for coord_type '{coord_type}', not {type(coord).__name__}")
-                # if coord_type == "cp":
-                permutation[:], _ = utils.get_permutation_array(coord, len(permutation))
+                if not isinstance(coord, int):
+                    raise TypeError(f"coord must be int for coord_type '{coord_type}', not {type(coord).__name__}")
+                permutation[:], permutation_parity = utils.get_permutation_array(coord, len(permutation), coord_type == "ep")
                 if coord_type == "ep":
                     permutation += NUM_CORNERS
-                # elif coord_type == "ep":
-                #     permutation[:], permutation_parity = utils.get_permutation_array(coord, NUM_EDGES, force_even_parity=True)
-                #     permutation += NUM_CORNERS
-                # if permutation_parity != self.permutation_parity:
-                #     self.permutation[-2:] = self.permutation[[-1, -2]]
-                #     if coord_type == "cp":
-                #         self.permutation_parity = permutation_parity
-            # else:  # TODO test this and print representation
-            #     if isinstance(coord, int):
-            #         coord_tuple = (coord, NONE)
-            #         if coord_type == "pep":
-            #             coord_tuple += (NONE,)
-            #     else:
-            #         coord_tuple = coord
-            #     axes = [*Axis.corner_axes()] if coord_type == "pcp" else [*Axis.edge_axes()]
-            #     if len(coord_tuple) != len(axes):
-            #         raise ValueError(f"coord tuple length must be {len(axes)} (got {len(coord_tuple)})")
-            #     for coord in coord_tuple:
-            #         if not isinstance(coord, int):
-            #             raise TypeError(f"coord tuple elements must be int, not {type(coord).__name__}")
-            #     axis_coord = {axis: coord for axis, coord in zip(axes, coord_tuple)}
-            #     perm = np.full_like(permutation, Cubie.NONE)
-            #     axis_offset = CORNER_AXIS_OFFSET if coord_type == "pcp" else EDGE_AXIS_OFFSET
-            #     for axis, coord in axis_coord.items():
-            #         if coord != NONE:
-            #             partial_permutation, combination = utils.get_partial_permutation_array(coord, NUM_AXIS_ELEMS)
-            #             if combination[-1] >= len(perm):
-            #                 raise ValueError(f"partial coord must be >= 0 and < {math.perm(len(perm), NUM_AXIS_ELEMS)} (got {coord})")
-            #             if not np.all(perm[combination] == Cubie.NONE):
-            #                 raise ValueError(f"invalid partial coordinates, overlapping detected (got {coord_tuple})")
-            #             perm[combination] = partial_permutation + axis_offset[axis]
-            #     permutation[:] = perm
-            #     if np.all(permutation != Cubie.NONE):
-            #         permutation_parity = utils.get_permutation_parity(permutation)
-            #         if permutation_parity != self.permutation_parity:
-            #             self.permutation[-2:] = self.permutation[[-1, -2]]
-            #             if coord_type == "pcp":
-            #                 self.permutation_parity = permutation_parity
-            #     else:
-            #         self.permutation_parity = None
-            #         self.orientation[:NUM_CORNERS] = np.where(permutation == Cubie.NONE, NONE, self.orientation[:NUM_CORNERS])
-                # self.permutation_parity = False  # TODO calculate parity if all different from -1
-                # self.orientation = np.where(self.permutation == Cubie.NONE, NONE, self.orientation)  # TODO document
-                # self.orientation = np.where((self.permutation != Cubie.NONE) & (self.orientation == NONE), 0, self.orientation)
-
-                # if isinstance(coord, int):
-                #     coord = (coord, NONE, NONE)
-                # for c in coord:
-                #     if not isinstance(c, int):
-                #         raise TypeError(f"coord tuple elements must be int, not {type(c).__name__}")
-                # axes = [*Axis.corner_axes()]
-                # if len(coord) != len(axes):
-                #     raise ValueError(f"coord tuple length must be {len(axes)} (got {len(coord)})")
-                # axis_coord = {axis: c for axis, c in zip(Axis.corner_axes(), coord)}
-                # permutation[:] = NONE
-                # axis_offset = CORNER_AXIS_OFFSET if coord_type == "pcp" else EDGE_AXIS_OFFSET
-                # for axis in Axis.corner_axes() if coord_type == "pcp" else Axis.edge_axes():
-                #     if axis_coord[axis] != NONE:
-                #         partial_permutation, combination = utils.get_partial_permutation_array(axis_coord[axis], NUM_AXIS_ELEMS)
-                #         if not np.all(permutation[combination] == NONE):
-                #             raise ValueError(f"invalid partial coordinates, overlapping detected (got {coord})")
-                #         permutation[combination] = partial_permutation + axis_offset[axis]
-
-        # else:
-        #     raise ValueError(f"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', or 'pep' (got '{coord_type}')")
-
-        # self._coords = ()
+                if self.permutation_parity is None:
+                    other_perm = self.permutation[NUM_CORNERS:] if coord_type == "cp" else self.permutation[:NUM_CORNERS]
+                    if not np.any(other_perm == Cubie.NONE):
+                        other_parity = utils.get_permutation_parity(other_perm)
+                        if permutation_parity == other_parity:
+                            self.permutation_parity = permutation_parity
+                elif self.permutation_parity != permutation_parity:
+                    self.permutation[-2:] = self.permutation[[-1, -2]]
+                    if coord_type == "cp":
+                        self.permutation_parity = permutation_parity
+            else:
+                orbits = [*Orbit.tetrads()] if coord_type == "pcp" else [*Orbit.slices()]
+                if isinstance(coord, int):
+                    coord = (coord,) + (NONE,) * (len(orbits) - 1)
+                if len(coord) != len(orbits):
+                    raise ValueError(f"coord tuple length must be {len(orbits)} for coord_type '{coord_type}' (got {len(coord)})")
+                perm = np.full_like(permutation, Cubie.NONE)
+                for c, orbit in zip(coord, orbits):
+                    if not isinstance(c, int):
+                        raise TypeError(f"coord tuple elements must be int, not {type(c).__name__}")
+                    if c != NONE:
+                        if c < 0 or c >= math.perm(len(perm), NUM_ORBIT_ELEMS):
+                            raise ValueError(f"coord must be >= 0 and < {math.perm(len(perm), NUM_ORBIT_ELEMS)} (got {c})")
+                        partial_permuttion, combination = utils.get_partial_permutation_array(c, NUM_ORBIT_ELEMS)
+                        if np.any(perm[combination] != Cubie.NONE):
+                            raise ValueError(f"invalid partial coordinates, overlapping detected (got {coord})")
+                        perm[combination] = partial_permuttion + ORBIT_OFFSET[orbit]
+                permutation[:] = perm
+                if np.any(self.permutation == Cubie.NONE):
+                    self.orientation = np.where(self.permutation == Cubie.NONE, NONE, self.orientation)
+                    self.permutation_parity = None
+                else:
+                    corner_parity = utils.get_permutation_parity(self.permutation[:NUM_CORNERS])
+                    edge_parity = utils.get_permutation_parity(self.permutation[NUM_CORNERS:])
+                    if corner_parity != edge_parity:
+                        if coord_type == "pcp":
+                            self.permutation[-2:] = self.permutation[[-1, -2]]
+                            self.permutation_parity = corner_parity
+                        else:
+                            warnings.warn("invalid cube parity")
+                            self.permutation_parity = None
+                    else:
+                        self.permutation_parity = corner_parity
+            self.orientation = np.where((self.permutation != Cubie.NONE) & (self.orientation == NONE), 0, self.orientation)
+        else:
+            raise ValueError(f"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' (got '{coord_type}')")
 
     def _set_coords(self, coords: tuple[int | tuple[int, ...], ...], partial_corner_perm: bool = False, partial_edge_perm: bool = False):  # TODO change tuple
         """
