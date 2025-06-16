@@ -123,6 +123,8 @@ def test_enums(response):
     assert Move.NONE.axis == Axis.NONE
     assert Move.X1.axis == Axis.X
     assert Move.U1.axis == Axis.Y
+    assert Move.NONE.inverse == Move.NONE
+    assert Move.U1.inverse == Move.U3
     assert Move.NONE.layers == [Layer.NONE]
     assert Move.X1.layers == [Layer.RIGHT, Layer.LEFT, Layer.MIDDLE]
     assert Move.FW1.layers == [Layer.FRONT, Layer.STANDING]

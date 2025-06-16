@@ -552,6 +552,13 @@ class Move(IntEnum):
         return Layer.from_char(self.name[0]).axis
 
     @property
+    def inverse(self) -> "Move":
+        """Inverse move."""
+        if self == Move.NONE:
+            return Move.NONE
+        return Move[self.name[:-1] + str(-int(self.name[-1]) % 4)]
+
+    @property
     def layers(self) -> list[Layer]:
         """Move layers."""
         if self == Move.NONE:
