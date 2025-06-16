@@ -9,17 +9,6 @@ from .defs import CORNER_ORIENTATION_SIZE, EDGE_ORIENTATION_SIZE, CORNER_PERMUTA
 from .enums import Axis, Orbit, Layer, Color, Face, Cubie, Move
 from . import utils
 
-
-def fromatwarning(message, category, *args, **kwargs):
-    return f"{category.__name__}: {message}\n"
-
-
-warnings.simplefilter("always")
-warnings.formatwarning = fromatwarning
-
-# TODO make all public just to check documentation
-
-
 REPR_ORDER = [Face.UP, Face.LEFT, Face.FRONT, Face.RIGHT, Face.BACK, Face.DOWN]
 COLORS_TYPE = [(axis.name, int) for axis in Axis.cartesian_axes()]
 AXIS_ORIENTATION_ORDER = (Axis.Y, Axis.Z, Axis.X)
@@ -35,6 +24,14 @@ ORBIT_OFFSET = {   # TODO improve when testing differnt order of cubies
     Orbit.TETRAD_111: 0,
     Orbit.TETRAD_M11: 4
 }
+
+
+def fromatwarning(message, category, *args, **kwargs):
+    return f"{category.__name__}: {message}\n"
+
+
+warnings.simplefilter("always")
+warnings.formatwarning = fromatwarning
 
 
 class Cube:
