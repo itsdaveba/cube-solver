@@ -609,7 +609,7 @@ class Cube:
                     return coord // 2
                 return coord
             orbits = CORNER_ORBITS if coord_type == "pcp" else EDGE_ORBITS
-            combs = [np.where(np.array([Cubie(INDEX_TO_CUBIE[perm]).orbit for perm in permutation]) == orbit)[0] for orbit in orbits]
+            combs = [np.where(np.array([Cubie(INDEX_TO_CUBIE[p]).orbit for p in permutation]) == orbit)[0] for orbit in orbits]
             coord = [utils.get_partial_permutation_coord(permutation[comb], comb) if len(comb) else NONE for comb in combs]
             if any(c != NONE for c in coord[1:]):
                 return tuple(coord)
@@ -758,7 +758,8 @@ class Cube:
                 self.permutation[-2:] = self.permutation[[-1, -2]]
                 if coord_type in ("cp", "pcp"):
                     self.permutation_parity = permutation_parity
-            self.orientation = np.where((self.permutation != CUBIE_TO_INDEX[Cubie.NONE]) & (self.orientation == NONE), 0, self.orientation)
+            condition = (self.permutation != CUBIE_TO_INDEX[Cubie.NONE]) & (self.orientation == NONE)
+            self.orientation = np.where(condition, 0, self.orientation)
         else:
             raise ValueError(f"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' (got '{coord_type}')")
 
