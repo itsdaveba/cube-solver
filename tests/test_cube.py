@@ -26,7 +26,7 @@ def test_enums(response):
     assert all(axis.is_cartesian for axis in Axis.cartesian_axes())
     assert all(axis.is_diagonal for axis in Axis.diagonal_axes())
     assert all(axis.is_edge for axis in Axis.edge_axes())
-    assert len([*Axis.axes()]) == 7
+    assert len([*Axis.axes()]) == 13
     assert len([*Axis.cartesian_axes()]) == 3
     assert len([*Axis.diagonal_axes()]) == 4
     assert len([*Axis.edge_axes()]) == 6

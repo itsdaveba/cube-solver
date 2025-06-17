@@ -9,20 +9,52 @@ from .defs import CORNER_ORIENTATION_SIZE, EDGE_ORIENTATION_SIZE, CORNER_PERMUTA
 from .enums import Axis, Orbit, Layer, Color, Face, Cubie, Move
 from . import utils
 
+ORIENTATION_AXES = [Axis.Y, Axis.Z, Axis.X]
 REPR_ORDER = [Face.UP, Face.LEFT, Face.FRONT, Face.RIGHT, Face.BACK, Face.DOWN]
-COLORS_TYPE = [(axis.name, int) for axis in Axis.cartesian_axes()]
-AXIS_ORIENTATION_ORDER = (Axis.Y, Axis.Z, Axis.X)
-SWAP_COLORS = {  # swap colors along axis
-    Axis.X: [Axis.X.name, Axis.Z.name, Axis.Y.name],
-    Axis.Y: [Axis.Z.name, Axis.Y.name, Axis.X.name],
-    Axis.Z: [Axis.Y.name, Axis.X.name, Axis.Z.name]
+
+CORNER_ORBITS = [Orbit.TETRAD_111, Orbit.TETRAD_M11]
+EDGE_ORBITS = [Orbit.SLICE_MIDDLE, Orbit.SLICE_EQUATOR, Orbit.SLICE_STANDING]
+
+DEFAULT_COLOR_SCHEME = { # reset
+    Face.UP: Color.WHITE,
+    Face.FRONT: Color.GREEN,
+    Face.RIGHT: Color.RED,
+    Face.DOWN: Color.YELLOW,
+    Face.BACK: Color.BLUE,
+    Face.LEFT: Color.ORANGE
 }
-ORBIT_OFFSET = {   # TODO improve when testing differnt order of cubies
-    Orbit.SLICE_MIDDLE: 8,
-    Orbit.SLICE_EQUATOR: 16,
-    Orbit.SLICE_STANDING: 12,
-    Orbit.TETRAD_111: 0,
-    Orbit.TETRAD_M11: 4
+
+INDEX_TO_CUBIE = np.array([
+    Cubie.UBL, Cubie.UFR, Cubie.DBR, Cubie.DFL,  # TETRAD_111 orbit
+    Cubie.UBR, Cubie.UFL, Cubie.DBL, Cubie.DFR,  # TETRAD_M11 orbit
+    Cubie.UB, Cubie.UF, Cubie.DB, Cubie.DF,      # SLICE_MIDDLE orbit
+    Cubie.UL, Cubie.UR, Cubie.DL, Cubie.DR,      # SLICE_STANDING orbit
+    Cubie.BL, Cubie.BR, Cubie.FL, Cubie.FR,      # SLICE_EQUATOR orbit
+    Cubie.NONE], dtype=int)
+
+CUBIE_TO_INDEX = np.zeros(max(len(Cubie), max(Cubie)) + 1, dtype=int)
+for cubie in chain(Cubie.corners(), Cubie.edges()):
+    CUBIE_TO_INDEX[cubie] = np.where(INDEX_TO_CUBIE == cubie)[0][0]
+CUBIE_TO_INDEX[Cubie.NONE] = NONE
+
+CARTESIAN_AXES = [*Axis.cartesian_axes()]
+min_orientation_axes = min([ORIENTATION_AXES[i:] + ORIENTATION_AXES[:i] for i in range(len(ORIENTATION_AXES))])
+min_cartesian_axes = min([CARTESIAN_AXES[i:] + CARTESIAN_AXES[:i] for i in range(len(CARTESIAN_AXES))])
+SHIFT_MULT = min_orientation_axes == min_cartesian_axes
+
+SWAP_COLORS = {}  # swap colors along axis
+for axis in CARTESIAN_AXES:
+    shift = CARTESIAN_AXES.index(axis) - 1
+    axes = np.roll(np.flip(np.roll(CARTESIAN_AXES, -shift)), shift)
+    SWAP_COLORS[axis] = [Axis(ax).name for ax in axes]
+COLORS_TYPE = [(axis.name, int) for axis in CARTESIAN_AXES]
+
+ORBIT_OFFSET = {
+    Orbit.TETRAD_111: CUBIE_TO_INDEX[Cubie.UBL],
+    Orbit.TETRAD_M11: CUBIE_TO_INDEX[Cubie.UBR],
+    Orbit.SLICE_MIDDLE: CUBIE_TO_INDEX[Cubie.UB],
+    Orbit.SLICE_STANDING: CUBIE_TO_INDEX[Cubie.UL],
+    Orbit.SLICE_EQUATOR: CUBIE_TO_INDEX[Cubie.BL]
 }
 
 warnings.simplefilter("always")
@@ -233,27 +265,28 @@ class Cube:
 
         # corners and edges
         for cubie in chain(Cubie.corners(), Cubie.edges()):
-            cubie_orientation = self.orientation[cubie]
-            cubie_permutation = Cubie(self.permutation[cubie])
+            cubie_orientation = self.orientation[CUBIE_TO_INDEX[cubie]]
+            cubie_permutation = Cubie(INDEX_TO_CUBIE[self.permutation[CUBIE_TO_INDEX[cubie]]])
             cubie_colors = np.array(solved_colors[cubie_permutation._index], dtype=COLORS_TYPE)
-            if cubie.is_corner:
-                if cubie_permutation != Cubie.NONE and cubie.orbit != cubie_permutation.orbit:
-                    cubie_colors = np.array(cubie_colors[SWAP_COLORS[Axis.Y]], dtype=COLORS_TYPE)
-                if cubie_orientation != NONE and cubie_orientation:
-                    shift = cubie_orientation if cubie.orbit == Orbit.TETRAD_M11 else -cubie_orientation
-                    cubie_colors = np.array(tuple(np.roll(cubie_colors.tolist(), shift)), dtype=COLORS_TYPE)
-            else:
-                orbits = {cubie.orbit, cubie_permutation.orbit}
-                if orbits == {Orbit.SLICE_MIDDLE, Orbit.SLICE_EQUATOR}:
-                    shift = 1 if cubie.orbit == Orbit.SLICE_EQUATOR else -1
-                    cubie_colors = np.array(tuple(np.roll(cubie_colors.tolist(), shift)), dtype=COLORS_TYPE)
-                elif orbits == {Orbit.SLICE_MIDDLE, Orbit.SLICE_STANDING}:
-                    cubie_colors = np.array(cubie_colors[SWAP_COLORS[Axis.Y]], dtype=COLORS_TYPE)
-                elif orbits == {Orbit.SLICE_EQUATOR, Orbit.SLICE_STANDING}:
-                    cubie_colors = np.array(cubie_colors[SWAP_COLORS[Axis.X]], dtype=COLORS_TYPE)
-                if cubie_orientation != NONE and cubie_orientation:
-                    axis = Layer[cubie.orbit.name.split("_")[1]].axis
-                    cubie_colors = np.array(cubie_colors[SWAP_COLORS[axis]], dtype=COLORS_TYPE)
+            if cubie_permutation != Cubie.NONE:
+                if cubie.is_corner:
+                    if cubie.orbit != cubie_permutation.orbit:
+                        cubie_colors = np.array(cubie_colors[SWAP_COLORS[Axis.Y]], dtype=COLORS_TYPE)
+                    if cubie_orientation:
+                        shift = (cubie_orientation if cubie.orbit == Orbit.TETRAD_M11 else -cubie_orientation) * SHIFT_MULT
+                        cubie_colors = np.array(tuple(np.roll(cubie_colors.tolist(), shift)), dtype=COLORS_TYPE)
+                else:
+                    orbits = {cubie.orbit, cubie_permutation.orbit}
+                    if orbits == {Orbit.SLICE_MIDDLE, Orbit.SLICE_EQUATOR}:
+                        shift = (1 if cubie.orbit == Orbit.SLICE_EQUATOR else -1) * SHIFT_MULT
+                        cubie_colors = np.array(tuple(np.roll(cubie_colors.tolist(), shift)), dtype=COLORS_TYPE)
+                    elif orbits == {Orbit.SLICE_MIDDLE, Orbit.SLICE_STANDING}:
+                        cubie_colors = np.array(cubie_colors[SWAP_COLORS[Axis.Y]], dtype=COLORS_TYPE)
+                    elif orbits == {Orbit.SLICE_EQUATOR, Orbit.SLICE_STANDING}:
+                        cubie_colors = np.array(cubie_colors[SWAP_COLORS[Axis.X]], dtype=COLORS_TYPE)
+                    if cubie_orientation:
+                        axis = Layer[cubie.orbit.name.split("_")[1]].axis
+                        cubie_colors = np.array(cubie_colors[SWAP_COLORS[axis]], dtype=COLORS_TYPE)
             self._colors[cubie._index] = cubie_colors
 
         return "".join([Color(c).char for c in np.ravel([self._colors[face._index][face.axis.name] for face in REPR_ORDER])])
@@ -312,23 +345,23 @@ class Cube:
 
         # corners and edges
         for cubie in chain(Cubie.corners(), Cubie.edges()):
-            cubie_colors = [self._colors[cubie._index][axis.name] for axis in AXIS_ORIENTATION_ORDER]
+            cubie_colors = [self._colors[cubie._index][axis.name] for axis in ORIENTATION_AXES]
             cubie_faces = np.array([inv_color_scheme[color] for color in cubie_colors if color != Color.NONE], dtype=Face)
             try:
                 if cubie.is_corner:
                     if cubie.orbit == Orbit.TETRAD_111:
-                        x, z = [AXIS_ORIENTATION_ORDER.index(axis) for axis in (Axis.X, Axis.Z)]
+                        x, z = [ORIENTATION_AXES.index(axis) for axis in (Axis.X, Axis.Z)]
                         cubie_faces[x], cubie_faces[z] = cubie_faces[z], cubie_faces[x]  # swap along `Y` axis
-                    self.orientation[cubie] = [face.axis for face in cubie_faces].index(Axis.Y)
+                    self.orientation[CUBIE_TO_INDEX[cubie]] = [face.axis for face in cubie_faces].index(Axis.Y)
                 else:
-                    axis_importance = [AXIS_ORIENTATION_ORDER.index(face.axis) for face in cubie_faces]
-                    self.orientation[cubie] = np.diff(axis_importance)[0] < 0
-                self.permutation[cubie] = Cubie.from_faces(cubie_faces.tolist())
+                    axis_importance = [ORIENTATION_AXES.index(face.axis) for face in cubie_faces]
+                    self.orientation[CUBIE_TO_INDEX[cubie]] = np.diff(axis_importance)[0] < 0
+                self.permutation[CUBIE_TO_INDEX[cubie]] = CUBIE_TO_INDEX[Cubie.from_faces(cubie_faces.tolist())]
             except Exception:
-                self.orientation[cubie] = NONE
-                self.permutation[cubie] = Cubie.NONE
+                self.orientation[CUBIE_TO_INDEX[cubie]] = NONE
+                self.permutation[CUBIE_TO_INDEX[cubie]] = CUBIE_TO_INDEX[Cubie.NONE]
 
-        if np.any(self.permutation == Cubie.NONE):
+        if np.any(self.permutation == CUBIE_TO_INDEX[Cubie.NONE]):
             warnings.warn("invalid string representation, setting undefined orientation and permutation values with -1")
             self.permutation_parity = None
         else:
@@ -365,7 +398,7 @@ class Cube:
         >>> cube
         WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY
         """
-        self._color_scheme = {face: color for face, color in zip(Face.faces(), Color.colors())}
+        self._color_scheme = DEFAULT_COLOR_SCHEME.copy()
         self._colors = np.full((SIZE,) * NUM_DIMS, (Color.NONE,) * NUM_DIMS, dtype=COLORS_TYPE)
         self.orientation = np.zeros(NUM_CORNERS + NUM_EDGES, dtype=int)
         self.permutation = np.arange(NUM_CORNERS + NUM_EDGES, dtype=int)
@@ -419,14 +452,14 @@ class Cube:
             layer = move.layers[0]
             shift = move.shifts[0]
             cubies = np.roll(layer.perm, shift, axis=1)
-            orientation = self.orientation[cubies]
+            orientation = self.orientation[CUBIE_TO_INDEX[cubies]]
             if shift % 2 == 1:
                 if move.axis == Axis.Z:
                     orientation = np.where(orientation != NONE, (orientation + [[1, 2, 1, 2], [1] * 4]) % ([3], [2]), NONE)
                 elif move.axis == Axis.X:
                     orientation[0] = np.where(orientation[0] != NONE, (orientation[0] + [2, 1, 2, 1]) % 3, NONE)
-            self.orientation[layer.perm] = orientation
-            self.permutation[layer.perm] = self.permutation[cubies]
+            self.orientation[CUBIE_TO_INDEX[layer.perm]] = orientation
+            self.permutation[CUBIE_TO_INDEX[layer.perm]] = self.permutation[CUBIE_TO_INDEX[cubies]]
             if self.permutation_parity is not None:
                 self.permutation_parity = not self.permutation_parity
 
@@ -457,12 +490,12 @@ class Cube:
             # corners and edges
             cubies = [*Cubie.corners()] + [*Cubie.edges()]
             rotations = [rotation[cubie] for cubie in cubies]
-            orientation = self.orientation[cubies]
-            permutation = self.permutation[cubies]
+            orientation = self.orientation[CUBIE_TO_INDEX[cubies]]
+            cubie_permutation = [Cubie(INDEX_TO_CUBIE[perm]) for perm in self.permutation[CUBIE_TO_INDEX[cubies]]]
             if move.shifts[0] % 2 == 1:
                 is_corner = np.array([cubie.is_corner for cubie in cubies])
                 cubie_orbits = np.array([cubie.orbit for cubie in cubies])
-                perm_orbits = np.array([Cubie(perm).orbit for perm in permutation])
+                perm_orbits = np.array([perm.orbit for perm in cubie_permutation])
                 corner_comp = edge_comp = [perm_orbits, cubie_orbits]
                 if move.axis == Axis.X:
                     corner_comp = [cubie_orbits, Orbit.TETRAD_M11]
@@ -475,8 +508,8 @@ class Cube:
                 condition = cubie_orbits == np.where(is_corner, corner_comp[1], edge_comp[1])
                 incr = np.where(condition, axis_comp, np.where(is_corner, -axis_comp.astype(int), ~axis_comp))
                 orientation = np.where(orientation != NONE, (orientation + incr) % np.where(is_corner, 3, 2), NONE)
-            self.orientation[rotations] = orientation
-            self.permutation[rotations] = [rotation[perm] for perm in permutation]
+            self.orientation[CUBIE_TO_INDEX[rotations]] = orientation
+            self.permutation[CUBIE_TO_INDEX[rotations]] = [CUBIE_TO_INDEX[rotation[perm]] for perm in cubie_permutation]
 
     def apply_maneuver(self, maneuver: str):
         """
@@ -575,8 +608,8 @@ class Cube:
                 if coord_type == "ep":
                     return coord // 2
                 return coord
-            orbits = [*Orbit.tetrads()] if coord_type == "pcp" else [*Orbit.slices()]
-            combs = [np.where(np.array([Cubie(perm).orbit for perm in permutation]) == orbit)[0] for orbit in orbits]
+            orbits = CORNER_ORBITS if coord_type == "pcp" else EDGE_ORBITS
+            combs = [np.where(np.array([Cubie(INDEX_TO_CUBIE[perm]).orbit for perm in permutation]) == orbit)[0] for orbit in orbits]
             coord = [utils.get_partial_permutation_coord(permutation[comb], comb) if len(comb) else NONE for comb in combs]
             if any(c != NONE for c in coord[1:]):
                 return tuple(coord)
@@ -681,11 +714,11 @@ class Cube:
                     permutation += NUM_CORNERS
                 if self.permutation_parity is None:
                     other_perm = self.permutation[NUM_CORNERS:] if coord_type == "cp" else self.permutation[:NUM_CORNERS]
-                    if not np.any(other_perm == Cubie.NONE):
+                    if not np.any(other_perm == CUBIE_TO_INDEX[Cubie.NONE]):
                         other_parity = utils.get_permutation_parity(other_perm)
                         self.permutation_parity = permutation_parity if permutation_parity == other_parity else other_parity
             else:
-                orbits = [*Orbit.tetrads()] if coord_type == "pcp" else [*Orbit.slices()]
+                orbits = CORNER_ORBITS if coord_type == "pcp" else EDGE_ORBITS
                 if isinstance(coord, int):
                     coord_tuple = (coord,) + (NONE,) * (len(orbits) - 1)
                 else:
@@ -693,7 +726,7 @@ class Cube:
                 size = len(coord_tuple)
                 if size != len(orbits):
                     raise ValueError(f"coord tuple length must be {len(orbits)} for coord_type '{coord_type}' (got {size})")
-                perm = np.full_like(permutation, Cubie.NONE)
+                perm = np.full_like(permutation, CUBIE_TO_INDEX[Cubie.NONE])
                 for coord, orbit in zip(coord_tuple, orbits):
                     if not isinstance(coord, int):
                         raise TypeError(f"coord tuple elements must be int, not {type(coord).__name__}")
@@ -701,12 +734,12 @@ class Cube:
                         if coord < 0 or coord >= math.perm(len(perm), NUM_ORBIT_ELEMS):
                             raise ValueError(f"coord must be >= 0 and < {math.perm(len(perm), NUM_ORBIT_ELEMS)} (got {coord})")
                         partial_permuttion, combination = utils.get_partial_permutation_array(coord, NUM_ORBIT_ELEMS)
-                        if np.any(perm[combination] != Cubie.NONE):
+                        if np.any(perm[combination] != CUBIE_TO_INDEX[Cubie.NONE]):
                             raise ValueError(f"invalid partial coordinates, overlapping detected (got {coord_tuple})")
                         perm[combination] = partial_permuttion + ORBIT_OFFSET[orbit]
                 permutation[:] = perm
-                if np.any(self.permutation == Cubie.NONE):
-                    self.orientation = np.where(self.permutation == Cubie.NONE, NONE, self.orientation)
+                if np.any(self.permutation == CUBIE_TO_INDEX[Cubie.NONE]):
+                    self.orientation = np.where(self.permutation == CUBIE_TO_INDEX[Cubie.NONE], NONE, self.orientation)
                     self.permutation_parity = None
                     permutation_parity = None
                 else:
@@ -725,7 +758,7 @@ class Cube:
                 self.permutation[-2:] = self.permutation[[-1, -2]]
                 if coord_type in ("cp", "pcp"):
                     self.permutation_parity = permutation_parity
-            self.orientation = np.where((self.permutation != Cubie.NONE) & (self.orientation == NONE), 0, self.orientation)
+            self.orientation = np.where((self.permutation != CUBIE_TO_INDEX[Cubie.NONE]) & (self.orientation == NONE), 0, self.orientation)
         else:
             raise ValueError(f"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' (got '{coord_type}')")
 
