@@ -1,6 +1,7 @@
 """Enums module."""
 from typing import Iterator
 from enum import Enum, auto
+from .defs import NONE
 
 
 class IntEnum(int, Enum):
@@ -10,7 +11,7 @@ class IntEnum(int, Enum):
 
 class Axis(IntEnum):
     """Axis enumeration."""
-    NONE = -1  #: No axis.
+    NONE = NONE  #: No axis.
     X = auto()  #: `X` axis along :attr:`Cubie.R` and :attr:`Cubie.L` centers.
     Y = auto()  #: `Y` axis along :attr:`Cubie.U` and :attr:`Cubie.D` centers.
     Z = auto()  #: `Z` axis along :attr:`Cubie.F` and :attr:`Cubie.B` centers.
@@ -43,7 +44,7 @@ class Axis(IntEnum):
     @classmethod
     def axes(cls) -> Iterator["Axis"]:
         """Iterate over valid axes."""
-        for i in range(7):
+        for i in range(13):
             yield cls(i)
 
     @classmethod
@@ -67,7 +68,7 @@ class Axis(IntEnum):
 
 class Orbit(IntEnum):
     """Orbit enumeration."""
-    NONE = -1  #: No orbit.
+    NONE = NONE  #: No orbit.
     SLICE_MIDDLE = auto()  #: `Middle` slice orbit.
     SLICE_EQUATOR = auto()  #: `Equator` slice orbit.
     SLICE_STANDING = auto()  #: `Standing` slice orbit.
@@ -105,7 +106,7 @@ class Orbit(IntEnum):
 
 class Layer(IntEnum):
     """Layer enumeration."""
-    NONE = -1  #: No layer.
+    NONE = NONE  #: No layer.
     UP = auto()  #: `Up` layer.
     FRONT = auto()  #: `Front` layer.
     RIGHT = auto()  #: `Right` layer.
@@ -195,7 +196,7 @@ class Layer(IntEnum):
 
 class Color(IntEnum):
     """Color enumeration."""
-    NONE = -1  #: No color.
+    NONE = NONE  #: No color.
     WHITE = auto()  #: `White` color.
     GREEN = auto()  #: `Green` color.
     RED = auto()  #: `Red` color.
@@ -247,7 +248,7 @@ class Color(IntEnum):
 
 class Face(IntEnum):
     """Face enumeration."""
-    NONE = -1  #: No face.
+    NONE = NONE  #: No face.
     UP = auto()  #: `Up` face.
     FRONT = auto()  #: `Front` face.
     RIGHT = auto()  #: `Right` face.
@@ -316,7 +317,7 @@ class Face(IntEnum):
 
 class Cubie(IntEnum):
     """Cubie enumeration."""
-    NONE = -1  #: No cubie.
+    NONE = NONE  #: No cubie.
     # corners
     UBL = auto()  #: `Up-Back-Left` corner.
     UFR = auto()  #: `Up-Front-Right` corner.
@@ -464,7 +465,7 @@ class Cubie(IntEnum):
 
 class Move(IntEnum):
     """Move enumeration."""
-    NONE = -1  #: No move.
+    NONE = NONE  #: No move.
     # face moves
     U1 = auto()  #: `U` face move.
     U2 = auto()  #: `U2` face move.
