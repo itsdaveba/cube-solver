@@ -8,7 +8,7 @@ class IntEnum(int, Enum):
     __repr__ = Enum.__str__
 
 
-class Axis(IntEnum):  # TODO test different axis order and for other enums
+class Axis(IntEnum):
     """Axis enumeration."""
     NONE = -1  #: No axis.
     X = auto()  #: `X` axis along :attr:`Cubie.R` and :attr:`Cubie.L` centers.
@@ -560,7 +560,7 @@ class Move(IntEnum):
         if self == Move.NONE:
             return [Layer.NONE]
         if self.is_rotation:
-            return [layer for layer in Layer.layers() if layer.axis == self.axis]
+            return [layer for layer in layer_order if layer.axis == self.axis]
         layers = [Layer.from_char(self.name[0])]
         if self.is_wide:
             layers += [layer for layer in Layer.inners() if layer.axis == self.axis]
@@ -795,5 +795,6 @@ char_layer = {layer.char: layer for layer in Layer}
 char_color = {color.char: color for color in Color}
 char_face = {face.char: face for face in Face}
 faces_cubie = {tuple(min([cb.faces[i:] + cb.faces[:i] for i in range(len(cb.faces))])if cb.faces else []): cb for cb in Cubie}
+layer_order = [Layer.UP, Layer.FRONT, Layer.RIGHT, Layer.DOWN, Layer.BACK, Layer.LEFT] + [*Layer.inners()]
 str_move = {move.string: move for move in Move}
 str_move.update({move.string[0].lower() + move.string[2:]: move for move in Move.wide_moves()})
