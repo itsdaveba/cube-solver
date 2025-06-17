@@ -48,7 +48,7 @@ def get_orientation_array(coord: int, v: int, n: int, force_modulo: bool = False
         raise TypeError(f"v must be int, not {type(v).__name__}")
     if not isinstance(n, int):
         raise TypeError(f"n must be int, not {type(n).__name__}")
-    if not isinstance(force_modulo, bool):  # TODO add value errors with lims
+    if not isinstance(force_modulo, bool):
         raise TypeError(f"force_modulo must be bool, not {type(force_modulo).__name__}")
     if v <= 0:
         raise ValueError(f"v must be positive (got {v})")
@@ -110,7 +110,7 @@ def get_orientation_coord(orientation: np.ndarray, v: int, is_modulo: bool = Fal
         raise TypeError(f"orientation must be ndarray, not {type(orientation).__name__}")
     if not isinstance(v, int):
         raise TypeError(f"v must be int, not {type(v).__name__}")
-    if not isinstance(is_modulo, bool):  # TODO document
+    if not isinstance(is_modulo, bool):
         raise TypeError(f"is_modulo must be bool, not {type(is_modulo).__name__}")
     if v <= 0:
         raise ValueError(f"v must be positive (got {v})")
