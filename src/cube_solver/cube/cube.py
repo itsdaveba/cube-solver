@@ -1,7 +1,10 @@
 """Cube module."""
+from __future__ import annotations
+
 import math
 import warnings
 import numpy as np
+from copy import deepcopy
 from itertools import chain
 
 from .defs import NONE, SIZE, NUM_DIMS, NUM_CORNERS, NUM_EDGES, NUM_ORBIT_ELEMS
@@ -253,6 +256,16 @@ class Cube:
     def coords(self, coords: tuple[int | tuple[int, ...], ...]):
         self.set_coords(coords)
 
+    def __ne__(self, other: object) -> bool:
+        """Negation of equality comparison."""
+        return not self.__eq__(other)
+
+    def __eq__(self, other: object) -> bool:
+        """Equality comparison."""
+        if not isinstance(other, Cube):
+            return False
+        return repr(self) == repr(other)
+
     def __repr__(self) -> str:
         """String representation of the :class:`Cube` object."""
         solved_colors = np.full_like(self._colors, (Color.NONE,) * NUM_DIMS)
@@ -435,8 +448,7 @@ class Cube:
 
         Examples
         --------
-        >>> from cube_solver import Cube
-        >>> from cube_solver.cube import Move
+        >>> from cube_solver import Cube, Move
         >>> cube = Cube()
         >>> cube.apply_move(Move.U1)   # U face move
         >>> cube.apply_move(Move.M2)   # M2 slice move
@@ -538,8 +550,10 @@ class Cube:
         if not isinstance(maneuver, str):
             raise TypeError(f"maneuver must be str, not {type(maneuver).__name__}")
 
-        for move_str in maneuver.split():
-            self.apply_move(Move.from_string(move_str))
+        # get moves from attr `moves` if maneuver is an instance of the `Maneuver` str subclass
+        moves = getattr(maneuver, "moves", [Move.from_string(move_str) for move_str in maneuver.split()])
+        for move in moves:
+            self.apply_move(move)
 
     def get_coord(self, coord_type: str) -> int | tuple[int, ...]:
         """
@@ -877,65 +891,38 @@ class Cube:
         self.set_coord("pep" if partial_edge_perm else "ep", coords[3])
 
 
-# # def generate_scramble(length: int = 25) -> str:
-# #     assert length >= 1, "scramble length must be greater or equal than 1"
+def apply_move(cube: Cube, move: Move) -> Cube:
+    """
+    Return a copy of the the :class:`Cube` object with the :class:`Move` applyed.
 
-# #     scramble = []
-# #     move = None
-# #     for _ in range(length):
-# #         move = np.random.choice(NEXT_MOVES[move])
-# #         scramble.append(move)
+    Parameters
+    ----------
+    cube : Cube
+        Cube object.
+    move : Move
+        The move to apply.
 
-# #     return " ".join(scramble)
+    Returns
+    -------
+    cube : Cube
+        Copy of the cube with the move applied.
 
+    Examples
+    --------
+    >>> from cube_solver import Cube, Move, apply_move
+    >>> cube = Cube()
+    >>> apply_move(cube, Move.U1)   # U face move
+    WWWWWWWWWGGGOOOOOORRRGGGGGGBBBRRRRRROOOBBBBBBYYYYYYYYY
+    >>> apply_move(cube, Move.M2)   # M2 slice move
+    WYWWYWWYWOOOOOOOOOGBGGBGGBGRRRRRRRRRBGBBGBBGBYWYYWYYWY
+    >>> apply_move(cube, Move.FW3)  # Fw' wide move
+    WWWRRRRRROWWOWWOWWGGGGGGGGGYYRYYRYYRBBBBBBBBBOOOOOOYYY
+    >>> apply_move(cube, Move.X1)   # x rotation
+    GGGGGGGGGOOOOOOOOOYYYYYYYYYRRRRRRRRRWWWWWWWWWBBBBBBBBB
+    """
+    if not isinstance(cube, Cube):
+        raise TypeError(f"cube must be Cube, not {type(cube).__name__}")
 
-# # def apply_move(cube: Cube, move: Move) -> Cube:  # TODO make move int
-# #     """
-# #     Return a copy of the cube with the move applied.
-
-# #     Parameters
-# #     ----------
-# #     cube : Cube
-# #         Cube object.
-# #     move
-# #         The move to apply.
-
-# #     Returns
-# #     -------
-# #     Cube
-# #         Cube object with move applied.
-# #     """
-# #     cube = cube.copy()
-# #     cube.apply_move(move)
-# #     return cube
-
-
-# # def apply_maneuver(cube: Cube, maneuver: str) -> Cube:
-# #     """
-# #     Return a copy of the cube with a sequence of moves applied.
-
-# #     Parameters
-# #     ----------
-# #     cube : Cube
-# #         Cube object.
-# #     maneuver
-# #         The sequence of moves to apply.
-
-# #     Returns
-# #     -------
-# #     Cube
-# #         Cube object with sequence of moves applied.
-
-# #     Examples
-# #     --------
-# #     >>> import cube_solver
-# #     >>> from cube_solver import Cube
-# #     >>> cube = Cube()
-# #     >>> cube_solver.apply_maneuver(cube, "U F R")
-# #     WWRWWROORGGYOOYOOYGGBGGYGGYWWWRRBRRBGOOWBBWBBRRBYYBYYO
-# #     >>> cube  # the original cube remains unchanged
-# #     WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY
-# #     """
-# #     cube = cube.copy()
-# #     cube.apply_maneuver(maneuver)
-# #     return cube
+    cube = deepcopy(cube)
+    cube.apply_move(move)
+    return cube

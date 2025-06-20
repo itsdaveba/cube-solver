@@ -5,6 +5,7 @@ cube\_solver package
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: Move
 
 Subpackages
 -----------

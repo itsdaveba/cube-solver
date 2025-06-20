@@ -1,4 +1,6 @@
 """Enums module."""
+from __future__ import annotations
+
 from typing import Iterator
 from enum import Enum, auto
 from .defs import NONE
@@ -42,25 +44,25 @@ class Axis(IntEnum):
         return 7 <= self < 13
 
     @classmethod
-    def axes(cls) -> Iterator["Axis"]:
+    def axes(cls) -> Iterator[Axis]:
         """Iterate over valid axes."""
         for i in range(13):
             yield cls(i)
 
     @classmethod
-    def cartesian_axes(cls) -> Iterator["Axis"]:
+    def cartesian_axes(cls) -> Iterator[Axis]:
         """Iterate over cartesian axes."""
         for i in range(3):
             yield cls(i)
 
     @classmethod
-    def diagonal_axes(cls) -> Iterator["Axis"]:
+    def diagonal_axes(cls) -> Iterator[Axis]:
         """Iterate over diagonal axes."""
         for i in range(3, 7):
             yield cls(i)
 
     @classmethod
-    def edge_axes(cls) -> Iterator["Axis"]:
+    def edge_axes(cls) -> Iterator[Axis]:
         """Iterate over edge axes."""
         for i in range(7, 13):
             yield cls(i)
@@ -86,19 +88,19 @@ class Orbit(IntEnum):
         return 3 <= self < 5
 
     @classmethod
-    def orbits(cls) -> Iterator["Orbit"]:
+    def orbits(cls) -> Iterator[Orbit]:
         """Iterate over valid orbits."""
         for i in range(5):
             yield cls(i)
 
     @classmethod
-    def slices(cls) -> Iterator["Orbit"]:
+    def slices(cls) -> Iterator[Orbit]:
         """Iterate over slice orbits."""
         for i in range(3):
             yield cls(i)
 
     @classmethod
-    def tetrads(cls) -> Iterator["Orbit"]:
+    def tetrads(cls) -> Iterator[Orbit]:
         """Iterate over tetrad orbits."""
         for i in range(3, 5):
             yield cls(i)
@@ -128,7 +130,7 @@ class Layer(IntEnum):
         return layer_axis[self]
 
     @property
-    def perm(self) -> list[list["Cubie"]]:
+    def perm(self) -> list[list[Cubie]]:
         """Layer permutation."""
         return layer_perm[self]
 
@@ -143,7 +145,7 @@ class Layer(IntEnum):
         return 6 <= self < 9
 
     @classmethod
-    def from_char(cls, char: str) -> "Layer":
+    def from_char(cls, char: str) -> Layer:
         """
         Return the corresponding :class:`Layer` enum.
 
@@ -176,19 +178,19 @@ class Layer(IntEnum):
             raise ValueError(f"invalid face character (got '{char}')")
 
     @classmethod
-    def layers(cls) -> Iterator["Layer"]:
+    def layers(cls) -> Iterator[Layer]:
         """Iterate over valid layers."""
         for i in range(9):
             yield cls(i)
 
     @classmethod
-    def outers(cls) -> Iterator["Layer"]:
+    def outers(cls) -> Iterator[Layer]:
         """Iterate over outer layers."""
         for i in range(6):
             yield cls(i)
 
     @classmethod
-    def inners(cls) -> Iterator["Layer"]:
+    def inners(cls) -> Iterator[Layer]:
         """Iterate over inner layers."""
         for i in range(6, 9):
             yield cls(i)
@@ -210,7 +212,7 @@ class Color(IntEnum):
         return self.name[0]
 
     @classmethod
-    def from_char(cls, char: str) -> "Color":
+    def from_char(cls, char: str) -> Color:
         """
         Return the corresponding :class:`Color` enum.
 
@@ -240,7 +242,7 @@ class Color(IntEnum):
             raise ValueError(f"invalid color character (got '{char}')")
 
     @classmethod
-    def colors(cls) -> Iterator["Color"]:
+    def colors(cls) -> Iterator[Color]:
         """Iterate over valid colors."""
         for i in range(6):
             yield cls(i)
@@ -269,7 +271,7 @@ class Face(IntEnum):
         return Layer[self.name].axis
 
     @property
-    def opposite(self) -> "Face":
+    def opposite(self) -> Face:
         """Opposite face."""
         return face_opposite[self]
 
@@ -279,7 +281,7 @@ class Face(IntEnum):
         return face_cubie_index[self]
 
     @classmethod
-    def from_char(cls, char: str) -> "Face":
+    def from_char(cls, char: str) -> Face:
         """
         Return the corresponding :class:`Face` enum.
 
@@ -309,7 +311,7 @@ class Face(IntEnum):
             raise ValueError(f"invalid face character (got '{char}')")
 
     @classmethod
-    def faces(cls) -> Iterator["Face"]:
+    def faces(cls) -> Iterator[Face]:
         """Iterate over valid faces."""
         for i in range(6):
             yield cls(i)
@@ -407,7 +409,7 @@ class Cubie(IntEnum):
         return 20 <= self < 26
 
     @classmethod
-    def from_faces(cls, faces: list[Face]) -> "Cubie":
+    def from_faces(cls, faces: list[Face]) -> Cubie:
         """
         Return the corresponding :class:`Cubie` enum.
 
@@ -439,31 +441,31 @@ class Cubie(IntEnum):
             raise ValueError(f"invalid cubie faces (got {faces})")
 
     @classmethod
-    def cubies(cls) -> Iterator["Cubie"]:
+    def cubies(cls) -> Iterator[Cubie]:
         """Iterate over valud cubies."""
         for i in range(27):
             yield cls(i)
 
     @classmethod
-    def corners(cls) -> Iterator["Cubie"]:
+    def corners(cls) -> Iterator[Cubie]:
         """Iterate over corner cubies."""
         for i in range(8):
             yield cls(i)
 
     @classmethod
-    def edges(cls) -> Iterator["Cubie"]:
+    def edges(cls) -> Iterator[Cubie]:
         """Iterate over edge cubies."""
         for i in range(8, 20):
             yield cls(i)
 
     @classmethod
-    def centers(cls) -> Iterator["Cubie"]:
+    def centers(cls) -> Iterator[Cubie]:
         """Iterate over center cubies."""
         for i in range(20, 26):
             yield cls(i)
 
 
-class Move(IntEnum):
+class Move(IntEnum):  # TODO move to move folder?
     """Move enumeration."""
     NONE = NONE  #: No move.
     # face moves
@@ -528,6 +530,8 @@ class Move(IntEnum):
     @property
     def string(self) -> str:
         """String representation of the move."""
+        if self == Move.NONE:
+            return ""
         str = self.name
         if str[0] in "XYZ":
             str = str[0].lower() + str[1:]
@@ -549,7 +553,7 @@ class Move(IntEnum):
         return Layer.from_char(self.name[0]).axis
 
     @property
-    def inverse(self) -> "Move":
+    def inverse(self) -> Move:
         """Inverse move."""
         if self == Move.NONE:
             return Move.NONE
@@ -603,7 +607,7 @@ class Move(IntEnum):
         return 45 <= self < 54
 
     @classmethod
-    def from_string(cls, string: str) -> "Move":
+    def from_string(cls, string: str) -> Move:
         """
         Return the corresponding :class:`Move` enum.
 
@@ -625,31 +629,31 @@ class Move(IntEnum):
             raise ValueError(f"invalid move string (got '{string}')")
 
     @classmethod
-    def moves(cls) -> Iterator["Move"]:
+    def moves(cls) -> Iterator[Move]:
         """Iterate over valid moves."""
         for i in range(54):
             yield cls(i)
 
     @classmethod
-    def face_moves(cls) -> Iterator["Move"]:
+    def face_moves(cls) -> Iterator[Move]:
         """Iterate over face moves."""
         for i in range(18):
             yield cls(i)
 
     @classmethod
-    def slice_moves(cls) -> Iterator["Move"]:
+    def slice_moves(cls) -> Iterator[Move]:
         """Iterate over slice moves."""
         for i in range(18, 27):
             yield cls(i)
 
     @classmethod
-    def wide_moves(cls) -> Iterator["Move"]:
+    def wide_moves(cls) -> Iterator[Move]:
         """Iterate over wide moves."""
         for i in range(27, 45):
             yield cls(i)
 
     @classmethod
-    def rotations(cls) -> Iterator["Move"]:
+    def rotations(cls) -> Iterator[Move]:
         """Iterate over rotations."""
         for i in range(45, 54):
             yield cls(i)

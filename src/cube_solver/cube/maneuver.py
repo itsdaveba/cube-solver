@@ -11,54 +11,120 @@ from .enums import Move, Layer
 face_moves = [*Move.face_moves()]
 face_moves.reverse()
 main_layers = (Layer.UP, Layer.FRONT, Layer.RIGHT)
-NEXT_MOVES = {move: [next for next in face_moves if move.axis != next.axis or
-                     (move.layers[0] != next.layers[0] and move.layers[0] in main_layers)] for move in face_moves}
-NEXT_MOVES[Move.NONE] = face_moves
+NEXT_MOVES = {Move.NONE: face_moves}
+NEXT_MOVES.update({move: [next for next in face_moves if move.axis != next.axis or
+                          (move.layers[0] != next.layers[0] and move.layers[0] in main_layers)] for move in face_moves})
 
-MOVES_DICT = {frozenset(): []}
+REDUCED_MOVES = {frozenset(): []}
 for first, second in combinations(Move, 2):
     if first.axis == second.axis and first.name[:-1] != second.name[:-1]:
         counter = Counter(dict(zip(first.layers, first.shifts)))
         counter.update(dict(zip(second.layers, second.shifts)))
         key = frozenset((layer, shift % 4) for layer, shift in counter.items() if shift % 4)
-        if key not in MOVES_DICT:
-            MOVES_DICT[key] = [first, second]
+        if key not in REDUCED_MOVES:
+            REDUCED_MOVES[key] = [first, second]
     elif first == Move.NONE:
         counter = Counter(dict(zip(second.layers, second.shifts)))
         key = frozenset((layer, shift % 4) for layer, shift in counter.items())
-        MOVES_DICT[key] = [second]
+        REDUCED_MOVES[key] = [second]
 
 
-def reduce_moves(moves: list[Move]) -> list[Move]:
-    n = len(moves)
-    for i in range(n - 1):
+def _reduce_moves(moves: list[Move]) -> list[Move]:
+    """Try to reduce consecutive moves along the same axis."""
+    for i in range(len(moves) - 1):
         if moves[i].axis == moves[i+1].axis:
             counter = Counter(dict(zip(moves[i].layers, moves[i].shifts)))
-            counter.update(dict(zip(moves[i+1].layers, moves[i+1].shifts)))
-            key = frozenset((layer, shift % 4) for layer, shift in counter.items() if shift % 4)
-            if key in MOVES_DICT and len(MOVES_DICT[key]) < 2:
-                return reduce_moves(moves[:i] + MOVES_DICT[key] + moves[i+2:])
-            if i + 2 < n and moves[i].axis == moves[i+2].axis:
-                counter.update(dict(zip(moves[i+2].layers, moves[i+2].shifts)))
-                key = frozenset((layer, shift % 4) for layer, shift in counter.items() if shift % 4)
-                if key in MOVES_DICT:
-                    return reduce_moves(moves[:i] + MOVES_DICT[key] + moves[i+3:])
-                if i + 3 < n and moves[i].axis == moves[i+3].axis:
-                    counter.update(dict(zip(moves[i+3].layers, moves[i+3].shifts)))
-                    key = frozenset((layer, shift % 4) for layer, shift in counter.items() if shift % 4)
-                    return reduce_moves(moves[:i] + MOVES_DICT[key] + moves[i+4:])
+            reduced_moves = _reduced(counter, moves, i, 1)
+            if reduced_moves is not None:
+                return reduced_moves
     return moves
 
 
+def _reduced(counter: Counter, moves: list[Move], i: int, j: int) -> list[Move] | None:
+    """Update counter and reduce if possible."""
+    counter.update(dict(zip(moves[i+j].layers, moves[i+j].shifts)))
+    key = frozenset((layer, shift % 4) for layer, shift in counter.items() if shift % 4)
+    if key in REDUCED_MOVES and len(REDUCED_MOVES[key]) <= j:
+        return _reduce_moves(moves[:i] + REDUCED_MOVES[key] + moves[i+j+1:])
+    if i + j + 1 < len(moves) and moves[i].axis == moves[i+j+1].axis:
+        return _reduced(counter, moves, i, j + 1)
+
+
 class Maneuver(str):
-    def __new__(cls, moves: str | list[Move]) -> Maneuver:
+    def __new__(cls, moves: str | list[Move]):
         """
-        Maneuver.
+        Create :class:`Maneuver` object.
+
+        A :class:`Maneuver` is a subclass of :class:`str` that represents
+        the sequence of moves that can be applied to a :class:`Cube` object.
 
         Parameters
-        ---------
-        moves : str or list of Move
-            Maneuver moves.
+        ----------
+        moves : str or list of Move.
+            Sequence of moves.
+
+        Examples
+        --------
+        >>> from cube_solver import Cube, Move, Maneuver
+
+        Apply a maneuver to a cube.
+
+        >>> Maneuver("U F2 R'")
+        "U F2 R'"
+        >>> Maneuver([Move.U1, Move.F2, Move.R3])
+        "U F2 R'"
+        >>> Cube(Maneuver("U F2 R'")) == Cube("U F2 R'")
+        True
+
+        Compare equvalent maneuvers.
+
+        >>> Maneuver("R L") == "L R"
+        True
+        >>> Maneuver("R L F2 B2 R' L' D R L F2 B2 R' L'") == "U"
+        True
+
+        Reduce consecutive moves along the same axis.
+
+        >>> Maneuver("U U")
+        'U2'
+        >>> Maneuver("R L R")
+        'R2 L'
+        >>> Maneuver("F S' B2 F")
+        'S z2'
+
+        Inverse maneuver.
+
+        >>> Maneuver("R U R' U'").inverse
+        "U R U' R'"
+
+        Container operations.
+
+        >>> maneuver = Maneuver("U F2 R'")
+        >>> maneuver[0]
+        Move.U1
+        >>> maneuver[:2]
+        'U F2'
+        >>> [move for move in maneuver]
+        [Move.U1, Move.F2, Move.R3]
+        >>> Move.U1 in maneuver
+        True
+
+        Numeric operations.
+
+        >>> A = Maneuver("U R'")
+        >>> B = Maneuver("F'")
+        >>> -A     # '-' negation, same as A'
+        "R U'"
+        >>> A + B  # '+' addition, same as A B
+        "U R' F'"
+        >>> A - B  # '-' subtraction, same as A B'
+        "U R' F"
+        >>> 2 * A  # '*' multiplication, same as A A
+        "U R' U R'"
+        >>> A * B  # '*' conjugation, same as A B A'
+        "U R' F' R U'"
+        >>> A @ B  # '@' commutator, same as A B A' B'
+        "U R' F' R U' F"
         """
         cls.moves: tuple[Move, ...]
 
@@ -72,18 +138,19 @@ class Maneuver(str):
                 if not isinstance(move, Move):
                     raise TypeError(f"moves list elements must be Move, not {type(move).__name__}")
 
-        moves = reduce_moves([move for move in moves if move != Move.NONE])
+        moves = _reduce_moves([move for move in moves if move != Move.NONE])
         obj = super().__new__(cls, " ".join(move.string for move in moves))
         obj.moves = tuple(moves)
         return obj
 
-    def __ne__(self, other: str | list[Move]) -> bool:
+    def __ne__(self, other: object) -> bool:
         return not self.__eq__(other)
 
-    def __eq__(self, other: str | list[Move]) -> bool:
-        """Maneuver equality comparison."""
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Maneuver):
             try:
+                if not isinstance(other, (str, list)):
+                    return False
                 other = Maneuver(other)
             except Exception:
                 return False
@@ -159,8 +226,40 @@ class Maneuver(str):
         other = Maneuver(other)
         return other.__matmul__(self)
 
+    @property
+    def inverse(self) -> Maneuver:
+        """
+        Inverse maneuver.
+
+        Examples
+        --------
+        >>> from cube_solver import Maneuver
+        >>> Maneuver("R U R' U'").inverse
+        "U R U' R'"
+        """
+        return Maneuver([move.inverse for move in self.moves[::-1]])
+
     @classmethod
     def random(cls, length: int = 25) -> Maneuver:  # TODO include other move types?
+        """
+        Generate a random maneuver.
+
+        Parameters
+        ----------
+        length : int, optional
+            Maneuver length. Default is ``25``.
+
+        Returns
+        -------
+        maneuver : Maneuver
+            Random maneuver of the specified length.
+
+        Examples
+        --------
+        >>> from cube_solver import Maneuver
+        >>> Maneuver.random(10)  # result might differ # doctest: +SKIP
+        "D2 R2 L' B2 D L D F L D2"
+        """
         if not isinstance(length, int):
             raise TypeError(f"length must be int, not {type(length).__name__}")
         if length < 0:
@@ -170,8 +269,3 @@ class Maneuver(str):
         for i in range(length):
             moves.append(random.choice(NEXT_MOVES[moves[-1]]))
         return cls(moves[1:])
-
-    @property
-    def inverse(self) -> Maneuver:
-        """Inverse maneuver."""
-        return Maneuver([move.inverse for move in self.moves[::-1]])

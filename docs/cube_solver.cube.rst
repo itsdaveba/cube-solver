@@ -16,4 +16,5 @@ Submodules
    cube_solver.cube.cube
    cube_solver.cube.defs
    cube_solver.cube.enums
+   cube_solver.cube.maneuver
    cube_solver.cube.utils

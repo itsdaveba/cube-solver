@@ -7,7 +7,9 @@ import numpy as np
 
 from cube_solver import Cube
 from cube_solver.cube import utils
+from cube_solver.cube.cube import apply_move
 from cube_solver.cube.enums import Axis, Orbit, Layer, Color, Face, Cubie, Move
+from cube_solver.cube.maneuver import Maneuver
 
 
 @pytest.fixture
@@ -110,7 +112,7 @@ def test_enums(response):
 
     # move
     assert hasattr(Move, "NONE")
-    assert Move.NONE.string == "NONE"
+    assert Move.NONE.string == ""
     assert Move.U1.string == "U"
     assert Move.U2.string == "U2"
     assert Move.U3.string == "U'"
@@ -418,6 +420,10 @@ def test_cube(response):
                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
 
+    # cube comparison
+    assert cube != 0
+    assert cube == Cube()
+
     # apply_maneuver
     with pytest.raises(TypeError, match=r"maneuver must be str, not NoneType"):
         cube.apply_maneuver(None)
@@ -425,6 +431,11 @@ def test_cube(response):
     # scramble
     with pytest.raises(TypeError, match=r"scramble must be str or None, not int"):
         Cube(0)
+    cube = Cube(Maneuver([Move.U1, Move.F2, Move.R3]))
+    assert repr(cube) == "WWBWWBYYOGGROOROOBGGWGGWRRYBRRBRROOGYOOYBBWBBWWGYYGYYR"
+    check_cube(cube, True,
+               [0, 2, 2, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [5, 0, 1, 4, 2, 7, 6, 3, 12, 11, 10, 13, 9, 17, 14, 18, 16, 15, 19, 8])
     cube = Cube("U F2 R' D B2 L' M E2 S' Uw Fw2 Rw' Dw Bw2 Lw' u f2 r' d b2 l' x y2 z'")
     assert repr(cube) == "YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO"
     check_cube(cube, False,
@@ -757,3 +768,146 @@ def test_cube(response):
     check_cube(cube, None,
                [0, 0, -1, -1, -1, -1, 0, 0, -1, -1, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1],
                [5, 4, -1, -1, -1, -1, 6, 7, -1, -1, 10, 11, 9, 8, -1, -1, -1, -1, -1, -1])
+    with pytest.raises(TypeError, match=r"cube must be Cube, not NoneType"):
+        apply_move(None, Move.NONE)
+    cube.reset()
+    next_cube = apply_move(cube, Move.NONE)
+    assert repr(cube) == "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY"
+    assert repr(next_cube) == "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY"
+    next_cube = apply_move(cube, Move.F1)
+    assert repr(cube) == "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY"
+    assert repr(next_cube) == "WWWWWWOOOOOYOOYOOYGGGGGGGGGWRRWRRWRRBBBBBBBBBRRRYYYYYY"
+    next_cube = apply_move(cube, Move.X1)
+    assert repr(cube) == "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY"
+    assert repr(next_cube) == "GGGGGGGGGOOOOOOOOOYYYYYYYYYRRRRRRRRRWWWWWWWWWBBBBBBBBB"
+
+
+def test_maneuver():
+    with pytest.raises(TypeError, match=r"moves must be str or list, not NoneType"):
+        Maneuver(None)
+    with pytest.raises(TypeError, match="moves list elements must be Move, not NoneType"):
+        Maneuver([None])
+    maneuver = Maneuver("")
+    assert maneuver != 0
+    assert maneuver != [None]
+    assert maneuver != "None"
+    assert maneuver == ""
+    assert maneuver == []
+    assert maneuver == Maneuver("")
+    assert maneuver == Maneuver([])
+    assert maneuver.moves == ()
+    maneuver = Maneuver([Move.NONE])
+    assert maneuver == ""
+    assert maneuver == []
+    assert maneuver == Maneuver("")
+    assert maneuver == Maneuver([])
+    assert maneuver.moves == ()
+    maneuver = Maneuver("U F2 R'")
+    assert maneuver == "U F2 R'"
+    assert maneuver == [Move.U1, Move.F2, Move.R3]
+    assert maneuver == Maneuver("U F2 R'")
+    assert maneuver == Maneuver([Move.U1, Move.F2, Move.R3])
+    assert maneuver.moves == (Move.U1, Move.F2, Move.R3)
+    maneuver = Maneuver([Move.U1, Move.NONE, Move.F2, Move.NONE, Move.R3])
+    assert maneuver == "U F2 R'"
+    assert maneuver == [Move.U1, Move.F2, Move.R3]
+    assert maneuver == Maneuver("U F2 R'")
+    assert maneuver == Maneuver([Move.U1, Move.F2, Move.R3])
+    assert maneuver.moves == (Move.U1, Move.F2, Move.R3)
+
+    # equivalent
+    assert Maneuver("U") == "U2 U'"
+    assert Maneuver("Fw2") != "B2"
+    assert Maneuver("f2") == "z2 B2"
+    assert Maneuver("M'") != "R' L"
+    assert Maneuver("M'") == "x R' L"
+    assert Maneuver("z") != ""
+    assert Maneuver("z") == "F S B'"
+    assert Maneuver("z'") == "f' B"
+
+    # reduce
+    assert str(Maneuver("U U U")) == "U'"
+    assert str(Maneuver("U U U2")) == ""
+    assert str(Maneuver("U D U'")) == "D"
+    assert str(Maneuver("U D Uw'")) == "Dw"
+    assert str(Maneuver("U D' E'")) == "y"
+    assert str(Maneuver("U D' y'")) == "E"
+    assert str(Maneuver("U D E2")) == "U D E2"
+    assert str(Maneuver("U D E2 U")) == "D Uw2"
+    maneuver = Maneuver("B B' U2 U' U' F2 F2 B F2 F2 U U' D2 D' D' U2 D' R U2 U2 R2 R' R' R' L' R L2 L\
+                         R L2 F B' B F2 B' F' B' F' F' L2 L' F' U' U U2 U L2 D2 D D L R' L R B2 F2 F2 B'\
+                         B' F' B2 B F2 F2 F2 B F2 F2 U U' D2 D' D' U2 D' U U U L2 L2 U' D U2 U2 U D' U")
+    assert str(maneuver) == "B U2 D' R2 B2 L F' U' F U2 D'"
+    assert str(Maneuver("x' Rw y Uw' z2 Fw2 y2 Uw2 Dw2 y' Dw' y Dw Dw2 y2")) == "L D' B2 Uw2"
+
+    # inverse
+    maneuver = Maneuver("U F2 R' D B2 L' M E2 S' Uw Fw2 Rw' Dw Bw2 Lw' u f2 r' d b2 l' x y2 z'")
+    cube = Cube(maneuver)
+    assert repr(cube) == "YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO"
+    cube.apply_maneuver(maneuver.inverse)
+    assert repr(cube) == "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY"
+    assert maneuver == maneuver.inverse.inverse
+
+    # container operations
+    maneuver = Maneuver("U F2 R'")
+    assert len(maneuver) == 3
+    with pytest.raises(TypeError, match=r"Maneuver indices must be int or slice, not NoneType"):
+        maneuver[None]
+    with pytest.raises(IndexError, match=r"Maneuver index out of range"):
+        maneuver[3]
+    with pytest.raises(IndexError, match=r"Maneuver index out of range"):
+        maneuver[-4]
+    assert maneuver[0] == Move.U1
+    assert maneuver[-1] == Move.R3
+    assert maneuver[:2] == "U F2"
+    assert maneuver[::-1] == "R' F2 U"
+    moves = [Move.U1, Move.F2, Move.R3]
+    for i, move in enumerate(maneuver):
+        assert move == moves[i]
+    for i, move in enumerate(reversed(maneuver)):
+        assert move == moves[2-i]
+    assert None not in maneuver
+    assert Move.U1 in maneuver
+    assert Move.U2 not in maneuver
+    assert "U" in maneuver
+    assert "U2" not in maneuver
+
+    # numeric operations
+    maneuver = Maneuver("U F2 R'")
+    # negation
+    assert str(-maneuver) == "R F2 U'"  # same as inverse
+    # addition
+    assert str(maneuver + "D B2 L'") == "U F2 R' D B2 L'"
+    assert str("D B2 L'" + maneuver) == "D B2 L' U F2 R'"
+    assert str(maneuver + [Move.L1, Move.R1, Move.U3]) == "U F2 L U'"
+    assert str([Move.L1, Move.R1, Move.U3] + maneuver) == "L R F2 R'"
+    # subtraction
+    assert str(maneuver - "D B2 L'") == "U F2 R' L B2 D'"
+    assert str("D B2 L'" - maneuver) == "D B2 L' R F2 U'"
+    assert str(maneuver - [Move.L1, Move.R1, Move.U3]) == "U F2 R' U R' L'"
+    assert str([Move.L1, Move.R1, Move.U3] - maneuver) == "L R U' R F2 U'"
+    # integer multiplication
+    assert str(maneuver * 2) == "U F2 R' U F2 R'"
+    assert str(2 * maneuver) == "U F2 R' U F2 R'"
+    # conjugation
+    assert str(maneuver * "D B2 L'") == "U F2 R' D B2 L' R F2 U'"
+    assert str("D B2 L'" * maneuver) == "D B2 L' U F2 R' L B2 D'"
+    assert str(maneuver * [Move.L1, Move.R1, Move.U3]) == "U F2 L U' R F2 U'"
+    assert str([Move.L1, Move.R1, Move.U3] * maneuver) == "L R F2 R' U R' L'"
+    # commutator
+    assert str(maneuver @ "D B2 L'") == "U F2 R' D B2 L' R F2 U' L B2 D'"
+    assert str("D B2 L'" @ maneuver) == "D B2 L' U F2 R' L B2 D' R F2 U'"
+    assert str(maneuver @ [Move.L1, Move.R1, Move.U3]) == "U F2 L U' R F2 R' L'"
+    assert str([Move.L1, Move.R1, Move.U3] @ maneuver) == "L R F2 R' U L' F2 U'"
+
+    # random
+    with pytest.raises(TypeError, match=r"length must be int, not NoneType"):
+        Maneuver.random(None)
+    with pytest.raises(ValueError, match=r"length must be >= 0 \(got -1\)"):
+        Maneuver.random(-1)
+    maneuver = Maneuver.random(0)
+    assert maneuver == ""
+    maneuver = Maneuver.random(100)
+    assert len(maneuver) == 100
+    for first, second, third in zip(iter(maneuver[:-2]), iter(maneuver[1:-1]), iter(maneuver[2:])):
+        assert first.axis != second.axis or second.axis != third.axis

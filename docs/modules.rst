@@ -2,6 +2,6 @@ API Documentation
 =================
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
    cube_solver
