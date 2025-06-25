@@ -11,7 +11,7 @@ Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
    cube_solver.cube
    cube_solver.solver
@@ -20,7 +20,8 @@ Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
    cube_solver.cli
    cube_solver.constants
+   cube_solver.defs
