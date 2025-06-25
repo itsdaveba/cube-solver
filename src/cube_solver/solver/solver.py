@@ -17,16 +17,14 @@ MOVE_TO_INDEX = np.zeros(max(len(Move), max(Move) + 1), dtype=int)
 for cubie in NEXT_MOVES[Move.NONE]:
     MOVE_TO_INDEX[cubie] = NEXT_MOVES[Move.NONE].index(cubie)
 
-# # TODO check types for each method
-
 
 class BaseSolver(ABC):
     num_phases: int = 1
-    phase_moves: list[list[Move]] = [[*Move.face_moves()]]
-    pruning_kwargs: list[list[PruningDef]] = [[]]
-    transition_kwargs: list[TransitionDef]
     partial_corner_perm: bool
     partial_edge_perm: bool
+    transition_kwargs: list[TransitionDef]
+    pruning_kwargs: list[list[PruningDef]] = [[]]
+    phase_moves: list[list[Move]] = [[*Move.face_moves()]]
 
     def __init_subclass__(cls):
         for attr in ("partial_corner_perm", "partial_edge_perm"):
@@ -44,13 +42,14 @@ class BaseSolver(ABC):
     def __init__(self, use_transition_tables: bool = False):
         if not isinstance(use_transition_tables, bool):
             raise TypeError(f"use_transition_tables must be bool, not {type(use_transition_tables).__name__}")
-        self.next_moves = []
+
+        self.next_moves: list[dict[Move, list[Move]]] = []
         for phase_moves in self.phase_moves:
             next_moves = {Move.NONE: phase_moves}
-            next_moves.update({move: [m for m in NEXT_MOVES[move] if m in phase_moves] for move in phase_moves})
+            next_moves.update({move: [mv for mv in NEXT_MOVES[move] if mv in phase_moves] for move in phase_moves})
             self.next_moves.append(next_moves)
 
-        self.final_moves = []
+        self.final_moves: list[set[Move]] = []
         for i in range(self.num_phases - 1):
             self.final_moves.append({Move.NONE} | set(self.phase_moves[i]) - set(self.phase_moves[i+1]))
 
@@ -113,7 +112,8 @@ class BaseSolver(ABC):
             transition_table[coord] = [apply_move(cube, Move(move)).get_coord(coord_name) for move in NEXT_MOVES[Move.NONE]]
         return transition_table
 
-    def generate_pruning_table(self, phase: int, shape: tuple[int, ...], indexes: tuple[int, ...] | None, **kwargs) -> np.ndarray:
+    def generate_pruning_table(
+            self, phase: int, shape: int | tuple[int, ...], indexes: int | tuple[int, ...] | None, **_) -> np.ndarray:
         cube = Cube()
         coords = self.get_coords(cube)
         phase_coords = self.phase_coords(phase, self.flatten(coords))
@@ -145,10 +145,14 @@ class BaseSolver(ABC):
         return flatten
 
     @abstractmethod
-    def phase_coords(self, phase: int, coords: FlattenCoords) -> FlattenCoords: ...  # phase: int, coords: tuple) -> tuple: ...
+    def phase_coords(self, phase: int, coords: FlattenCoords) -> FlattenCoords: ...
 
-    def prune_coords(self, phase_coords: FlattenCoords, indexes: tuple[int, ...] | None) -> FlattenCoords:
-        return phase_coords if indexes is None else tuple(phase_coords[index] for index in indexes)
+    def prune_coords(self, phase_coords: FlattenCoords, indexes: int | tuple[int, ...] | None) -> FlattenCoords:
+        if indexes is None:
+            return phase_coords
+        if isinstance(indexes, int):
+            return (phase_coords[indexes],)
+        return tuple(phase_coords[index] for index in indexes)
 
     @overload
     def next_position(self, position: Cube, move: Move) -> Cube: ...
@@ -162,7 +166,7 @@ class BaseSolver(ABC):
             next_position = ()
             for coord, kwargs in zip(position, self.transition_kwargs):
                 if isinstance(coord, int):
-                    next_position += (self.transition_tables[kwargs["coord_name"]][coord, MOVE_TO_INDEX[move]].item(),)  # TODO make al coords list, even [0]
+                    next_position += (self.transition_tables[kwargs["coord_name"]][coord, MOVE_TO_INDEX[move]].item(),)
                 else:
                     next_position += (tuple(self.transition_tables[kwargs["coord_name"]][coord, MOVE_TO_INDEX[move]].tolist()),)
             return next_position
@@ -171,7 +175,7 @@ class BaseSolver(ABC):
         cube.apply_move(move)
         return self.get_coords(cube)
 
-    def is_solved(self, phase: int, position: Cube | CoordsType) -> bool:  # | tuple, phase: int | None = None) -> bool:
+    def is_solved(self, phase: int, position: Cube | CoordsType) -> bool:
         """
         Check whether the `cube` position is solved at the current `phase`.
 
@@ -202,8 +206,8 @@ class BaseSolver(ABC):
         position = self.phase_coords(phase, self.flatten(position))
         return position == self.solved_coords[phase]
 
-    def solve(self, cube: Cube, max_depth: int | None = None, optimal: bool = False, verbose: int = 0) -> Maneuver | None:  #, max_depth: int | None = None, verbose: int = 0, optimal=False) -> str | None:
-        """  # TODO cube could be None for perf testing?
+    def solve(self, cube: Cube, max_depth: int | None = None, optimal: bool = False, verbose: int = 0) -> Maneuver | None:  # TODO cube could be None for perf testing?
+        """
         Solve the `cube` position.
 
         Parameters
