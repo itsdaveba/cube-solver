@@ -1,65 +1,41 @@
-# import time
-# from cube_solver import Cube, Move, generate_scramble
-# from cube_solver.solver import BaseSolver
+import numpy as np
 
-# PHASE1_MOVES = list(reversed(Move))
-# RESTRICT = [Move.F1, Move.F3, Move.B1, Move.B3, Move.R1, Move.R3, Move.L1, Move.L3]
-# PHASE2_MOVES = [move for move in list(reversed(Move)) if move not in RESTRICT]
-
-
-# class Kociemba(BaseSolver):
-#     num_phases = 2
-#     partial_corner_perm = False
-#     phase_moves = [PHASE1_MOVES, PHASE2_MOVES]
-#     solved_coords = [(0, 0, 494), (0, 0, 0)]
-#     pruning_names = [["kociemba_coeoec"], ["kociemba_cpsep", "kociemba_epsep", "kociemba_cpep"]]
-#     pruning_kwargs = [[dict(shape=(2187, 2048, 495), indexes=[0, 1, 2])],
-#                       [dict(shape=(40320, 24), indexes=[0, 2]),
-#                        dict(shape=(40320, 24), indexes=[1, 2]),
-#                        dict(shape=(40320, 40320), indexes=[0, 1])]]
-
-#     def _phase_coords(self, phase: int, coords: tuple) -> tuple:
-#         if phase == 0:
-#             corner_orientation = coords[0]
-#             edge_orientation = coords[1]
-#             edge_combination = coords[3][0] // 24
-#             return (corner_orientation, edge_orientation, edge_combination)
-#         if phase == 1:
-#             corner_permutation = coords[2]
-#             edge_permutation = coords[3][1] + (coords[3][2] + coords[3][2] // 24 - 69) * 24  # TODO double-check
-#             slice_edge_permutation = coords[3][0] % 24
-#             return (corner_permutation, edge_permutation, slice_edge_permutation)
-#         raise ValueError
+from ..cube.enums import Move
+from .solver import BaseSolver, PruningDef, FlattenCoords
+from ..cube.defs import CORNER_ORIENTATION_SIZE as CO_SIZE
+from ..cube.defs import EDGE_ORIENTATION_SIZE as EO_SIZE
+from ..cube.defs import PARTIAL_CORNER_PERMUTATION_SIZE as PCP_SIZE
+from ..cube.defs import PARTIAL_EDGE_PERMUTATION_SIZE as PEP_SIZE
+from ..cube.defs import NONE, NUM_CORNERS, NUM_EDGES, FACTORIAL, COMBINATION, NUM_ORBIT_ELEMS
 
 
-# if __name__ == "__main__":
-#     cube = Cube(random_state=True)
-#     solver = Kociemba(use_transition_tables=True)
-#     solution = solver.solve(cube, verbose=2)
-#     print(solution)
+EEC_SIZE = COMBINATION[NUM_EDGES, NUM_ORBIT_ELEMS].item()
+CC_SIZE = COMBINATION[NUM_CORNERS, NUM_ORBIT_ELEMS].item()
+EC_SIZE = COMBINATION[NUM_EDGES - NUM_ORBIT_ELEMS, NUM_ORBIT_ELEMS].item()
 
-#     # num_solves = 1000
-#     # max_moves = 20  # God's Number
+PHASE0_MOVES = [*Move.face_moves()]
+RESTRICT_MOVES = [Move.F1, Move.F3, Move.B1, Move.B3, Move.R1, Move.R3, Move.L1, Move.L3]
+PHASE1_MOVES = [move for move in PHASE0_MOVES if move not in RESTRICT_MOVES]
 
-#     # avg_time = 0.0
-#     # cube = Cube()
-#     # solver = Kociemba(use_transition_tables=True)
 
-#     # for i in range(num_solves):
-#     #     print(f"Solve Number: {i + 1}")
-#     #     cube.set_random_state()
-#     #     print("Cube:", repr(cube))
+class Kociemba(BaseSolver):
+    num_phases = 2
+    partial_corner_perm = False
+    partial_edge_perm = True
+    phase_moves = [PHASE0_MOVES, PHASE1_MOVES]
+    pruning_kwargs = [
+        [PruningDef(name="co_eec", shape=(2187, 495), indexes=(0, 2)), PruningDef(name="eo_eec", shape=(2048, 495), indexes=(1, 2))],
+        [PruningDef(name="cp_eep", shape=(40320, 24), indexes=(0, 2)), PruningDef(name="ep_eep", shape=(40320, 24), indexes=(1, 2))]]
 
-#     #     start = time.time()
-#     #     solution = solver.solve(cube, verbose=1, optimal=max_moves)
-#     #     end = time.time()
-#     #     avg_time += end - start
-
-#     #     if solution is not None:
-#     #         print("Solution:", solution)
-#     #     else:
-#     #         print("No Solution Found")
-
-#     #     print(f"Time: {end - start:.2f} seconds")
-#     #     print(f"Average Time: {avg_time / (i + 1):.2f} seconds")
-#     #     print()
+    def phase_coords(self, phase: int, coords: FlattenCoords) -> FlattenCoords:
+        if phase == 0:
+            edge_orientation = coords[1]
+            corner_orientation = coords[0]
+            equator_edge_combination = coords[4] // FACTORIAL[NUM_ORBIT_ELEMS].item()
+            return (corner_orientation, edge_orientation, equator_edge_combination)
+        elif phase == 1:
+            corner_permutation = coords[2]
+            edge_permutation = coords[3] + (coords[5] + coords[5] // 24 - 69) * 24  # TODO double-check
+            equator_edge_permutation = coords[4] % 24
+            return (corner_permutation, edge_permutation, equator_edge_permutation)
+        raise ValueError("")  # TODO add message

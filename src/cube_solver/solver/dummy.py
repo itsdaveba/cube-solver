@@ -1,16 +1,9 @@
-# from cube_solver import Cube, generate_scramble
-# from cube_solver.solver import BaseSolver
+from .solver import BaseSolver, FlattenCoords
 
 
-# class DummySolver(BaseSolver):
-#     def _phase_coords(self, phase: int, coords: tuple) -> tuple:
-#         return coords
+class DummySolver(BaseSolver):
+    partial_corner_perm = True
+    partial_edge_perm = True
 
-
-# if __name__ == "__main__":
-#     scramble = generate_scramble(5)
-#     print("Scramble:", scramble)
-#     cube = Cube(scramble)
-#     solver = DummySolver(use_transition_tables=True)
-#     solution = solver.solve(cube, verbose=1)
-#     print("Solution:", solution)
+    def phase_coords(self, phase: int, coords: FlattenCoords) -> FlattenCoords:
+        return coords

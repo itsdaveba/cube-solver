@@ -1,26 +1,18 @@
-# from cube_solver import Cube, generate_scramble
-# from cube_solver.solver import BaseSolver
+from .solver import BaseSolver, PruningDef, FlattenCoords
+from ..cube.defs import CORNER_ORIENTATION_SIZE as co_size
+from ..cube.defs import EDGE_ORIENTATION_SIZE as eo_size
+from ..cube.defs import CORNER_PERMUTATION_SIZE as cp_size
+from ..cube.defs import PARTIAL_EDGE_PERMUTATION_SIZE as pep_size
 
 
-# class Korf(BaseSolver):
-#     solved_coords = [(0, 0, 0, 1656, 11856, 1656, 0)]
-#     pruning_names = [["korf_co", "korf_eo", "korf_pcp1", "korf_pcp2", "korf_pep1", "korf_pep2", "korf_pep3"]]
-#     pruning_kwargs = [[dict(shape=(2187,), indexes=[0]),
-#                        dict(shape=(2048,), indexes=[1]),
-#                        dict(shape=(1680,), indexes=[2]),
-#                        dict(shape=(1680,), indexes=[3]),
-#                        dict(shape=(11880,), indexes=[4]),
-#                        dict(shape=(11880,), indexes=[5]),
-#                        dict(shape=(11880,), indexes=[6])]]
+class Korf(BaseSolver):
+    partial_corner_perm = False
+    partial_edge_perm = True
+    pruning_kwargs = [[PruningDef(name="ceo", shape=(co_size, eo_size), indexes=(0, 1)),
+                       PruningDef(name="cp", shape=(cp_size,), indexes=(2,)),
+                       PruningDef(name="pep1", shape=(pep_size,), indexes=(3,)),
+                       PruningDef(name="pep2", shape=(pep_size,), indexes=(4,)),
+                       PruningDef(name="pep3", shape=(pep_size,), indexes=(5,))]]
 
-#     def _phase_coords(self, phase: int, coords: tuple) -> tuple:
-#         return coords[:2] + coords[2] + coords[3]
-
-
-# if __name__ == "__main__":
-#     scramble = generate_scramble(9)
-#     print("Scramble:", scramble)
-#     cube = Cube(scramble)
-#     solver = Korf(use_transition_tables=True)
-#     solution = solver.solve(cube, verbose=1)
-#     print("Solution:", solution)
+    def phase_coords(self, phase: int, coords: FlattenCoords) -> FlattenCoords:
+        return coords
