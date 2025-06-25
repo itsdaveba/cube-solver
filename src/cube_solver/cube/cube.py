@@ -7,6 +7,7 @@ import numpy as np
 from copy import deepcopy
 from itertools import chain
 
+from ..defs import CoordType, CoordsType
 from .defs import NONE, SIZE, NUM_DIMS, NUM_CORNERS, NUM_EDGES, NUM_ORBIT_ELEMS
 from .defs import CORNER_ORIENTATION_SIZE, EDGE_ORIENTATION_SIZE, CORNER_PERMUTATION_SIZE, EDGE_PERMUTATION_SIZE
 from .enums import Axis, Orbit, Layer, Color, Face, Cubie, Move
@@ -35,8 +36,8 @@ INDEX_TO_CUBIE = np.array([
     Cubie.BL, Cubie.BR, Cubie.FL, Cubie.FR,      # SLICE_EQUATOR orbit
     Cubie.NONE], dtype=int)
 
-CUBIE_TO_INDEX = np.zeros(max(len(Cubie), max(Cubie)) + 1, dtype=int)
-for cubie in chain(Cubie.corners(), Cubie.edges()):
+CUBIE_TO_INDEX = np.zeros(max(len(Cubie), max(Cubie) + 1), dtype=int)
+for cubie in INDEX_TO_CUBIE:
     CUBIE_TO_INDEX[cubie] = np.where(INDEX_TO_CUBIE == cubie)[0][0]
 CUBIE_TO_INDEX[Cubie.NONE] = NONE
 
@@ -253,8 +254,25 @@ class Cube:
         return tuple(coord if isinstance(coord, int) else coord[0] for coord in coords)
 
     @coords.setter
-    def coords(self, coords: tuple[int | tuple[int, ...], ...]):
+    def coords(self, coords: tuple[int, ...]):
         self.set_coords(coords)
+
+    @property
+    def is_solved(self) -> bool:
+        """
+        Whether the cube is solved.
+
+        Examples
+        --------
+        >>> from cube_solver import Cube
+        >>> cube = Cube()
+        >>> cube.is_solved
+        True
+        >>> cube.apply_maneuver("U F R")
+        >>> cube.is_solved
+        False
+        """
+        return self.coords == (0, 0, 0, 0)
 
     def __ne__(self, other: object) -> bool:
         """Negation of equality comparison."""
@@ -439,7 +457,7 @@ class Cube:
 
     def apply_move(self, move: Move):
         """
-        Apply a :class:`Move` to the cube.
+        Apply a move to the cube.
 
         Parameters
         ----------
@@ -555,13 +573,13 @@ class Cube:
         for move in moves:
             self.apply_move(move)
 
-    def get_coord(self, coord_type: str) -> int | tuple[int, ...]:
+    def get_coord(self, coord_name: str) -> CoordType:
         """
         Get cube coordinate value.
 
         Parameters
         ----------
-        coord_type : {'co', 'eo', 'cp', 'ep', 'pcp', 'pep'}
+        coord_name : {'co', 'eo', 'cp', 'ep', 'pcp', 'pep'}
             Get the specified cube coordinate.
 
             * 'co' means `corner orientation`.
@@ -608,36 +626,36 @@ class Cube:
         >>> cube.get_coord('pep')  # partial edge permutation
         (7262, 2633, 8640)
         """
-        if not isinstance(coord_type, str):
-            raise TypeError(f"coord_type must be str, not {type(coord_type).__name__}")
+        if not isinstance(coord_name, str):
+            raise TypeError(f"coord_name must be str, not {type(coord_name).__name__}")
 
-        if coord_type in ("co", "eo"):
-            orientation = self.orientation[:NUM_CORNERS] if coord_type == "co" else self.orientation[NUM_CORNERS:]
-            return utils.get_orientation_coord(orientation, 3 if coord_type == "co" else 2, is_modulo=True)
+        if coord_name in ("co", "eo"):
+            orientation = self.orientation[:NUM_CORNERS] if coord_name == "co" else self.orientation[NUM_CORNERS:]
+            return utils.get_orientation_coord(orientation, 3 if coord_name == "co" else 2, is_modulo=True)
 
-        if coord_type in ("cp", "ep", "pcp", "pep"):
-            permutation = self.permutation[:NUM_CORNERS] if coord_type in ("cp", "pcp") else self.permutation[NUM_CORNERS:]
-            if coord_type in ("cp", "ep"):
+        if coord_name in ("cp", "ep", "pcp", "pep"):
+            permutation = self.permutation[:NUM_CORNERS] if coord_name in ("cp", "pcp") else self.permutation[NUM_CORNERS:]
+            if coord_name in ("cp", "ep"):
                 coord = utils.get_permutation_coord(permutation)
-                if coord_type == "ep":
+                if coord_name == "ep":
                     return coord // 2
                 return coord
-            orbits = CORNER_ORBITS if coord_type == "pcp" else EDGE_ORBITS
+            orbits = CORNER_ORBITS if coord_name == "pcp" else EDGE_ORBITS
             combs = [np.where(np.array([Cubie(INDEX_TO_CUBIE[p]).orbit for p in permutation]) == orbit)[0] for orbit in orbits]
             coord = [utils.get_partial_permutation_coord(permutation[comb], comb) if len(comb) else NONE for comb in combs]
             if any(c != NONE for c in coord[1:]):
                 return tuple(coord)
             return coord[0]
 
-        raise ValueError(f"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' (got '{coord_type}')")
+        raise ValueError(f"coord_name must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' (got '{coord_name}')")
 
-    def set_coord(self, coord_type: str, coord: int | tuple[int, ...]):
+    def set_coord(self, coord_name: str, coord: CoordType):
         """
         Set cube coordinate value.
 
         Parameters
         ----------
-        coord_type : {'co', 'eo', 'cp', 'ep', 'pcp', 'pep'}
+        coord_name : {'co', 'eo', 'cp', 'ep', 'pcp', 'pep'}
             Set the specified cube coordinate.
 
             * 'co' means `corner orientation`.
@@ -707,39 +725,39 @@ class Cube:
         >>> cube.permutation[8:]
         array([-1, -1, 10, -1,  9, -1, -1, -1, -1,  8, 11, -1])
         """
-        if not isinstance(coord_type, str):
-            raise TypeError(f"coord_type must be str, not {type(coord_type).__name__}")
+        if not isinstance(coord_name, str):
+            raise TypeError(f"coord_name must be str, not {type(coord_name).__name__}")
         if not isinstance(coord, (int, tuple)):
             raise TypeError(f"coord must be int or tuple, not {type(coord).__name__}")
 
-        if coord_type in ("co", "eo"):
+        if coord_name in ("co", "eo"):
             if not isinstance(coord, int):
-                raise TypeError(f"coord must be int for coord_type '{coord_type}', not {type(coord).__name__}")
-            orientation = self.orientation[:NUM_CORNERS] if coord_type == "co" else self.orientation[NUM_CORNERS:]
-            v = 3 if coord_type == "co" else 2
+                raise TypeError(f"coord must be int for coord_name '{coord_name}', not {type(coord).__name__}")
+            orientation = self.orientation[:NUM_CORNERS] if coord_name == "co" else self.orientation[NUM_CORNERS:]
+            v = 3 if coord_name == "co" else 2
             orientation[:] = utils.get_orientation_array(coord, v, len(orientation), force_modulo=True)
-        elif coord_type in ("cp", "ep", "pcp", "pep"):
-            permutation = self.permutation[:NUM_CORNERS] if coord_type in ("cp", "pcp") else self.permutation[NUM_CORNERS:]
-            if coord_type in ("cp", "ep"):
+        elif coord_name in ("cp", "ep", "pcp", "pep"):
+            permutation = self.permutation[:NUM_CORNERS] if coord_name in ("cp", "pcp") else self.permutation[NUM_CORNERS:]
+            if coord_name in ("cp", "ep"):
                 if not isinstance(coord, int):
-                    raise TypeError(f"coord must be int for coord_type '{coord_type}', not {type(coord).__name__}")
-                permutation[:], permutation_parity = utils.get_permutation_array(coord, len(permutation), coord_type == "ep")
-                if coord_type == "ep":
+                    raise TypeError(f"coord must be int for coord_name '{coord_name}', not {type(coord).__name__}")
+                permutation[:], permutation_parity = utils.get_permutation_array(coord, len(permutation), coord_name == "ep")
+                if coord_name == "ep":
                     permutation += NUM_CORNERS
                 if self.permutation_parity is None:
-                    other_perm = self.permutation[NUM_CORNERS:] if coord_type == "cp" else self.permutation[:NUM_CORNERS]
+                    other_perm = self.permutation[NUM_CORNERS:] if coord_name == "cp" else self.permutation[:NUM_CORNERS]
                     if not np.any(other_perm == CUBIE_TO_INDEX[Cubie.NONE]):
                         other_parity = utils.get_permutation_parity(other_perm)
                         self.permutation_parity = permutation_parity if permutation_parity == other_parity else other_parity
             else:
-                orbits = CORNER_ORBITS if coord_type == "pcp" else EDGE_ORBITS
+                orbits = CORNER_ORBITS if coord_name == "pcp" else EDGE_ORBITS
                 if isinstance(coord, int):
                     coord_tuple = (coord,) + (NONE,) * (len(orbits) - 1)
                 else:
                     coord_tuple = coord
                 size = len(coord_tuple)
                 if size != len(orbits):
-                    raise ValueError(f"coord tuple length must be {len(orbits)} for coord_type '{coord_type}' (got {size})")
+                    raise ValueError(f"coord tuple length must be {len(orbits)} for coord_name '{coord_name}' (got {size})")
                 perm = np.full_like(permutation, CUBIE_TO_INDEX[Cubie.NONE])
                 for coord, orbit in zip(coord_tuple, orbits):
                     if not isinstance(coord, int):
@@ -763,24 +781,24 @@ class Cube:
                     if corner_parity == edge_parity:
                         self.permutation_parity = corner_parity
                     else:
-                        if coord_type == "pcp":
+                        if coord_name == "pcp":
                             self.permutation_parity = edge_parity
                         else:
                             warnings.warn("invalid cube parity")
                             self.permutation_parity = None
             if self.permutation_parity is not None and self.permutation_parity != permutation_parity:
                 self.permutation[-2:] = self.permutation[[-1, -2]]
-                if coord_type in ("cp", "pcp"):
+                if coord_name in ("cp", "pcp"):
                     self.permutation_parity = permutation_parity
             condition = (self.permutation != CUBIE_TO_INDEX[Cubie.NONE]) & (self.orientation == NONE)
             self.orientation = np.where(condition, 0, self.orientation)
         else:
-            raise ValueError(f"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' (got '{coord_type}')")
+            raise ValueError(f"coord_name must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' (got '{coord_name}')")
 
     def get_coords(
             self,
             partial_corner_perm: bool = False,
-            partial_edge_perm: bool = False) -> tuple[int | tuple[int, ...], ...]:
+            partial_edge_perm: bool = False) -> CoordsType:
         """
         Get cube coordinates.
 
@@ -832,7 +850,7 @@ class Cube:
 
     def set_coords(
             self,
-            coords: tuple[int | tuple[int, ...], ...],
+            coords: CoordsType,
             partial_corner_perm: bool = False,
             partial_edge_perm: bool = False):
         """
@@ -890,10 +908,21 @@ class Cube:
         self.set_coord("pcp" if partial_corner_perm else "cp", coords[2])
         self.set_coord("pep" if partial_edge_perm else "ep", coords[3])
 
+    def copy(self) -> Cube:
+        """
+        Return a copy of the cube.
+
+        Returns
+        -------
+        cube : Cube
+            Copy of cube object.
+        """
+        return deepcopy(self)
+
 
 def apply_move(cube: Cube, move: Move) -> Cube:
     """
-    Return a copy of the the :class:`Cube` object with the :class:`Move` applyed.
+    Return a copy of the the cube with the move applyed.
 
     Parameters
     ----------
@@ -923,6 +952,44 @@ def apply_move(cube: Cube, move: Move) -> Cube:
     if not isinstance(cube, Cube):
         raise TypeError(f"cube must be Cube, not {type(cube).__name__}")
 
-    cube = deepcopy(cube)
+    cube = cube.copy()
     cube.apply_move(move)
+    return cube
+
+
+def apply_maneuver(cube: Cube, maneuver: str) -> Cube:
+    """
+    Return a copy of the cube with the sequence of moves applied.
+
+    Accepts the following move types:
+
+    * Face moves (e.g. `U`, `F2`, `R'`).
+    * Slice moves (e.g. `M`, `E2`, `S'`).
+    * Wide moves (e.g. `Uw`, `Fw2`, `Rw'` or `u`, `f2`, `r'`).
+    * Rotations (e.g. `x`, `y2`, `z'`).
+
+    Parameters
+    ----------
+    cube : Cube
+        Cube object.
+    maneuver : str
+        The sequence of moves to apply.
+
+    Returns
+    -------
+    cube : Cube
+        Copy of the cube with the sequence of moves applied.
+
+    Examples
+    --------
+    >>> from cube_solver import Cube, apply_maneuver
+    >>> cube = Cube()
+    >>> apply_maneuver(cube, "U M2 Fw' x")
+    RGGBBORGGWYWWYWGOOGOOGOOYWYYWYYWYRRBRRBRRBWYWBRBBGBOGO
+    """
+    if not isinstance(cube, Cube):
+        raise TypeError(f"cube must be Cube, not {type(cube).__name__}")
+
+    cube = cube.copy()
+    cube.apply_maneuver(maneuver)
     return cube

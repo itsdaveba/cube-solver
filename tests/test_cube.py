@@ -5,11 +5,9 @@
 import pytest
 import numpy as np
 
-from cube_solver import Cube
+from cube_solver import Cube, Maneuver, apply_move, apply_maneuver
 from cube_solver.cube import utils
-from cube_solver.cube.cube import apply_move
 from cube_solver.cube.enums import Axis, Orbit, Layer, Color, Face, Cubie, Move
-from cube_solver.cube.maneuver import Maneuver
 
 
 @pytest.fixture
@@ -415,6 +413,7 @@ def check_cube(cube: Cube, permutation_parity: bool | None, orientation: list[in
 
 def test_cube(response):
     cube = Cube()
+    assert cube.is_solved
     assert repr(cube) == "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY"
     check_cube(cube, False,
                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -427,16 +426,28 @@ def test_cube(response):
     # apply_maneuver
     with pytest.raises(TypeError, match=r"maneuver must be str, not NoneType"):
         cube.apply_maneuver(None)
+    with pytest.raises(TypeError, match=r"cube must be Cube, not NoneType"):
+        apply_maneuver(None, "")
+    next_cube = apply_maneuver(cube, "U F2 R'")
+    assert cube.is_solved
+    assert not next_cube.is_solved
+    assert repr(cube) == "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY"
+    assert repr(next_cube) == "WWBWWBYYOGGROOROOBGGWGGWRRYBRRBRROOGYOOYBBWBBWWGYYGYYR"
+    check_cube(next_cube, True,
+               [0, 2, 2, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [5, 0, 1, 4, 2, 7, 6, 3, 12, 11, 10, 13, 9, 17, 14, 18, 16, 15, 19, 8])
 
     # scramble
     with pytest.raises(TypeError, match=r"scramble must be str or None, not int"):
         Cube(0)
     cube = Cube(Maneuver([Move.U1, Move.F2, Move.R3]))
+    assert not cube.is_solved
     assert repr(cube) == "WWBWWBYYOGGROOROOBGGWGGWRRYBRRBRROOGYOOYBBWBBWWGYYGYYR"
     check_cube(cube, True,
                [0, 2, 2, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                [5, 0, 1, 4, 2, 7, 6, 3, 12, 11, 10, 13, 9, 17, 14, 18, 16, 15, 19, 8])
     cube = Cube("U F2 R' D B2 L' M E2 S' Uw Fw2 Rw' Dw Bw2 Lw' u f2 r' d b2 l' x y2 z'")
+    assert not cube.is_solved
     assert repr(cube) == "YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO"
     check_cube(cube, False,
                [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
@@ -519,9 +530,9 @@ def test_cube(response):
         ---------"""
 
     # get_coord
-    with pytest.raises(TypeError, match=r"coord_type must be str, not NoneType"):
+    with pytest.raises(TypeError, match=r"coord_name must be str, not NoneType"):
         cube.get_coord(None)
-    with pytest.raises(ValueError, match=r"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' \(got 'None'\)"):
+    with pytest.raises(ValueError, match=r"coord_name must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' \(got 'None'\)"):
         cube.get_coord("None")
     assert cube.get_coord("co") == 167
     assert cube.get_coord("eo") == 48
@@ -553,14 +564,14 @@ def test_cube(response):
                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
 
     # set_coord
-    with pytest.raises(TypeError, match=r"coord_type must be str, not NoneType"):
+    with pytest.raises(TypeError, match=r"coord_name must be str, not NoneType"):
         cube.set_coord(None, None)
     with pytest.raises(TypeError, match=r"coord must be int or tuple, not NoneType"):
         cube.set_coord("None", None)
-    with pytest.raises(ValueError, match=r"coord_type must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' \(got 'None'\)"):
+    with pytest.raises(ValueError, match=r"coord_name must be one of 'co', 'eo', 'cp', 'ep', 'pcp', 'pep' \(got 'None'\)"):
         cube.set_coord("None", ())
     # corner orientation
-    with pytest.raises(TypeError, match=r"coord must be int for coord_type 'co', not tuple"):
+    with pytest.raises(TypeError, match=r"coord must be int for coord_name 'co', not tuple"):
         cube.set_coord("co", ())
     with pytest.raises(ValueError, match=r"coord must be >= 0 and < 2187 \(got -1\)"):
         cube.set_coord("co", -1)
@@ -570,7 +581,7 @@ def test_cube(response):
                [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
     # edge orientation
-    with pytest.raises(TypeError, match=r"coord must be int for coord_type 'eo', not tuple"):
+    with pytest.raises(TypeError, match=r"coord must be int for coord_name 'eo', not tuple"):
         cube.set_coord("eo", ())
     with pytest.raises(ValueError, match=r"coord must be >= 0 and < 2048 \(got -1\)"):
         cube.set_coord("eo", -1)
@@ -580,7 +591,7 @@ def test_cube(response):
                [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
     # corner permutation
-    with pytest.raises(TypeError, match=r"coord must be int for coord_type 'cp', not tuple"):
+    with pytest.raises(TypeError, match=r"coord must be int for coord_name 'cp', not tuple"):
         cube.set_coord("cp", ())
     with pytest.raises(ValueError, match=r"coord must be >= 0 and < 40320 \(got -1\)"):
         cube.set_coord("cp", -1)
@@ -590,7 +601,7 @@ def test_cube(response):
                [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
                [4, 3, 1, 6, 7, 0, 2, 5, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
     # edge permutation
-    with pytest.raises(TypeError, match=r"coord must be int for coord_type 'ep', not tuple"):
+    with pytest.raises(TypeError, match=r"coord must be int for coord_name 'ep', not tuple"):
         cube.set_coord("ep", ())
     with pytest.raises(ValueError, match=r"coord must be >= 0 and < 239500800 \(got -1\)"):
         cube.set_coord("ep", -1)
@@ -600,7 +611,7 @@ def test_cube(response):
                [0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
                [4, 3, 1, 6, 7, 0, 2, 5, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
     # partial corner permutation
-    with pytest.raises(ValueError, match=r"coord tuple length must be 2 for coord_type 'pcp' \(got 0\)"):
+    with pytest.raises(ValueError, match=r"coord tuple length must be 2 for coord_name 'pcp' \(got 0\)"):
         cube.set_coord("pcp", ())
     with pytest.raises(TypeError, match=r"coord tuple elements must be int, not NoneType"):
         cube.set_coord("pcp", (None, None))
@@ -634,7 +645,7 @@ def test_cube(response):
                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
                [4, 3, 1, 6, 7, 0, 2, 5, 18, 10, 12, 14, 9, 13, 19, 15, 11, 8, 16, 17])
     # partial edge permutation
-    with pytest.raises(ValueError, match=r"coord tuple length must be 3 for coord_type 'pep' \(got 0\)"):
+    with pytest.raises(ValueError, match=r"coord tuple length must be 3 for coord_name 'pep' \(got 0\)"):
         cube.set_coord("pep", ())
     with pytest.raises(TypeError, match=r"coord tuple elements must be int, not NoneType"):
         cube.set_coord("pep", (None, None, None))
@@ -833,11 +844,14 @@ def test_maneuver():
     assert str(Maneuver("U D' E'")) == "y"
     assert str(Maneuver("U D' y'")) == "E"
     assert str(Maneuver("U D E2")) == "U D E2"
-    assert str(Maneuver("U D E2 U")) == "D Uw2"
+    maneuver = Maneuver("U D E2 U")
+    assert len(maneuver) == 2
+    assert maneuver == "D Uw2"
     maneuver = Maneuver("B B' U2 U' U' F2 F2 B F2 F2 U U' D2 D' D' U2 D' R U2 U2 R2 R' R' R' L' R L2 L\
                          R L2 F B' B F2 B' F' B' F' F' L2 L' F' U' U U2 U L2 D2 D D L R' L R B2 F2 F2 B'\
                          B' F' B2 B F2 F2 F2 B F2 F2 U U' D2 D' D' U2 D' U U U L2 L2 U' D U2 U2 U D' U")
-    assert str(maneuver) == "B U2 D' R2 B2 L F' U' F U2 D'"
+    assert len(maneuver) == 11
+    assert maneuver == "B U2 D' R2 B2 L F' U' F U2 D'"
     assert str(Maneuver("x' Rw y Uw' z2 Fw2 y2 Uw2 Dw2 y' Dw' y Dw Dw2 y2")) == "L D' B2 Uw2"
 
     # inverse
