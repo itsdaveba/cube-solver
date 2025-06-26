@@ -25,7 +25,20 @@ for first, second in combinations(moves, 2):
 
 
 def _reduce_moves(moves: list[Move]) -> list[Move]:
-    """Try to reduce consecutive moves along the same axis."""
+    """
+    Given a sequence of moves, reduce consecutive
+    moves along the same axis where possible.
+
+    Parameters
+    ----------
+    moves : list of Move
+        Sequence of moves to reduce.
+
+    Returns
+    -------
+    reduced : list of Move
+        Reduced sequence of moves.
+    """
     for i in range(len(moves) - 1):
         if moves[i].axis == moves[i+1].axis:
             counter = Counter(dict(zip(moves[i].layers, moves[i].shifts)))
@@ -35,14 +48,37 @@ def _reduce_moves(moves: list[Move]) -> list[Move]:
     return moves
 
 
-def _reduced(counter: Counter, moves: list[Move], i: int, j: int) -> list[Move] | None:
-    """Update counter and reduce if possible."""
-    counter.update(dict(zip(moves[i+j].layers, moves[i+j].shifts)))
+def _reduced(counter: Counter, moves: list[Move], i: int, n: int) -> list[Move] | None:
+    """
+    Update counter and reduce consecutive
+    moves along the same axis where possible.
+    Returns ``None`` if the sequence of consecutive moves
+    starting at index ``i`` cannot be reduced.
+
+    Parameters
+    ----------
+    counter : Counter
+        Counter containing the total layer shifts
+        of ``n`` consecutive moves along the same axis.
+    moves : list of Move
+        Sequence of moves to reduce.
+    i : int
+        Start index of consecutive moves along the same axis.
+    n : int
+        Number of consecutive moves along the same axis.
+
+    Returns
+    -------
+    reduced : list of Move or None
+        Reduced sequence of moves, or ``None``
+        if the sequence of moves cannot be reduced.
+    """
+    counter.update(dict(zip(moves[i+n].layers, moves[i+n].shifts)))
     key = frozenset((layer, shift % 4) for layer, shift in counter.items() if shift % 4)
-    if key in REDUCED_MOVES and len(REDUCED_MOVES[key]) <= j:
-        return _reduce_moves(moves[:i] + REDUCED_MOVES[key] + moves[i+j+1:])
-    if i + j + 1 < len(moves) and moves[i].axis == moves[i+j+1].axis:
-        return _reduced(counter, moves, i, j + 1)
+    if key in REDUCED_MOVES and len(REDUCED_MOVES[key]) <= n:
+        return _reduce_moves(moves[:i] + REDUCED_MOVES[key] + moves[i+n+1:])
+    if i + n + 1 < len(moves) and moves[i].axis == moves[i+n+1].axis:
+        return _reduced(counter, moves, i, n + 1)
 
 
 class Maneuver(str):
@@ -55,7 +91,7 @@ class Maneuver(str):
 
         Parameters
         ----------
-        moves : str or list of Move.
+        moves : str or list of Move
             Sequence of moves.
 
         Examples

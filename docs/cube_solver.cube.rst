@@ -5,13 +5,12 @@ cube\_solver.cube package
    :members:
    :undoc-members:
    :show-inheritance:
-   :ignore-module-all:
 
 Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
    cube_solver.cube.cube
    cube_solver.cube.defs

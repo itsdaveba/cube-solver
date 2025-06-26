@@ -5,14 +5,14 @@ cube\_solver.solver package
    :members:
    :undoc-members:
    :show-inheritance:
-   :ignore-module-all:
 
 Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
+   cube_solver.solver.defs
    cube_solver.solver.dummy
    cube_solver.solver.kociemba
    cube_solver.solver.korf

@@ -39,6 +39,10 @@ autodoc_typehints = "description"
 autoclass_content = "init"
 # Define the order in which automodule and autoclass members are listed.
 autodoc_member_order = "bysource"
+# Autodoc default options
+autodoc_default_options = {
+    'ignore-module-all': True
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

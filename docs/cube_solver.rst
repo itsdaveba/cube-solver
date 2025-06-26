@@ -2,10 +2,9 @@ cube\_solver package
 ====================
 
 .. automodule:: cube_solver
-   :members:
+   :members: Cube, Maneuver, apply_move, apply_maneuver
    :undoc-members:
    :show-inheritance:
-   :exclude-members: Move
 
 Subpackages
 -----------
