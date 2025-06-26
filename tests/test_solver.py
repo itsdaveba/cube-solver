@@ -1,3 +1,4 @@
+import os
 import time
 import pytest
 import numpy as np
@@ -5,6 +6,7 @@ import numpy as np
 from cube_solver import Cube, Maneuver
 from cube_solver import DummySolver, Korf, Thistlethwaite, Kociemba
 from cube_solver.solver import BaseSolver
+from cube_solver.solver.defs import FlattenCoords, PruningDef
 
 
 def num_checks(depth: int) -> int:
@@ -66,23 +68,78 @@ def depth_test(solver: BaseSolver, max_depth: int, num_cubes: int):  # TODO add 
 def test_solver():
     cube = Cube()
     cube.set_coord("pcp", 0)
+    with pytest.raises(AttributeError, match=r"'TestSolver' class must define class attribute 'partial_corner_perm'"):
+        class TestSolver(BaseSolver):
+            pass
+    with pytest.raises(AttributeError, match=r"'TestSolver' class must define class attribute 'partial_edge_perm'"):
+        class TestSolver(BaseSolver):
+            partial_corner_perm = True
+    class TestSolver(BaseSolver):
+        partial_corner_perm = True
+        partial_edge_perm = True
+    with pytest.raises(TypeError):
+        TestSolver(None)
+    class TestSolver(BaseSolver):
+        partial_corner_perm = True
+        partial_edge_perm = True
+        def phase_coords(self, coords: FlattenCoords, phase: int) -> FlattenCoords:
+            return coords
+    with pytest.raises(TypeError, match=r"use_pruning_tables must be bool, not NoneType"):
+        TestSolver(None, None)
     with pytest.raises(TypeError, match=r"use_transition_tables must be bool, not NoneType"):
-        DummySolver(None)
-    solver = DummySolver()
+        TestSolver(True, None)
+    with pytest.raises(ValueError, match=r"cannot use pruning tables with empty class attribute 'pruning_kwargs'"):
+        TestSolver(True, False)
+    solver = TestSolver(False, False)
+    assert solver.pruning_tables == {}
+    assert solver.transition_tables == {}
     with pytest.raises(TypeError, match=r"cube must be Cube, not NoneType"):
-        solver.solve(None, "")
-    with pytest.raises(TypeError, match=r"max_depth must be int or None, not str"):
-        solver.solve(cube, "")
-    with pytest.raises(ValueError, match=r"max_depth must be >= 0 \(got -1\)"):
-        solver.solve(cube, -1)
+        solver.solve(None, "", None, None)
+    with pytest.raises(TypeError, match=r"max_length must be int or None, not str"):
+        solver.solve(cube, "", None, None)
+    with pytest.raises(TypeError, match=r"optimal must be bool, not NoneType"):
+        solver.solve(cube, -1, None, None)
+    with pytest.raises(TypeError, match=r"verbose must be int, not NoneType"):
+        solver.solve(cube, -1, False, None)
+    with pytest.raises(ValueError, match=r"max_length must be >= 0 \(got -1\)"):
+        solver.solve(cube, -1, False, -1)
+    with pytest.raises(ValueError, match=r"verbose must be 0 or 1 \(got -1\)"):
+        solver.solve(cube, 0, False, -1)
     with pytest.raises(ValueError, match=r"invalid cube state"):
-        solver.solve(cube, 0)
+        solver.solve(cube, 0, False, 0)
     with pytest.warns(UserWarning, match=r"invalid corner orientation"):
         cube = Cube(repr="OGWYYOBWWYGRGRRWGBYBGBGBRRYRYOOOBGOGGRBYBWYRBWWROWWOYO")
     with pytest.raises(ValueError, match=r"invalid cube state"):
-        solver.solve(cube, 0)
-    cube.reset()
-    assert solver.solve(cube, 0) == ""
+        solver.solve(cube, 0, False, 0)
+    scramble = Maneuver("U F2 R'")
+    cube = Cube(scramble)
+    assert solver.solve(cube, 0, False, 0) is None
+    assert solver.solve(cube, None, True, 1) == scramble.inverse
+    if os.path.exists("tables/transition.npz"):
+        os.remove("tables/transition.npz")
+    if os.path.exists("tables/pruning_testsolver.npz"):
+        os.remove("tables/pruning_testsolver.npz")
+    class TestSolver(BaseSolver):
+        partial_corner_perm = True
+        partial_edge_perm = True
+        pruning_kwargs = [[PruningDef(name="pcp", shape=1680, indexes=2)]]
+        def phase_coords(self, coords: FlattenCoords, phase: int) -> FlattenCoords:
+            return coords
+    with pytest.raises(ValueError, match=r"coord_size must be <= 65536 \(got 239500800\)"):
+        solver.generate_transition_table("ep", 239500800)
+    solver = TestSolver(True, False)
+    assert solver.pruning_tables != {}
+    assert solver.transition_tables == {}
+    assert solver.solve(cube) == scramble.inverse
+    solver = TestSolver(False, True)
+    assert solver.pruning_tables == {}
+    assert solver.transition_tables != {}
+    assert solver.solve(cube) == scramble.inverse
+    solver = TestSolver(True, True)
+    assert solver.pruning_tables != {}
+    assert solver.transition_tables != {}
+    assert solver.solve(cube) == scramble.inverse
+    os.remove("tables/pruning_testsolver.npz")
 
 
 def test_dummy():

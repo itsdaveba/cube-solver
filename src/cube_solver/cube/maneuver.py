@@ -88,7 +88,7 @@ class Maneuver(str):
         Create :class:`Maneuver` object.
 
         A :class:`Maneuver` is a subclass of :class:`str` that represents
-        the sequence of moves that can be applied to a :class:`Cube` object.
+        the sequence of moves that can be applied to a :class:`cube_solver.Cube` object.
 
         Parameters
         ----------

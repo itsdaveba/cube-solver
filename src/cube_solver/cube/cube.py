@@ -84,8 +84,8 @@ class Cube:
         Notes
         -----
         The ``repr`` parameter must contain characters from `{'W', 'G', 'R', 'Y', 'B', 'O'}`,
-        representing the colors :attr:`Color.WHITE`, :attr:`Color.GREEN`, :attr:`Color.RED`,
-        :attr:`Color.YELLOW`, :attr:`Color.BLUE`, and :attr:`Color.ORANGE`, respectively.
+        representing the colors :attr:`.Color.WHITE`, :attr:`.Color.GREEN`, :attr:`.Color.RED`,
+        :attr:`.Color.YELLOW`, :attr:`.Color.BLUE`, and :attr:`.Color.ORANGE`, respectively.
         The order of the string representation is::
 
                        ------------
@@ -109,12 +109,12 @@ class Cube:
 
         The default color scheme used for the cube is as follows (note: this may differ when using the ``repr`` parameter):
 
-        * :attr:`Face.UP`: :attr:`Color.WHITE`
-        * :attr:`Face.FRONT`: :attr:`Color.GREEN`
-        * :attr:`Face.RIGHT`: :attr:`Color.RED`
-        * :attr:`Face.DOWN`: :attr:`Color.YELLOW`
-        * :attr:`Face.BACK`: :attr:`Color.BLUE`
-        * :attr:`Face.LEFT`: :attr:`Color.ORANGE`
+        * :attr:`.Face.UP`: :attr:`.Color.WHITE`
+        * :attr:`.Face.FRONT`: :attr:`.Color.GREEN`
+        * :attr:`.Face.RIGHT`: :attr:`.Color.RED`
+        * :attr:`.Face.DOWN`: :attr:`.Color.YELLOW`
+        * :attr:`.Face.BACK`: :attr:`.Color.BLUE`
+        * :attr:`.Face.LEFT`: :attr:`.Color.ORANGE`
 
         Examples
         --------
@@ -183,8 +183,8 @@ class Cube:
         * ``2`` if the corner is `twisted counter-clockwise` relative to the correct orientation.
 
         An edge is correctly oriented if, when placed in its correct position using only
-        :attr:`Face.UP`, :attr:`Face.DOWN`, :attr:`Face.RIGHT` and :attr:`Face.LEFT` face turns, it does not appear `flipped`.
-        Edge orientation values are:
+        :attr:`.Face.UP`, :attr:`.Face.DOWN`, :attr:`.Face.RIGHT` and :attr:`.Face.LEFT` face turns,
+        it does not appear `flipped`. Edge orientation values are:
 
         * ``0`` if the edge is `correctly` oriented.
         * ``1`` if the edge is incorrectly oriented (i.e. `flipped`).
@@ -462,7 +462,7 @@ class Cube:
         Parameters
         ----------
         move : Move
-            The move to apply.
+            Move to apply.
 
         Examples
         --------
@@ -600,8 +600,8 @@ class Cube:
 
             The `orbit` order for partial coordinate values is:
 
-            * Corner orbits: :attr:`Orbit.TETRAD_111`, :attr:`Orbit.TETRAD_M11`
-            * Edge orbits: :attr:`Orbit.SLICE_MIDDLE`, :attr:`Orbit.SLICE_EQUATOR`, :attr:`Orbit.SLICE_STANDING`
+            * Corner orbits: :attr:`.Orbit.TETRAD_111`, :attr:`.Orbit.TETRAD_M11`
+            * Edge orbits: :attr:`.Orbit.SLICE_MIDDLE`, :attr:`.Orbit.SLICE_EQUATOR`, :attr:`.Orbit.SLICE_STANDING`
 
         Examples
         --------
@@ -674,8 +674,8 @@ class Cube:
 
             The `orbit` order for partial coordinate values is:
 
-            * Corner orbits: :attr:`Orbit.TETRAD_111`, :attr:`Orbit.TETRAD_M11`
-            * Edge orbits: :attr:`Orbit.SLICE_MIDDLE`, :attr:`Orbit.SLICE_EQUATOR`, :attr:`Orbit.SLICE_STANDING`
+            * Corner orbits: :attr:`.Orbit.TETRAD_111`, :attr:`.Orbit.TETRAD_M11`
+            * Edge orbits: :attr:`.Orbit.SLICE_MIDDLE`, :attr:`.Orbit.SLICE_EQUATOR`, :attr:`.Orbit.SLICE_STANDING`
 
         Notes
         -----
@@ -929,7 +929,7 @@ def apply_move(cube: Cube, move: Move) -> Cube:
     cube : Cube
         Cube object.
     move : Move
-        The move to apply.
+        Move to apply.
 
     Returns
     -------
