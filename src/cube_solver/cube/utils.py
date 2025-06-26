@@ -1,3 +1,4 @@
+"""Cube utils module."""
 import math
 import numpy as np
 

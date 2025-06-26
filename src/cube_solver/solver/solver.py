@@ -1,3 +1,4 @@
+"""BaseSolver module."""
 import numpy as np
 from copy import deepcopy
 from typing import overload
@@ -58,7 +59,7 @@ class BaseSolver(ABC):
         self.solved_coords: list[FlattenCoords] = [self.phase_coords(phase, init_coords) for phase in range(self.num_phases)]
         """Solved flatten coordinates for each phase."""
 
-        self.use_transition_tables: bool = use_transition_tables  # TODO trans tables for each phase?
+        self.use_transition_tables: bool = use_transition_tables
         """Whether to use transition tables for cube state transitions."""
         self.transition_tables: dict[str, np.ndarray] = {}
         """Transition tables used to compute cube state transitions."""
@@ -96,8 +97,24 @@ class BaseSolver(ABC):
         self.prune_checks: list[list[list[int]]]
         """Number of prune checks during a solve."""  # TODO add more?
 
+    # TODO get transition table for each phase
     # TODO add log: generating transition tables?, move to utils
     def generate_transition_table(self, coord_name: str, coord_size: int) -> np.ndarray:
+        """
+        Generate the cube coordinate transition table.
+
+        Parameters
+        ----------
+        coord_name : {'co', 'eo', 'cp', 'ep', 'pcp', 'pep'}
+            Cube coordinate name.
+        coord_size : int
+            Size of the cube coordinate.
+
+        Returns
+        -------
+        transition_table : ndarray
+            Cube coordinate transition table.
+        """
         if coord_size - 1 > np.iinfo(np.uint16).max:
             raise ValueError("")
         transition_table = np.zeros((coord_size, len(NEXT_MOVES[Move.NONE])), dtype=np.uint16)
@@ -108,7 +125,25 @@ class BaseSolver(ABC):
 
     # TODO maybe move to utils when having transition tables per phase
     def generate_pruning_table(self, phase: int, shape: int | tuple[int, ...],
-                               indexes: int | tuple[int, ...] | None, **_) -> np.ndarray:
+                               indexes: int | tuple[int, ...] | None) -> np.ndarray:
+        """
+        Generate the phase coordinates pruning table.
+
+        Parameters
+        ----------
+        phase : int
+            Solver phase (0-indexed).
+        shape : int or tuple of int
+            Shape of the pruning table.
+        indexes : int or tuple of int or None
+            Index or indexes of the phase coordinates to use for the pruning table.
+            If ``None``, use all the phase coordinates.
+
+        Returns
+        -------
+        pruning_table : ndarray
+            Phase coordinates pruning table.
+        """
         self.cube.reset()
         coords = self.get_coords(self.cube)
         phase_coords = self.phase_coords(phase, self.flatten(coords))

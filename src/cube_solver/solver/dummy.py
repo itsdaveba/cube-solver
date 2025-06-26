@@ -1,3 +1,4 @@
+"""DummySolver solver."""
 from .solver import BaseSolver, FlattenCoords
 
 

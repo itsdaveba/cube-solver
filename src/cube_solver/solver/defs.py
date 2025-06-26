@@ -1,3 +1,4 @@
+"""Solver definitions."""
 from dataclasses import dataclass
 
 NONE = -1
@@ -19,7 +20,7 @@ class TransitionDef:
 class PruningDef:
     name: str
     shape: int | tuple[int, ...]
-    indexes: int | tuple[int, ...] | None
+    indexes: int | tuple[int, ...] | None = None
     phase: int | None = None
 
 

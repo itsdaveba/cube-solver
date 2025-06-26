@@ -1,4 +1,4 @@
-"""Defs module."""
+"""Cube definitions."""
 import numpy as np
 
 NONE = -1

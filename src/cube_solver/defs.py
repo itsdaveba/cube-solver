@@ -1,3 +1,4 @@
+"""Common definitions."""
 from .cube.enums import Move, Layer
 
 CoordType = int | tuple[int, ...]

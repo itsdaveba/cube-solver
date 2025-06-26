@@ -1,3 +1,4 @@
+"""Thistlethwaite solver."""
 import numpy as np
 
 from ..cube.enums import Move
@@ -42,10 +43,10 @@ class Thistlethwaite(BaseSolver):
     partial_edge_perm = True
     phase_moves = [PHASE0_MOVES, PHASE1_MOVES, PHASE2_MOVES, PHASE3_MOVES]
     pruning_kwargs = [
-        [PruningDef(name="eo", shape=(EO_SIZE,), indexes=None)],
-        [PruningDef(name="co_eec", shape=(CO_SIZE, EEC_SIZE), indexes=None)],
-        [PruningDef(name="cc_ct_msec", shape=(CC_SIZE, NUM_THREADS, MSEC_SIZE), indexes=None)],
-        [PruningDef(name="cop_eop", shape=(OP_SIZE, OP_SIZE // NUM_THREADS, OP_SIZE, OP_SIZE, OP_SIZE // 2), indexes=None)]]
+        [PruningDef(name="eo", shape=(EO_SIZE,))],
+        [PruningDef(name="co_eec", shape=(CO_SIZE, EEC_SIZE))],
+        [PruningDef(name="cc_ct_msec", shape=(CC_SIZE, NUM_THREADS, MSEC_SIZE))],
+        [PruningDef(name="cop_eop", shape=(OP_SIZE, OP_SIZE // NUM_THREADS, OP_SIZE, OP_SIZE, OP_SIZE // 2))]]
 
     def phase_coords(self, phase: int, coords: FlattenCoords) -> FlattenCoords:
         if phase == 0:

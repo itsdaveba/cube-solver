@@ -1,3 +1,4 @@
+"""Kociemba solver."""
 from ..cube.enums import Move
 from ..cube.defs import CORNER_ORIENTATION_SIZE as CO_SIZE
 from ..cube.defs import EDGE_ORIENTATION_SIZE as EO_SIZE

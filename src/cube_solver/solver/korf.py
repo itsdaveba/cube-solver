@@ -1,3 +1,4 @@
+"""Korf solver."""
 from ..cube.defs import CORNER_ORIENTATION_SIZE as CO_SIZE
 from ..cube.defs import EDGE_ORIENTATION_SIZE as EO_SIZE
 from ..cube.defs import CORNER_PERMUTATION_SIZE as CP_SIZE

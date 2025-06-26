@@ -1,3 +1,4 @@
+"""Solver utils module."""
 import numpy as np
 from pathlib import Path
 from dataclasses import asdict
