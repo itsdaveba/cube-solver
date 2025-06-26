@@ -1,5 +1,4 @@
 import numpy as np
-from pathlib import Path
 from copy import deepcopy
 from typing import overload
 from collections import deque
@@ -40,39 +39,62 @@ class BaseSolver(ABC):
                           coord_size=PARTIAL_EDGE_PERMUTATION_SIZE if cls.partial_edge_perm else EDGE_PERMUTATION_SIZE)]
 
     def __init__(self, use_transition_tables: bool = False):
+        """
+        Create :class:`BaseSolver` object.
+
+        Parameters
+        ----------
+        use_transition_tables : bool, optional
+            Whether to use transition tables for cube state transitions.
+            If ``True``, creates or loads the tables from the ``tables/`` directory.
+            Default is ``False``.
+        """
         if not isinstance(use_transition_tables, bool):
             raise TypeError(f"use_transition_tables must be bool, not {type(use_transition_tables).__name__}")
 
-        # TODO order
-        self.next_moves: list[dict[Move, list[Move]]] = []
-        for phase_moves in self.phase_moves:
-            next_moves = {Move.NONE: phase_moves}
-            next_moves.update({move: [mv for mv in NEXT_MOVES[move] if mv in phase_moves] for move in phase_moves})
-            self.next_moves.append(next_moves)
-
-        self.final_moves: list[set[Move]] = []
-        for i in range(self.num_phases - 1):
-            self.final_moves.append({Move.NONE} | set(self.phase_moves[i]) - set(self.phase_moves[i+1]))
-
         self.cube: Cube = Cube()
+        """Internal :class:`Cube` object. Used to generate transition and pruning tables."""
         init_coords = self.flatten(self.get_coords(self.cube))
         self.solved_coords: list[FlattenCoords] = [self.phase_coords(phase, init_coords) for phase in range(self.num_phases)]
+        """Solved flatten coordinates for each phase."""
+
         self.use_transition_tables: bool = use_transition_tables  # TODO trans tables for each phase?
+        """Whether to use transition tables for cube state transitions."""
         self.transition_tables: dict[str, np.ndarray] = {}
+        """Transition tables used to compute cube state transitions."""
         if self.use_transition_tables:  # TODO test with different extension
             self.transition_tables = utils.get_tables("transition.npz", self.transition_kwargs,
                                                       self.generate_transition_table, accumulate=True)
+        self.pruning_tables: dict[str, np.ndarray] = {}
+        """Pruning tables used to reduce the tree search space."""
         pruning_kwargs = []
         for phase, phase_kwargs in enumerate(self.pruning_kwargs):
             for kwargs in phase_kwargs:
                 kwargs.phase = phase
                 pruning_kwargs.append(kwargs)
-        pruning_filename = f"pruning_{self.__class__.__name__.lower()}.npz"
-        self.pruning_tables: dict[str, np.ndarray] = utils.get_tables(pruning_filename, pruning_kwargs,
-                                                                      self.generate_pruning_table, accumulate=False)
+        if pruning_kwargs:
+            pruning_filename = f"pruning_{self.__class__.__name__.lower()}.npz"
+            self.pruning_tables = utils.get_tables(pruning_filename, pruning_kwargs,
+                                                   self.generate_pruning_table, accumulate=False)
+
+        self.final_moves: list[set[Move]] = []
+        """Final allowed moves for each phase except the last."""
+        for i in range(self.num_phases - 1):
+            self.final_moves.append({Move.NONE} | set(self.phase_moves[i]) - set(self.phase_moves[i+1]))
+
+        self.next_moves: list[dict[Move, list[Move]]] = []
+        """Allowed next moves based on the previous move, for each phase."""
+        for phase_moves in self.phase_moves:
+            next_moves = {Move.NONE: phase_moves}
+            next_moves.update({move: [mv for mv in NEXT_MOVES[move] if mv in phase_moves] for move in phase_moves})
+            self.next_moves.append(next_moves)
 
         self.nodes: list[list[list[int]]]  # TODO needed?
-        self.checks: list[list[list[int]]]  # TODO needed?
+        """Number of visited nodes during a solve."""
+        self.solve_checks: list[list[list[int]]]  # TODO needed?
+        """Number of solve checks during a solve."""
+        self.prune_checks: list[list[list[int]]]
+        """Number of prune checks during a solve."""  # TODO add more?
 
     # TODO add log: generating transition tables?, move to utils
     def generate_transition_table(self, coord_name: str, coord_size: int) -> np.ndarray:
