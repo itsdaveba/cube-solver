@@ -5,6 +5,7 @@ from typing import overload
 from collections import deque
 from abc import ABC, abstractmethod
 
+from ..logger import logger
 from ..defs import CoordsType, NEXT_MOVES
 from ..cube import Cube, Move, Maneuver, apply_move
 from ..cube.defs import CORNER_ORIENTATION_SIZE, EDGE_ORIENTATION_SIZE
@@ -19,7 +20,7 @@ for cubie in NEXT_MOVES[Move.NONE]:
 
 
 class BaseSolver(ABC):
-    num_phases: int = 1
+    num_phases: int = 1  # TODO add tests for class attributes?
     """Number of phases of the solving algorithm."""
     partial_corner_perm: bool
     """Whether the solving algorithm uses the normal or the partial corner permutation. """
@@ -51,12 +52,12 @@ class BaseSolver(ABC):
 
         Parameters
         ----------
-        use_pruning_tables : bool, optional
-            Whether to use pruning tables to reduce the tree search space.
-            If ``True``, creates or loads the tables from the ``tables/`` directory.
-            Default is ``True``.
         use_transition_tables : bool, optional
             Whether to use transition tables for cube state transitions.
+            If ``True``, creates or loads the tables from the ``tables/`` directory.
+            Default is ``True``.
+        use_pruning_tables : bool, optional
+            Whether to use pruning tables to reduce the tree search space.
             If ``True``, creates or loads the tables from the ``tables/`` directory.
             Default is ``True``.
         """
@@ -71,17 +72,17 @@ class BaseSolver(ABC):
         self.solved_coords: list[FlattenCoords] = [self.phase_coords(init_coords, phase) for phase in range(self.num_phases)]
         """Solved flatten coordinates for each phase."""
 
-        self.use_pruning_tables: bool = use_pruning_tables
-        """Whether to use pruning tables to reduce the tree search space."""
         self.use_transition_tables: bool = use_transition_tables
         """Whether to use transition tables for cube state transitions."""
+        self.use_pruning_tables: bool = use_pruning_tables
+        """Whether to use pruning tables to reduce the tree search space."""
         self.transition_tables: dict[str, np.ndarray] = {}
         """Transition tables used to compute cube state transitions."""
         if self.use_transition_tables:  # TODO test with different extension
             self.transition_tables = utils.get_tables("transition.npz", self.transition_kwargs,
                                                       self.generate_transition_table, accumulate=True)
         if not self.phase_moves:
-            self.phase_moves = [[*Move.face_moves()] * self.num_phases]
+            self.phase_moves = [[*Move.face_moves()] * self.num_phases]  # TODO test with a solver with two phases with all moves
         self.pruning_tables: dict[str, np.ndarray] = {}
         """Pruning tables used to reduce the tree search space."""
         if self.use_pruning_tables:
@@ -381,7 +382,7 @@ class BaseSolver(ABC):
         cube.apply_move(move)
         return self.get_coords(cube)
 
-    # TODO add timeout for optimal or for all
+    # TODO add timeout for optimal or for all, maybe optimal can be bool or int
     def solve(self, cube: Cube, max_length: int | None = None, optimal: bool = False, verbose: int = 0) -> Maneuver | list[Maneuver] | None:  # TODO cube could be None for perf testing?
         """
         Solve the cube position.
@@ -394,18 +395,18 @@ class BaseSolver(ABC):
             Maximum number of moves to search. If ``None``, search indefinitely. Default is ``None``.
         optimal : bool, optimal
             If ``True``, finds the optimal solution. Default is ``False``.
-        verbose : {0, 1}, optional
+        verbose : {0, 1, 2}, optional
             Verbosity level. Default is ``0``.
 
             * ``0`` returns only the solution.
-            * ``1`` returns the solution for each phase.
-              Also logs all solutions found if ``optimal`` is ``True``.
+            * ``1`` logs all solutions found if ``optimal`` is ``True``.
+            * ``2`` returns the solution for each phase.
 
         Returns
         -------
         solution : Maneuver or list of Maneuver or None
             Solution for the cube position,
-            or list of solutions for each phase if ``verbose`` is ``1``,
+            or list of solutions for each phase if ``verbose`` is ``2``,
             or ``None`` if no solution is found.
 
         Examples
@@ -414,9 +415,9 @@ class BaseSolver(ABC):
         >>> cube = Cube("U F R")
         >>> solver = Kociemba()
         >>> solver.solve(cube)
-        R' F' U'
-        >>> solver.solve(cube, optimal=True, verbose=1)
-        R F U
+        "R' F' U'"
+        >>> solver.solve(cube, optimal=True, verbose=2)
+        ["R' F'", "U'"]
         """
         if not isinstance(cube, Cube):
             raise TypeError(f"cube must be Cube, not {type(cube).__name__}")
@@ -428,8 +429,8 @@ class BaseSolver(ABC):
             raise TypeError(f"verbose must be int, not {type(verbose).__name__}")
         if isinstance(max_length, int) and max_length < 0:
             raise ValueError(f"max_length must be >= 0 (got {max_length})")
-        if verbose not in (0, 1):
-            raise ValueError(f"verbose must be 0 or 1 (got {verbose})")
+        if verbose not in (0, 1, 2):
+            raise ValueError(f"verbose must be one of 0, 1, 2 (got {verbose})")
         try:
             cube.coords
         except ValueError:
@@ -450,13 +451,16 @@ class BaseSolver(ABC):
         self.solution = [[] for _ in range(self.num_phases)]  # TODO check
         self.best_solution = None
 
-        # self.nodes.append([[] for i in range(self.num_phases)])
-        # self.checks.append([[] for i in range(self.num_phases)])  # TODO try not to erase after each new depth
+        solution = []
         position = self.get_coords(self.cube) if self.use_transition_tables else self.cube
         if self.phase_search(position):
-            return Maneuver([move for phase in range(self.num_phases) for move in reversed(self.solution[phase])])
+            solution = self.solution
         if self.optimal:
-            return Maneuver([move for phase in range(self.num_phases) for move in reversed(self.best_solution[phase])])
+            solution = self.best_solution
+        if solution:
+            if verbose == 2:
+                return [Maneuver(phase_solution[::-1]) for phase_solution in solution]
+            return Maneuver([move for phase_solution in solution for move in phase_solution[::-1]])
         return None
 
     # TODO make iterative version and compare
@@ -484,6 +488,10 @@ class BaseSolver(ABC):
                 self.return_phase = True
                 self.max_length = current_length - 1
                 self.best_solution = deepcopy(self.solution)
+                if self.verbose == 1:
+                    logger.info(f"Solution: {Maneuver([move for solution in self.solution for move in solution[::-1]])}")
+                elif self.verbose == 2:
+                    logger.info(f"Solution: {[Maneuver(phase_solution[::-1]) for phase_solution in self.solution]}")
                 return False
             return True
         depth = 0

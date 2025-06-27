@@ -9,10 +9,10 @@ from cube_solver.solver import BaseSolver, utils
 from cube_solver.solver.defs import FlattenCoords, PruningDef
 
 
-def num_checks(depth: int) -> int:
+def num_nodes(depth: int) -> int:
     if depth <= 2:
         return 104 * depth * depth - 87 * depth + 1
-    return num_checks(depth - 1) * 12 + num_checks(depth - 2) * 18
+    return num_nodes(depth - 1) * 12 + num_nodes(depth - 2) * 18
 
 
 def solve_test(solver: BaseSolver, num_cubes: int):
@@ -33,7 +33,7 @@ def solve_test(solver: BaseSolver, num_cubes: int):
         nodes.append([sum(nds) for phase_nodes in solver.nodes for nds in phase_nodes])
         assert solution is not None
         print("#", end="")
-    nodes = np.mean(nodes, axis=0)
+    nodes = np.mean(nodes, axis=0)  # TODO add solve length
     print("\nMin Time\tMax Time\tMean Time\tStd Time\tMean Phase Nodes")
     print("--------------------------------------------------------------------------------")
     print(f"{np.min(times):.4f} sec\t{np.max(times):.4f} sec", end="\t")
@@ -111,7 +111,7 @@ def test_solver():
         solver.solve(cube, -1, False, None)
     with pytest.raises(ValueError, match=r"max_length must be >= 0 \(got -1\)"):
         solver.solve(cube, -1, False, -1)
-    with pytest.raises(ValueError, match=r"verbose must be 0 or 1 \(got -1\)"):
+    with pytest.raises(ValueError, match=r"verbose must be one of 0, 1, 2 \(got -1\)"):
         solver.solve(cube, 0, False, -1)
     with pytest.raises(ValueError, match=r"invalid cube state"):
         solver.solve(cube, 0, False, 0)
@@ -125,7 +125,7 @@ def test_solver():
     scramble = Maneuver("U F2 R'")
     cube = Cube(scramble)
     assert solver.solve(cube, 0, False, 0) is None
-    assert solver.solve(cube, None, True, 1) == scramble.inverse
+    assert solver.solve(cube, None, True, 2) == [scramble.inverse]
     if os.path.exists("tables/transition.npz"):
         tables = utils.load_tables("tables/transition.npz")
         if "cp" in tables:
@@ -133,8 +133,6 @@ def test_solver():
             utils.save_tables("tables/transition.npz", tables)
         else:
             os.remove("tables/transition.npz")  # TODO just remove when creating tables with C++
-    if os.path.exists("tables/pruning_testsolver.npz"):
-        os.remove("tables/pruning_testsolver.npz")
     solver = TestSolver(True, False)
     assert solver.transition_tables != {}
     assert solver.pruning_tables == {}
