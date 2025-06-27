@@ -16,5 +16,5 @@ class Korf(BaseSolver):
                        PruningDef(name="eep", shape=PEP_SIZE, indexes=4),
                        PruningDef(name="sep", shape=PEP_SIZE, indexes=5)]]
 
-    def phase_coords(self, phase: int, coords: FlattenCoords) -> FlattenCoords:
+    def phase_coords(self, coords: FlattenCoords, phase: int) -> FlattenCoords:
         return coords

@@ -5,7 +5,7 @@ import numpy as np
 
 from cube_solver import Cube, Maneuver
 from cube_solver import DummySolver, Korf, Thistlethwaite, Kociemba
-from cube_solver.solver import BaseSolver
+from cube_solver.solver import BaseSolver, utils
 from cube_solver.solver.defs import FlattenCoords, PruningDef
 
 
@@ -15,29 +15,32 @@ def num_checks(depth: int) -> int:
     return num_checks(depth - 1) * 12 + num_checks(depth - 2) * 18
 
 
-def solve_cubes(solver: BaseSolver, scramble_length: int, num_cubes: int):
+def solve_test(solver: BaseSolver, num_cubes: int):
     print()
     print("Solve Test")
     print("----------")
     print(f"Solver: {solver.__class__.__name__}")
     print(f"Transition Tables: {solver.use_transition_tables}")
-    print(f"Scramble Length: {scramble_length}")
+    print(f"Pruning Tables: {solver.use_pruning_tables}")
     print(f"Num Cubes: {num_cubes}")
-    print("Solving Cubes", end="")
     times = []
+    nodes = []
     for i in range(num_cubes):
-        print(".", end="")
-        scramble = Maneuver.random(scramble_length)
-        cube = Cube(scramble)
+        cube = Cube(random_state=True)
         times.append(time.perf_counter())
         solution = solver.solve(cube)
         times[i] = time.perf_counter() - times[i]
-        assert solution == scramble.inverse
+        nodes.append([sum(nds) for phase_nodes in solver.nodes for nds in phase_nodes])
+        assert solution is not None
+        print("#", end="")
+    nodes = np.mean(nodes, axis=0)
+    print("\nMin Time\tMax Time\tMean Time\tStd Time\tMean Phase Nodes")
+    print("--------------------------------------------------------------------------------")
+    print(f"{np.min(times):.4f} sec\t{np.max(times):.4f} sec", end="\t")
+    print(f"{np.mean(times):.4f} sec\t{np.std(times):.4f} sec", end="\t")
+    for phase_nodes in nodes:
+        print(f"{phase_nodes:.0f}", end=" ")
     print()
-    print(f"Min Time: {np.min(times)}")
-    print(f"Max Time: {np.max(times)}")
-    print(f"Avg Time: {np.mean(times)}")
-    print(f"Std Time: {np.std(times)}")
 
 
 def depth_test(solver: BaseSolver, max_depth: int, num_cubes: int):  # TODO add stats about nodes and checks
@@ -46,12 +49,14 @@ def depth_test(solver: BaseSolver, max_depth: int, num_cubes: int):  # TODO add 
     print("----------")
     print(f"Solver: {solver.__class__.__name__}")
     print(f"Transition Tables: {solver.use_transition_tables}")
+    print(f"Pruning Tables: {solver.use_pruning_tables}")
     print(f"Max Depth: {max_depth}")
     print(f"Num Cubes: {num_cubes}")
-    print("\nDepth\tSolving\t\tMin\t\tMax\t\tMean\t\tStd")
-    print("----------------------------------------------------------------------------------")
+    print("\nDepth\tSolving\t\tMin Time\tMax Time\tMean Time\tStd Time\tMean Phase Nodes")
+    print("--------------------------------------------------------------------------------------------------------")
     for depth in range(max_depth + 1):
         times = []
+        nodes = []
         print(f"{depth}", end="\t")
         for i in range(num_cubes):
             scramble = Maneuver.random(depth)
@@ -59,15 +64,20 @@ def depth_test(solver: BaseSolver, max_depth: int, num_cubes: int):  # TODO add 
             times.append(time.perf_counter())
             solution = solver.solve(cube)
             times[i] = time.perf_counter() - times[i]
+            nodes.append([sum(nds) for phase_nodes in solver.nodes for nds in phase_nodes])
             assert solution == scramble.inverse
             print("#", end="")
+        nodes = np.mean(nodes, axis=0)
         print(f"\t{np.min(times):.4f} sec\t{np.max(times):.4f} sec", end="\t")
-        print(f"{np.mean(times):.4f} sec\t{np.std(times):.4f} sec")
+        print(f"{np.mean(times):.4f} sec\t{np.std(times):.4f} sec", end="\t")
+        for phase_nodes in nodes:
+            print(f"{phase_nodes:.0f}", end=" ")
+        print()
 
 
 def test_solver():
     cube = Cube()
-    cube.set_coord("pcp", 0)
+    cube.set_coord("pep", 0)
     with pytest.raises(AttributeError, match=r"'TestSolver' class must define class attribute 'partial_corner_perm'"):
         class TestSolver(BaseSolver):
             pass
@@ -84,15 +94,13 @@ def test_solver():
         partial_edge_perm = True
         def phase_coords(self, coords: FlattenCoords, phase: int) -> FlattenCoords:
             return coords
-    with pytest.raises(TypeError, match=r"use_pruning_tables must be bool, not NoneType"):
-        TestSolver(None, None)
     with pytest.raises(TypeError, match=r"use_transition_tables must be bool, not NoneType"):
-        TestSolver(True, None)
-    with pytest.raises(ValueError, match=r"cannot use pruning tables with empty class attribute 'pruning_kwargs'"):
-        TestSolver(True, False)
+        TestSolver(None, None)
+    with pytest.raises(TypeError, match=r"use_pruning_tables must be bool, not NoneType"):
+        TestSolver(False, None)
     solver = TestSolver(False, False)
-    assert solver.pruning_tables == {}
     assert solver.transition_tables == {}
+    assert solver.pruning_tables == {}
     with pytest.raises(TypeError, match=r"cube must be Cube, not NoneType"):
         solver.solve(None, "", None, None)
     with pytest.raises(TypeError, match=r"max_length must be int or None, not str"):
@@ -107,37 +115,49 @@ def test_solver():
         solver.solve(cube, 0, False, -1)
     with pytest.raises(ValueError, match=r"invalid cube state"):
         solver.solve(cube, 0, False, 0)
-    with pytest.warns(UserWarning, match=r"invalid corner orientation"):
-        cube = Cube(repr="OGWYYOBWWYGRGRRWGBYBGBGBRRYRYOOOBGOGGRBYBWYRBWWROWWOYO")
-    with pytest.raises(ValueError, match=r"invalid cube state"):
-        solver.solve(cube, 0, False, 0)
+    with pytest.warns(UserWarning, match=r"invalid cube parity"):
+        cube.set_coord("pep", (0, 11857, 1656))
+    with pytest.warns(UserWarning, match=r"invalid cube parity"):
+        with pytest.raises(ValueError, match=r"invalid cube state"):
+            solver.solve(cube, 0, False, 0)
+    with pytest.raises(ValueError, match=r"coord_size must be <= 65536 \(got 239500800\)"):
+        solver.generate_transition_table("ep", 239500800)
     scramble = Maneuver("U F2 R'")
     cube = Cube(scramble)
     assert solver.solve(cube, 0, False, 0) is None
     assert solver.solve(cube, None, True, 1) == scramble.inverse
     if os.path.exists("tables/transition.npz"):
-        os.remove("tables/transition.npz")
+        tables = utils.load_tables("tables/transition.npz")
+        if "cp" in tables:
+            tables = {"cp": tables["cp"]}
+            utils.save_tables("tables/transition.npz", tables)
+        else:
+            os.remove("tables/transition.npz")  # TODO just remove when creating tables with C++
     if os.path.exists("tables/pruning_testsolver.npz"):
         os.remove("tables/pruning_testsolver.npz")
+    solver = TestSolver(True, False)
+    assert solver.transition_tables != {}
+    assert solver.pruning_tables == {}
+    assert solver.solve(cube) == scramble.inverse
+    class TestSolver(BaseSolver):
+        partial_corner_perm = True
+        partial_edge_perm = True
+        pruning_kwargs = [[PruningDef(name="partial_corner_perm", shape=1680, indexes=2)]]
+        def phase_coords(self, coords: FlattenCoords, phase: int) -> FlattenCoords:
+            return coords
+    solver = TestSolver(False, True)
+    assert solver.transition_tables == {}
+    assert solver.pruning_tables != {}
+    assert solver.solve(cube) == scramble.inverse
     class TestSolver(BaseSolver):
         partial_corner_perm = True
         partial_edge_perm = True
         pruning_kwargs = [[PruningDef(name="pcp", shape=1680, indexes=2)]]
         def phase_coords(self, coords: FlattenCoords, phase: int) -> FlattenCoords:
             return coords
-    with pytest.raises(ValueError, match=r"coord_size must be <= 65536 \(got 239500800\)"):
-        solver.generate_transition_table("ep", 239500800)
-    solver = TestSolver(True, False)
-    assert solver.pruning_tables != {}
-    assert solver.transition_tables == {}
-    assert solver.solve(cube) == scramble.inverse
-    solver = TestSolver(False, True)
-    assert solver.pruning_tables == {}
-    assert solver.transition_tables != {}
-    assert solver.solve(cube) == scramble.inverse
     solver = TestSolver(True, True)
-    assert solver.pruning_tables != {}
     assert solver.transition_tables != {}
+    assert solver.pruning_tables != {}
     assert solver.solve(cube) == scramble.inverse
     os.remove("tables/pruning_testsolver.npz")
 
@@ -145,50 +165,34 @@ def test_solver():
 def test_dummy():
     num_cubes = 12
 
-    max_depth = 3
+    max_depth = 4
     solver = DummySolver()
     depth_test(solver, max_depth, num_cubes)
-    # assert solver.checks == [num_checks(i) for i in range(max_depth + 1)]
-    # assert all(np.cumsum(solver.checks) == solver.nodes)
-
-    max_depth = 4
-    solver = DummySolver(use_transition_tables=True)
-    depth_test(solver, max_depth, num_cubes)
-    # assert solver.checks == [num_checks(i) for i in range(max_depth + 1)]
-    # assert all(np.cumsum(solver.checks) == solver.nodes)
 
 
 def test_korf():
     num_cubes = 12
 
+    max_depth = 4
+    solver = Korf(use_pruning_tables=False)
+    depth_test(solver, max_depth, num_cubes)
+
     max_depth = 8
     solver = Korf()
     depth_test(solver, max_depth, num_cubes)
 
-    max_depth = 10
-    solver = Korf(use_transition_tables=True)
-    depth_test(solver, max_depth, num_cubes)
-
 
 def test_thistlethwaite():
-    num_cubes = 12
-
-    max_depth = 30
+    num_cubes = 100
     solver = Thistlethwaite()
-    depth_test(solver, max_depth, num_cubes)
-
-    max_depth = 30
-    solver = Thistlethwaite(use_transition_tables=True)
-    depth_test(solver, max_depth, num_cubes)
+    with pytest.raises(ValueError, match=r"phase must be < 4 \(got 4\)"):
+        solver.phase_coords((), 4)
+    solve_test(solver, num_cubes)
 
 
 def test_kociemba():
-    num_cubes = 12
-
-    # max_depth = 30
-    # solver = Kociemba()
-    # depth_test(solver, max_depth, num_cubes)
-
-    # max_depth = 30
-    # solver = Kociemba(use_transition_tables=True)
-    # depth_test(solver, max_depth, num_cubes)
+    num_cubes = 10
+    solver = Kociemba()
+    with pytest.raises(ValueError, match=r"phase must be < 2 \(got 2\)"):
+        solver.phase_coords((), 2)
+    solve_test(solver, num_cubes)

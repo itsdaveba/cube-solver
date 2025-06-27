@@ -48,7 +48,7 @@ class Thistlethwaite(BaseSolver):
         [PruningDef(name="cc_ct_msec", shape=(CC_SIZE, NUM_THREADS, MSEC_SIZE))],
         [PruningDef(name="cop_eop", shape=(OP_SIZE, OP_SIZE // NUM_THREADS, OP_SIZE, OP_SIZE, OP_SIZE // 2))]]
 
-    def phase_coords(self, phase: int, coords: FlattenCoords) -> FlattenCoords:
+    def phase_coords(self, coords: FlattenCoords, phase: int) -> FlattenCoords:
         if phase == 0:
             edge_orientation = coords[1]
             return (edge_orientation,)

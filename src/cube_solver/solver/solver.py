@@ -45,7 +45,7 @@ class BaseSolver(ABC):
             TransitionDef(coord_name="pep" if cls.partial_edge_perm else "ep",
                           coord_size=PARTIAL_EDGE_PERMUTATION_SIZE if cls.partial_edge_perm else EDGE_PERMUTATION_SIZE)]
 
-    def __init__(self, use_pruning_tables: bool = True, use_transition_tables: bool = True):
+    def __init__(self, use_transition_tables: bool = True, use_pruning_tables: bool = True):
         """
         Create :class:`.BaseSolver` object.
 
@@ -60,12 +60,10 @@ class BaseSolver(ABC):
             If ``True``, creates or loads the tables from the ``tables/`` directory.
             Default is ``True``.
         """
-        if not isinstance(use_pruning_tables, bool):
-            raise TypeError(f"use_pruning_tables must be bool, not {type(use_pruning_tables).__name__}")
         if not isinstance(use_transition_tables, bool):
             raise TypeError(f"use_transition_tables must be bool, not {type(use_transition_tables).__name__}")
-        if use_pruning_tables and not self.pruning_kwargs:
-            raise ValueError("cannot use pruning tables with empty class attribute 'pruning_kwargs'")
+        if not isinstance(use_pruning_tables, bool):
+            raise TypeError(f"use_pruning_tables must be bool, not {type(use_pruning_tables).__name__}")
 
         self.cube: Cube = Cube()
         """Internal :class:`cube_solver.Cube` object. Used to generate transition and pruning tables."""
@@ -92,9 +90,10 @@ class BaseSolver(ABC):
                 for kwargs in phase_kwargs:
                     kwargs.phase = phase
                     pruning_kwargs.append(kwargs)
-            pruning_filename = f"pruning_{self.__class__.__name__.lower()}.npz"
-            self.pruning_tables = utils.get_tables(pruning_filename, pruning_kwargs,
-                                                   self.generate_pruning_table, accumulate=False)
+            if pruning_kwargs:
+                pruning_filename = f"pruning_{self.__class__.__name__.lower()}.npz"
+                self.pruning_tables = utils.get_tables(pruning_filename, pruning_kwargs,
+                                                       self.generate_pruning_table, accumulate=False)
 
         self.final_moves: list[set[Move]] = []
         """Final allowed moves for each phase except the last."""
@@ -264,6 +263,11 @@ class BaseSolver(ABC):
         -------
         phase_coords : tuple of int
             Phase coordinates.
+
+        Notes
+        -----
+        Depending on the class attributes :attr:`partial_corner_perm` and :attr:`partial_edge_perm`,
+        the ``coords`` parameter is the flattened version of the output from the :meth:`get_coords` method.
         """
 
     def prune_coords(self, phase_coords: FlattenCoords, indexes: int | tuple[int, ...] | None) -> FlattenCoords:
@@ -414,7 +418,7 @@ class BaseSolver(ABC):
         >>> solver.solve(cube, optimal=True, verbose=1)
         R F U
         """
-        if not isinstance(cube, Cube):  # TODO add test for optimal and verbose
+        if not isinstance(cube, Cube):
             raise TypeError(f"cube must be Cube, not {type(cube).__name__}")
         if max_length is not None and not isinstance(max_length, int):
             raise TypeError(f"max_length must be int or None, not {type(max_length).__name__}")
@@ -426,30 +430,33 @@ class BaseSolver(ABC):
             raise ValueError(f"max_length must be >= 0 (got {max_length})")
         if verbose not in (0, 1):
             raise ValueError(f"verbose must be 0 or 1 (got {verbose})")
-        if cube.permutation_parity is None:
-            raise ValueError("invalid cube state")
         try:
-            self.get_coords(cube)
+            cube.coords
         except ValueError:
             raise ValueError("invalid cube state")
+        self.cube = Cube(repr=(repr(cube)))
+        if self.cube.permutation_parity is None:
+            raise ValueError("invalid cube state")
 
-        # self.nodes = []
-        # self.checks = []
+        # TODO test performance with and without stats
+        self.nodes = [[] for _ in range(self.num_phases)]
+        self.checks = [[] for _ in range(self.num_phases)]
+        self.prunes = [[] for _ in range(self.num_phases)]
         # TODO order
         self.max_length = None if optimal else max_length
         self.optimal = optimal  # TODO add to __init__
+        self.return_phase = False
         self.verbose = verbose
-        self.solution = [[] * self.num_phases]  # TODO check
+        self.solution = [[] for _ in range(self.num_phases)]  # TODO check
+        self.best_solution = None
 
         # self.nodes.append([[] for i in range(self.num_phases)])
         # self.checks.append([[] for i in range(self.num_phases)])  # TODO try not to erase after each new depth
-        position = self.get_coords(cube) if self.use_transition_tables else cube
+        position = self.get_coords(self.cube) if self.use_transition_tables else self.cube
         if self.phase_search(position):
-            return Maneuver([move for phase in range(self.num_phases) for move in [*self.solution[phase]][::-1]])
-        # if optimal:
-        #     return Maneuver([move for phase in range(self.num_phases) for move in [*self.best_solution[phase]][::-1]])
-        # if x is not None:
-        #     return Maneuver([move for phase in range(self.num_phases) for move in [*self.solution[phase]][::-1]])
+            return Maneuver([move for phase in range(self.num_phases) for move in reversed(self.solution[phase])])
+        if self.optimal:
+            return Maneuver([move for phase in range(self.num_phases) for move in reversed(self.best_solution[phase])])
         return None
 
     # TODO make iterative version and compare
@@ -466,63 +473,72 @@ class BaseSolver(ABC):
             Phase to solve from. Default is ``0``.
         current_length : int, optional
             Current solution length. Default is ``0``.
-        last_move : Move, optional
-            Last move performed on the cube. Helps avoid repeating the same move during the phase search.
-            :attr:`.Move.NONE` indicates that no moves have been made yet (i.e. the start of the phase search).
-            Default is :attr:`.Move.NONE`.
 
         Returns
         -------
         bool
-            `True` if a solution was found, `False` otherwise.
+            ``True`` if a solution is found, ``False`` otherwise.
         """
         if phase == self.num_phases:
-            # if self.optimal:
-            #     self.skip_phase = phase - 1
-            #     self.max_depth = current_depth - 1
-            #     self.best_solution = deepcopy(self.solution)
+            if self.optimal:
+                self.return_phase = True
+                self.max_length = current_length - 1
+                self.best_solution = deepcopy(self.solution)
+                return False
             return True
         depth = 0
-        # self.nodes[phase].append([])
+        self.nodes[phase].append([])
+        self.checks[phase].append([])
+        self.prunes[phase].append([])
         while True if self.max_length is None else current_length + depth <= self.max_length:
-            # self.nodes[phase][-1].append(0)
+            self.nodes[phase][-1].append(0)
+            self.checks[phase][-1].append(0)
+            self.prunes[phase][-1].append(0)
             self.solution[phase].append(Move.NONE)
             if self.search(position, phase, depth, current_length):
                 return True
-            # if length is None:
-            #     self.solution[phase] = deque([])
-            #     return False
+            elif self.optimal and self.return_phase:
+                self.return_phase = False
+                self.solution[phase] = []
+                return False
             depth += 1
         self.solution[phase] = []
         return False
 
-    def search(self, position: Cube | CoordsType, phase: int, depth: int, current_length: int, last_move: Move = Move.NONE) -> bool:
+    def search(self, position: Cube | CoordsType, phase: int, depth: int, current_length: int) -> bool:
         """
+        Solve the cube position from the specified phase at the specified depth.
+
         Parameters
         ----------
-        last_move : Move, optional
-            Last move performed on the cube. Helps avoid repeating the same move during the phase search.
-            :attr:`.Move.NONE` indicates that no moves have been made yet (i.e. the start of the phase search).
-            Default is :attr:`.Move.NONE`.
+        position : Cube or tuple of (int or tuple of int)
+            Cube object or cube coordinates to search.
+        phase : int
+            Phase to solve from.
+        depth : int
+            Current search depth.
+        current_length : int
+            Current solution length.
+
+        Returns
+        -------
+        bool
+            ``True`` if a solution is found, ``False`` otherwise.
         """
-        # self.nodes[phase][-1][-1] += 1
-        self.solution[phase][depth] = last_move
-        if depth == 0:  # TODO change this inside the pruning and check stats, self.num_prunes?
-            if phase == self.num_phases - 1 or (last_move in self.final_moves[phase]):
-                # self.solve_checks[phase][-1][-1] += 1
+        self.nodes[phase][-1][-1] += 1
+        if depth == 0:
+            if phase == self.num_phases - 1 or (self.solution[phase][0] in self.final_moves[phase]):
+                self.checks[phase][-1][-1] += 1
                 if self.is_solved(position, phase):
                     return self.phase_search(position, phase + 1, current_length)
             return False
-        # self.prune_checks[phase][-1][-1] += 1
         if not self.prune(position, phase, depth):
-            for move in self.next_moves[phase][last_move]:  # TODO get last move from solution
-                next_position = self.next_position(position, move)
-                if self.search(next_position, phase, depth - 1, current_length + 1, move):
+            for move in self.next_moves[phase][self.solution[phase][depth]]:  # TODO get last move from solution
+                self.solution[phase][depth - 1] = move
+                if self.search(self.next_position(position, move), phase, depth - 1, current_length + 1):
                     return True
-                # if self.optimal:
-                #     if phase == self.skip_phase:
-                #         return None
-                #     elif self.skip_phase != -1:
-                #         self.skip_phase = -1
-                #     continue
+                elif self.optimal and self.return_phase:
+                    return False
+            return False  # TODO not necessary if no stats
+        self.prunes[phase][-1][-1] += 1
         return False

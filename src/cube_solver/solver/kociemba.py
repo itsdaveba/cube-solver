@@ -27,7 +27,7 @@ class Kociemba(BaseSolver):
         [PruningDef(name="cp_eep", shape=(CP_SIZE, OP_SIZE), indexes=(0, 2)),
          PruningDef(name="msep_eep", shape=(MSEP_SIZE, OP_SIZE), indexes=(1, 2))]]
 
-    def phase_coords(self, phase: int, coords: FlattenCoords) -> FlattenCoords:
+    def phase_coords(self, coords: FlattenCoords, phase: int) -> FlattenCoords:
         if phase == 0:
             corner_orientation = coords[0]
             edge_orientation = coords[1]

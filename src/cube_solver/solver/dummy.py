@@ -6,5 +6,5 @@ class DummySolver(BaseSolver):
     partial_corner_perm = True
     partial_edge_perm = True
 
-    def phase_coords(self, phase: int, coords: FlattenCoords) -> FlattenCoords:
+    def phase_coords(self, coords: FlattenCoords, phase: int) -> FlattenCoords:
         return coords

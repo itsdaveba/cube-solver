@@ -1,4 +1,5 @@
 """Solver utils module."""
+import logging
 import numpy as np
 from pathlib import Path
 from dataclasses import asdict
@@ -6,17 +7,25 @@ from typing import Sequence, Callable
 
 from .defs import TableDef
 
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+logger = logging.getLogger()
+
+
 # TODO document
 
 
-def load_tables(path: Path) -> dict[str, np.ndarray]:
+def load_tables(path: str | Path) -> dict[str, np.ndarray]:
+    if isinstance(path, str):
+        path = Path(path)
     with path.open("rb") as file:
         tables = np.load(file, allow_pickle=False)
         tables = dict(tables)
     return tables
 
 
-def save_tables(path: Path, tables: dict[str, np.ndarray]):
+def save_tables(path: str | Path, tables: dict[str, np.ndarray]):
+    if isinstance(path, str):
+        path = Path(path)
     path.parent.mkdir(exist_ok=True)
     with path.open("wb") as file:
         np.savez(file, allow_pickle=False, **tables)
@@ -30,6 +39,7 @@ def get_tables(filename: str, tables_kwargs: Sequence[TableDef],
         save = False
         for kwargs in tables_kwargs:
             if kwargs.name not in tables:
+                logger.info(f"Updating {path}")
                 tables[kwargs.name] = generate_table_fn(**asdict(kwargs))
                 save = True
         if not accumulate:
@@ -40,6 +50,7 @@ def get_tables(filename: str, tables_kwargs: Sequence[TableDef],
         if save:
             save_tables(path, tables)
     except FileNotFoundError:
+        logger.info(f"Creating {path}")
         tables = {kwargs.name: generate_table_fn(**asdict(kwargs)) for kwargs in tables_kwargs}
         save_tables(path, tables)
     return tables
