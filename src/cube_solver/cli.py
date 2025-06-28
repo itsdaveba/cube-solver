@@ -1,6 +1,7 @@
 """Console script for cube_solver."""
 from enum import Enum
 from cube_solver import Cube, Maneuver, Thistlethwaite, Kociemba
+from cube_solver.solver import BaseSolver
 
 # import click
 import typer
@@ -23,37 +24,58 @@ ALGS = {
 
 
 @app.command()
+def maneuver(moves: Annotated[str, typer.Argument(show_default=False, help="Sequence of moves.")]):
+    """
+    Apply a sequence of moves to a cube.
+
+    Accepts the following move types:
+    \n\n* Face moves (e.g. U, F2, R').
+    \n\n* Slice moves (e.g. M, E2, S').
+    \n\n* Wide moves (e.g. Uw, Fw2, Rw' or u, f2, r').
+    \n\n* Rotations (e.g. x, y2, z').
+    """
+    cube = Cube(moves)
+    console.print(cube)
+    console.print(f"Cube: {repr(cube)}")
+
+
+@app.command()
 def scramble(length: Annotated[int, typer.Option("--length", "-l", show_envvar=False, help="Scramble length.")] = 25,
              wca: Annotated[bool, typer.Option("--wca", help="Scramble following WCA rules.")] = False,
-             verbose: Annotated[bool, typer.Option("--verbose", "-v",
-                                                   help="Show cube layout and cube string representation.")] = False):
+             verbose: Annotated[int, typer.Option("--verbose", "-v", count=True,
+                                                  help="Show cube layout and cube string representation.")] = 0):
     """Generate a random scramble."""
     if wca:
-        cube = Cube(random_state=True)
         solver = Kociemba()
-        solution = solver.solve(cube, length)
-        assert isinstance(solution, Maneuver)
-        scramble = solution.inverse
+        while True:
+            cube = Cube(random_state=True)
+            solution = solver.solve(cube, length)
+            assert isinstance(solution, Maneuver)
+            scramble = solution.inverse
+            if solver.solve(cube, 1) is None:
+                break
     else:
         scramble = Maneuver.random(length)
     if verbose:
-        console.print("Scramble:", str(scramble))
+        console.print(f"Scramble: {scramble}")
         cube = Cube(scramble)
         console.print(cube)
-        console.print("Cube:", repr(cube))
+        console.print(f"Cube: {repr(cube)}")
     else:
-        console.print(str(scramble))
+        console.print(f"{scramble}")
 
 
 @app.command(no_args_is_help=True)
 def solve(cube: Annotated[str, typer.Argument(help="Cube string representation.")] = "",
           algorithm: Annotated[Algorithm, typer.Option("--algorithm", "-a", show_envvar=False,
                                                        help="Solver algorithm.", show_choices=True)] = Algorithm.KOCIEMBA,
+          length: Annotated[int | None, typer.Option("--length", "-l", show_envvar=False,
+                                                     help="Maximum solution length.")] = None,
           scramble: Annotated[str, typer.Option("--scramble", "-s", show_envvar=False, help="Cube scramble.")] = "",
           random: Annotated[bool, typer.Option("--random", "-r", help="Solve a random cube.")] = False,
           optimal: Annotated[bool, typer.Option("--optimal", "-o", help="Find the optimal solution.")] = False,
-          verbose: Annotated[bool, typer.Option("--verbose", "-v",
-                                                help="Show cube layout and cube string representation.")] = False):
+          verbose: Annotated[int, typer.Option("--verbose", "-v", count=True,
+                                               help="Show cube layout and cube string representation.")] = 0):
     """
     Solve a cube.
 
@@ -66,7 +88,7 @@ def solve(cube: Annotated[str, typer.Argument(help="Cube string representation."
     \n\nafter the scramble R U R' U', is:
     \n\nWWOWWGWWGBOOOOOOOOGGYGGWGGGRRWBRRWRRBRRBBBBBBYYRYYYYYY
     """
-    solver = ALGS[algorithm]()
+    solver: BaseSolver = ALGS[algorithm]()
     if not cube and not scramble and not random:
         console.print("Must provide either the 'cube' argument, the '--scramble' / '-s' option, or the '--random' / '-r' option.")
         raise typer.Exit()
@@ -80,13 +102,16 @@ def solve(cube: Annotated[str, typer.Argument(help="Cube string representation."
         console.print("The '--random' / '-r' option cannot be used with the '--scramble' / '-s' option.")
         raise typer.Exit()
     _cube = Cube(repr=cube) if cube else Cube(scramble) if scramble else Cube(random_state=True)
-    solution = solver.solve(_cube, optimal=optimal, verbose=1)
     if verbose:
         console.print(_cube)
-        console.print("Cube:", repr(_cube))
-        console.print("Solution:", str(solution))
+        console.print(f"Cube: {repr(_cube)}")  # TODO typer color
+        solution = solver.solve(_cube, length, optimal, verbose)
+        assert solution is not None
+        length = len(solution) if isinstance(solution, Maneuver) else sum(len(sol) for sol in solution)
+        console.print(f"Solution: {solution} ({length})")
     else:
-        console.print(str(solution))
+        solution = solver.solve(_cube, length, optimal)
+        console.print(f"{solver.solve(_cube, length, optimal)}")
 
 
 if __name__ == "__main__":

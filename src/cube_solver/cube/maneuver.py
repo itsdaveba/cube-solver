@@ -83,7 +83,7 @@ def _reduced(counter: Counter, moves: list[Move], i: int, n: int) -> list[Move] 
 
 
 class Maneuver(str):
-    def __new__(cls, moves: str | list[Move]):
+    def __new__(cls, moves: str | list[Move], reduce: bool = True):
         """
         Create :class:`Maneuver` object.
 
@@ -94,6 +94,9 @@ class Maneuver(str):
         ----------
         moves : str or list of Move
             Sequence of moves.
+        reduce : bool, optional
+            Whether to reduce the sequence of moves.
+            Default is ``True``.
 
         Examples
         --------
@@ -170,7 +173,8 @@ class Maneuver(str):
                 if not isinstance(move, Move):
                     raise TypeError(f"moves list elements must be Move, not {type(move).__name__}")
 
-        moves = _reduce_moves([move for move in moves if move != Move.NONE])
+        if reduce:
+            moves = _reduce_moves([move for move in moves if move != Move.NONE])
         obj = super().__new__(cls, " ".join(move.string for move in moves))
         obj.moves = tuple(moves)
         return obj

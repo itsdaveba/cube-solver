@@ -444,7 +444,7 @@ class BaseSolver(ABC):
         self.checks = [[] for _ in range(self.num_phases)]
         self.prunes = [[] for _ in range(self.num_phases)]
         # TODO order
-        self.max_length = None if optimal else max_length
+        self.max_length = max_length
         self.optimal = optimal  # TODO add to __init__
         self.return_phase = False
         self.verbose = verbose
@@ -489,9 +489,11 @@ class BaseSolver(ABC):
                 self.max_length = current_length - 1
                 self.best_solution = deepcopy(self.solution)
                 if self.verbose == 1:
-                    logger.info(f"Solution: {Maneuver([move for solution in self.solution for move in solution[::-1]])}")
+                    solution = Maneuver([move for sol in self.solution for move in sol[-2::-1]], reduce=False)
+                    logger.info(f"Solution: {solution} ({len(solution)})")
                 elif self.verbose == 2:
-                    logger.info(f"Solution: {[Maneuver(phase_solution[::-1]) for phase_solution in self.solution]}")
+                    solution = [Maneuver(phase_solution[::-1]) for phase_solution in self.solution]
+                    logger.info(f"Solution: {' | '.join([f'{sol} ({len(sol)})' for sol in solution])}")
                 return False
             return True
         depth = 0
