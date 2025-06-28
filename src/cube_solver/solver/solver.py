@@ -1,4 +1,5 @@
 """BaseSolver module."""
+import time
 import numpy as np
 from copy import deepcopy
 from typing import overload
@@ -383,7 +384,8 @@ class BaseSolver(ABC):
         return self.get_coords(cube)
 
     # TODO add timeout for optimal or for all, maybe optimal can be bool or int
-    def solve(self, cube: Cube, max_length: int | None = None, optimal: bool = False, verbose: int = 0) -> Maneuver | list[Maneuver] | None:  # TODO cube could be None for perf testing?
+    def solve(self, cube: Cube, max_length: int | None = None, optimal: bool = False,
+              timeout: int | None = None, verbose: int = 0) -> Maneuver | list[Maneuver] | None:  # TODO cube could be None for perf testing?
         """
         Solve the cube position.
 
@@ -395,6 +397,9 @@ class BaseSolver(ABC):
             Maximum number of moves to search. If ``None``, search indefinitely. Default is ``None``.
         optimal : bool, optimal
             If ``True``, finds the optimal solution. Default is ``False``.
+        timeout : int or None, optional
+            Stop the search after the specified number of seconds.
+            If ``None``, no time limit is applied. Default is ``None``.
         verbose : {0, 1, 2}, optional
             Verbosity level. Default is ``0``.
 
@@ -427,8 +432,12 @@ class BaseSolver(ABC):
             raise TypeError(f"optimal must be bool, not {type(optimal).__name__}")
         if not isinstance(verbose, int):
             raise TypeError(f"verbose must be int, not {type(verbose).__name__}")
+        if timeout is not None and not isinstance(timeout, int):
+            raise TypeError(f"timeout must be int or None, not {type(timeout).__name__}")
         if isinstance(max_length, int) and max_length < 0:
             raise ValueError(f"max_length must be >= 0 (got {max_length})")
+        if isinstance(timeout, int) and timeout < 0:
+            raise ValueError(f"timeout must be >= 0 (got {timeout})")
         if verbose not in (0, 1, 2):
             raise ValueError(f"verbose must be one of 0, 1, 2 (got {verbose})")
         try:
@@ -440,16 +449,21 @@ class BaseSolver(ABC):
             raise ValueError("invalid cube state")
 
         # TODO test performance with and without stats
+        # TODO only record at each phase
+        self.num_nodes = 0  # TODO check and maybe change for just nodes
         self.nodes = [[] for _ in range(self.num_phases)]
         self.checks = [[] for _ in range(self.num_phases)]
         self.prunes = [[] for _ in range(self.num_phases)]
-        # TODO order
+
         self.max_length = max_length
-        self.optimal = optimal  # TODO add to __init__
-        self.return_phase = False
+        self.optimal = optimal  # TODO add to __init__?
+        self.timeout = timeout
         self.verbose = verbose
-        self.solution = [[] for _ in range(self.num_phases)]  # TODO check
+        self.return_phase = False
+        self.start = time.time()
+        self.terminate = False
         self.best_solution = None
+        self.solution = [[] for _ in range(self.num_phases)]
 
         solution = []
         position = self.get_coords(self.cube) if self.use_transition_tables else self.cube
@@ -507,7 +521,7 @@ class BaseSolver(ABC):
             self.solution[phase].append(Move.NONE)
             if self.search(position, phase, depth, current_length):
                 return True
-            elif self.optimal and self.return_phase:
+            elif self.terminate or (self.optimal and self.return_phase):
                 self.return_phase = False
                 self.solution[phase] = []
                 return False
@@ -536,6 +550,11 @@ class BaseSolver(ABC):
             ``True`` if a solution is found, ``False`` otherwise.
         """
         self.nodes[phase][-1][-1] += 1
+        if self.timeout is not None:
+            if self.num_nodes % 100000 == 0 and int(time.time() - self.start) >= self.timeout:
+                self.terminate = True
+                return False
+            self.num_nodes += 1
         if depth == 0:
             if phase == self.num_phases - 1 or (self.solution[phase][0] in self.final_moves[phase]):
                 self.checks[phase][-1][-1] += 1
@@ -547,7 +566,7 @@ class BaseSolver(ABC):
                 self.solution[phase][depth - 1] = move
                 if self.search(self.next_position(position, move), phase, depth - 1, current_length + 1):
                     return True
-                elif self.optimal and self.return_phase:
+                elif self.terminate or (self.optimal and self.return_phase):
                     return False
             return False  # TODO not necessary if no stats
         self.prunes[phase][-1][-1] += 1

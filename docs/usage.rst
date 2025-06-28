@@ -21,7 +21,7 @@ To generate a scramble, use the ``scramble`` subcommand:
 
     $ cube scramble --help       # scramble subcommand help
     $ cube scramble              # scramble of length 25
-    $ cube scramble --length 30  # scramble of specific length
+    $ cube scramble --length 30  # scramble of length 30
     $ cube scramble --wca        # scramble following WCA rules
 
 To solve a cube, use the ``solve`` subcommand.
@@ -55,6 +55,7 @@ The order of the string representation is::
     $ cube solve --random                                                # solve random cube
     $ cube solve --random --algorithm thistle                            # solver algorithm
     $ cube solve --scramble "L2 U R D' B2 L' D2 F B D" --optimal         # find the optimal solution
+    $ cube solve --random --optimal --verbose --timeout 10               # stop search after 10 seconds
 
 To use **Cube Solver** in a Python project:
 

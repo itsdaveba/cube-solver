@@ -71,6 +71,8 @@ def solve(cube: Annotated[str, typer.Argument(help="Cube string representation."
                                                        help="Solver algorithm.", show_choices=True)] = Algorithm.KOCIEMBA,
           length: Annotated[int | None, typer.Option("--length", "-l", show_envvar=False,
                                                      help="Maximum solution length.")] = None,
+          timeout: Annotated[int | None, typer.Option("--timeout", "-t", show_envvar=False,
+                                                      help="Maximum time in seconds.")] = None,
           scramble: Annotated[str, typer.Option("--scramble", "-s", show_envvar=False, help="Cube scramble.")] = "",
           random: Annotated[bool, typer.Option("--random", "-r", help="Solve a random cube.")] = False,
           optimal: Annotated[bool, typer.Option("--optimal", "-o", help="Find the optimal solution.")] = False,
@@ -105,13 +107,21 @@ def solve(cube: Annotated[str, typer.Argument(help="Cube string representation."
     if verbose:
         console.print(_cube)
         console.print(f"Cube: {repr(_cube)}")  # TODO typer color
-        solution = solver.solve(_cube, length, optimal, verbose)
-        assert solution is not None
-        length = len(solution) if isinstance(solution, Maneuver) else sum(len(sol) for sol in solution)
-        console.print(f"Solution: {solution} ({length})")
+        solution = solver.solve(_cube, length, optimal, timeout, verbose)
+        if solution is not None:
+            length = len(solution) if isinstance(solution, Maneuver) else sum(len(sol) for sol in solution)
+            if optimal:
+                if solver.terminate:
+                    console.print(f"Suboptimal: {solution} ({length})")
+                else:
+                    console.print(f"Optimal: {solution} ({length})")
+            else:
+                console.print(f"Solution: {solution} ({length})")
+        else:
+            console.print(f"Solution: {solution}")
     else:
-        solution = solver.solve(_cube, length, optimal)
-        console.print(f"{solver.solve(_cube, length, optimal)}")
+        solution = solver.solve(_cube, length, optimal, timeout)
+        console.print(f"{solution}")
 
 
 if __name__ == "__main__":
