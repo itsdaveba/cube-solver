@@ -430,10 +430,10 @@ class BaseSolver(ABC):
             raise TypeError(f"max_length must be int or None, not {type(max_length).__name__}")
         if not isinstance(optimal, bool):
             raise TypeError(f"optimal must be bool, not {type(optimal).__name__}")
-        if not isinstance(verbose, int):
-            raise TypeError(f"verbose must be int, not {type(verbose).__name__}")
         if timeout is not None and not isinstance(timeout, int):
             raise TypeError(f"timeout must be int or None, not {type(timeout).__name__}")
+        if not isinstance(verbose, int):
+            raise TypeError(f"verbose must be int, not {type(verbose).__name__}")
         if isinstance(max_length, int) and max_length < 0:
             raise ValueError(f"max_length must be >= 0 (got {max_length})")
         if isinstance(timeout, int) and timeout < 0:
@@ -505,7 +505,7 @@ class BaseSolver(ABC):
                 if self.verbose == 1:
                     solution = Maneuver([move for sol in self.solution for move in sol[-2::-1]], reduce=False)
                     logger.info(f"Solution: {solution} ({len(solution)})")
-                elif self.verbose == 2:
+                else:
                     solution = [Maneuver(phase_solution[::-1]) for phase_solution in self.solution]
                     logger.info(f"Solution: {' | '.join([f'{sol} ({len(sol)})' for sol in solution])}")
                 return False
@@ -550,11 +550,10 @@ class BaseSolver(ABC):
             ``True`` if a solution is found, ``False`` otherwise.
         """
         self.nodes[phase][-1][-1] += 1
-        if self.timeout is not None:
-            if self.num_nodes % 100000 == 0 and int(time.time() - self.start) >= self.timeout:
-                self.terminate = True
-                return False
-            self.num_nodes += 1
+        if self.timeout is not None and self.num_nodes % 100000 == 0 and int(time.time() - self.start) >= self.timeout:
+            self.terminate = True
+            return False
+        self.num_nodes += 1
         if depth == 0:
             if phase == self.num_phases - 1 or (self.solution[phase][0] in self.final_moves[phase]):
                 self.checks[phase][-1][-1] += 1

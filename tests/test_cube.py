@@ -795,9 +795,11 @@ def test_cube(response):
 
 def test_maneuver():
     with pytest.raises(TypeError, match=r"moves must be str or list, not NoneType"):
-        Maneuver(None)
+        Maneuver(None, None)
+    with pytest.raises(TypeError, match=r"reduce must be bool, not NoneType"):
+        Maneuver([None], None)
     with pytest.raises(TypeError, match="moves list elements must be Move, not NoneType"):
-        Maneuver([None])
+        Maneuver([None], True)
     maneuver = Maneuver("")
     assert maneuver != 0
     assert maneuver != [None]
@@ -837,6 +839,7 @@ def test_maneuver():
     assert Maneuver("z'") == "f' B"
 
     # reduce
+    assert str(Maneuver("U U U", False)) == "U U U"
     assert str(Maneuver("U U U")) == "U'"
     assert str(Maneuver("U U U2")) == ""
     assert str(Maneuver("U D U'")) == "D"

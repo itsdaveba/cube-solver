@@ -165,6 +165,8 @@ class Maneuver(str):
 
         if not isinstance(moves, (str, list)):
             raise TypeError(f"moves must be str or list, not {type(moves).__name__}")
+        if not isinstance(reduce, bool):
+            raise TypeError(f"reduce must be bool, not {type(reduce).__name__}")
 
         if isinstance(moves, str):
             moves = [Move.from_string(move_str) for move_str in moves.split()]

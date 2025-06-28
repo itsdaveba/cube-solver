@@ -102,30 +102,40 @@ def test_solver():
     assert solver.transition_tables == {}
     assert solver.pruning_tables == {}
     with pytest.raises(TypeError, match=r"cube must be Cube, not NoneType"):
-        solver.solve(None, "", None, None)
+        solver.solve(None, "", None, "", None)
     with pytest.raises(TypeError, match=r"max_length must be int or None, not str"):
-        solver.solve(cube, "", None, None)
+        solver.solve(cube, "", None, "", None)
     with pytest.raises(TypeError, match=r"optimal must be bool, not NoneType"):
-        solver.solve(cube, -1, None, None)
+        solver.solve(cube, -1, None, "", None)
+    with pytest.raises(TypeError, match=r"timeout must be int or None, not str"):
+        solver.solve(cube, -1, False, "", None)
     with pytest.raises(TypeError, match=r"verbose must be int, not NoneType"):
-        solver.solve(cube, -1, False, None)
+        solver.solve(cube, -1, False, -1, None)
     with pytest.raises(ValueError, match=r"max_length must be >= 0 \(got -1\)"):
-        solver.solve(cube, -1, False, -1)
+        solver.solve(cube, -1, False, -1, -1)
+    with pytest.raises(ValueError, match=r"timeout must be >= 0 \(got -1\)"):
+        solver.solve(cube, 0, False, -1, -1)
     with pytest.raises(ValueError, match=r"verbose must be one of 0, 1, 2 \(got -1\)"):
-        solver.solve(cube, 0, False, -1)
+        solver.solve(cube, 0, False, 0, -1)
     with pytest.raises(ValueError, match=r"invalid cube state"):
-        solver.solve(cube, 0, False, 0)
+        solver.solve(cube, 0, False, 0, 0)
     with pytest.warns(UserWarning, match=r"invalid cube parity"):
         cube.set_coord("pep", (0, 11857, 1656))
     with pytest.warns(UserWarning, match=r"invalid cube parity"):
         with pytest.raises(ValueError, match=r"invalid cube state"):
-            solver.solve(cube, 0, False, 0)
+            solver.solve(cube, 0, False, 0, 0)
     with pytest.raises(ValueError, match=r"coord_size must be <= 65536 \(got 239500800\)"):
         solver.generate_transition_table("ep", 239500800)
     scramble = Maneuver("U F2 R'")
     cube = Cube(scramble)
-    assert solver.solve(cube, 0, False, 0) is None
-    assert solver.solve(cube, None, True, 2) == [scramble.inverse]
+    assert solver.solve(cube, 0, False, 0, 0) is None
+    assert solver.terminate
+    assert solver.solve(cube, 0, False, None, 0) is None
+    assert not solver.terminate
+    assert solver.solve(cube, None, True, None, 1) == scramble.inverse
+    assert not solver.terminate
+    assert solver.solve(cube, None, True, None, 2) == [scramble.inverse]
+    assert not solver.terminate
     if os.path.exists("tables/transition.npz"):
         tables = utils.load_tables("tables/transition.npz")
         if "cp" in tables:
