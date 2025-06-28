@@ -272,7 +272,7 @@ class Maneuver(str):
         return Maneuver([move.inverse for move in self.moves[::-1]])
 
     @classmethod
-    def random(cls, length: int = 25) -> Maneuver:  # TODO include other move types?
+    def random(cls, length: int = 25) -> Maneuver:  # TODO include other move types? Make truly random by reaching a random state
         """
         Generate a random maneuver.
 

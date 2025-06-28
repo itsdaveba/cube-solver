@@ -22,5 +22,5 @@ Submodules
    :maxdepth: 2
 
    cube_solver.cli
-   cube_solver.constants
    cube_solver.defs
+   cube_solver.logger

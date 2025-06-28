@@ -1,18 +1,14 @@
 """Solver utils module."""
-import logging
 import numpy as np
 from pathlib import Path
 from dataclasses import asdict
 from typing import Sequence, Callable
 
+from ..logger import logger
 from .defs import TableDef
-
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-logger = logging.getLogger()
 
 
 # TODO document
-
 
 def load_tables(path: str | Path) -> dict[str, np.ndarray]:
     if isinstance(path, str):
