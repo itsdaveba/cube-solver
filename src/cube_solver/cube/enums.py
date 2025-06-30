@@ -465,7 +465,7 @@ class Cubie(IntEnum):
             yield cls(i)
 
 
-class Move(IntEnum):  # TODO move to move folder?
+class Move(IntEnum):
     """Move enumeration."""
     NONE = NONE  #: No move.
     # face moves

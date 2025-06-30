@@ -90,6 +90,7 @@ class BaseSolver(ABC):
             pruning_kwargs = []
             for phase, phase_kwargs in enumerate(self.pruning_kwargs):
                 for kwargs in phase_kwargs:
+                    kwargs.self = self
                     kwargs.phase = phase
                     pruning_kwargs.append(kwargs)
             if pruning_kwargs:
@@ -143,7 +144,9 @@ class BaseSolver(ABC):
         return transition_table
 
     # TODO maybe move to utils when having transition tables per phase
-    def generate_pruning_table(self, phase: int, shape: int | tuple[int, ...],
+    # TODO maybe move to utils because is static
+    @staticmethod
+    def generate_pruning_table(self: BaseSolver, phase: int, shape: int | tuple[int, ...],
                                indexes: int | tuple[int, ...] | None, **kwargs) -> np.ndarray:
         """
         Generate the phase coordinates pruning table.

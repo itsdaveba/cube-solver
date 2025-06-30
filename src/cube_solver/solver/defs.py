@@ -21,6 +21,7 @@ class PruningDef:
     name: str
     shape: int | tuple[int, ...]
     indexes: int | tuple[int, ...] | None = None
+    self: object | None = None
     phase: int | None = None
 
 

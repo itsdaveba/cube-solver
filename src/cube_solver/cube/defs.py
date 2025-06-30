@@ -11,7 +11,7 @@ NUM_ORBIT_ELEMS = 4
 
 # precomputed factorials and combinations
 FACTORIAL = np.cumprod([1] + list(range(1, NUM_EDGES + 1)))
-COMBINATION = np.zeros((np.max([NUM_CORNERS, NUM_EDGES]) + 1, NUM_ORBIT_ELEMS + 1), dtype=int)
+COMBINATION = np.zeros((NUM_EDGES + 1, NUM_ORBIT_ELEMS + 1), dtype=int)
 COMBINATION[:, 0] = 1
 for i in range(1, NUM_ORBIT_ELEMS + 1):
     COMBINATION[i:, i] = COMBINATION[i-1:-1, i-1].cumsum()

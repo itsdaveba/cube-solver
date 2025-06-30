@@ -62,7 +62,7 @@ class Thistlethwaite(BaseSolver):
             middle_standing_edge_combination = coords[4] // OP_SIZE
             return (corner_combination, corner_thread, middle_standing_edge_combination)
         elif phase == 3:
-            corner_orbit_permutation = (coords[2] % OP_SIZE, (coords[3] % OP_SIZE) // NUM_THREADS)
-            edge_orbit_permutation = (coords[4] % OP_SIZE, coords[5] % OP_SIZE, (coords[6] % OP_SIZE) // 2)
+            corner_orbit_permutation = (coords[2], (coords[3] % OP_SIZE) // NUM_THREADS)
+            edge_orbit_permutation = (coords[4], coords[5] % OP_SIZE, (coords[6] % OP_SIZE) // 2)
             return corner_orbit_permutation + edge_orbit_permutation
         raise ValueError(f"phase must be < {self.num_phases} (got {phase})")

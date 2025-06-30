@@ -3,10 +3,11 @@ from ..cube.enums import Move
 from ..cube.defs import CORNER_ORIENTATION_SIZE as CO_SIZE
 from ..cube.defs import EDGE_ORIENTATION_SIZE as EO_SIZE
 from ..cube.defs import CORNER_PERMUTATION_SIZE as CP_SIZE
-from ..cube.defs import NUM_EDGES, FACTORIAL, COMBINATION, NUM_ORBIT_ELEMS
+from ..cube.defs import NUM_CORNERS, NUM_EDGES, FACTORIAL, COMBINATION, NUM_ORBIT_ELEMS
 from .solver import BaseSolver, PruningDef, FlattenCoords
 
 
+CC_SIZE = COMBINATION[NUM_CORNERS, NUM_ORBIT_ELEMS].item()  # corner combination
 EEC_SIZE = COMBINATION[NUM_EDGES, NUM_ORBIT_ELEMS].item()  # equator edge combination
 MSEP_SIZE = FACTORIAL[NUM_EDGES - NUM_ORBIT_ELEMS].item()  # middle standing edge permutation
 OP_SIZE = FACTORIAL[NUM_ORBIT_ELEMS].item()  # orbit permutation
@@ -22,8 +23,7 @@ class Kociemba(BaseSolver):
     partial_edge_perm = True
     phase_moves = [PHASE0_MOVES, PHASE1_MOVES]
     pruning_kwargs = [
-        [PruningDef(name="co_eec", shape=(CO_SIZE, EEC_SIZE), indexes=(0, 2)),
-         PruningDef(name="eo_eec", shape=(EO_SIZE, EEC_SIZE), indexes=(1, 2))],
+        [PruningDef(name="co_eo_eec", shape=(CO_SIZE, EO_SIZE, EEC_SIZE))],
         [PruningDef(name="cp_eep", shape=(CP_SIZE, OP_SIZE), indexes=(0, 2)),
          PruningDef(name="msep_eep", shape=(MSEP_SIZE, OP_SIZE), indexes=(1, 2))]]
 
@@ -31,11 +31,11 @@ class Kociemba(BaseSolver):
         if phase == 0:
             corner_orientation = coords[0]
             edge_orientation = coords[1]
-            equator_edge_combination = coords[4] // FACTORIAL[NUM_ORBIT_ELEMS].item()
+            equator_edge_combination = coords[4] // OP_SIZE
             return (corner_orientation, edge_orientation, equator_edge_combination)
         elif phase == 1:
             corner_permutation = coords[2]
-            middle_standing_edge_permutation = coords[3] + (coords[5] + coords[5] // 24 - 69) * 24  # TODO double-check
-            equator_edge_permutation = coords[4] % 24
+            middle_standing_edge_permutation = coords[5] + (coords[3] - CC_SIZE + 1 + coords[3] // OP_SIZE) * OP_SIZE
+            equator_edge_permutation = coords[4] % OP_SIZE
             return (corner_permutation, middle_standing_edge_permutation, equator_edge_permutation)
         raise ValueError(f"phase must be < {self.num_phases} (got {phase})")

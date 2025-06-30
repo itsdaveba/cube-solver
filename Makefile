@@ -24,17 +24,6 @@ export PRINT_HELP_PYSCRIPT
 
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
-# Python C API
-PYTHON_INCLUDES := $(shell python3-config --includes)
-NUMPY_INCLUDES := $(shell python -c "import numpy; print(numpy.get_include())")
-
-CC = gcc
-CFLAGS = -fPIC -O2 -Wall -g -I./include $(PYTHON_INCLUDES) -I$(NUMPY_INCLUDES)
-LDFLAGS = -shared
-
-SRC = $(wildcard *.c)
-TARGET = $(SRC:module.c=.so)
-
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
@@ -95,8 +84,3 @@ release: dist ## package and upload a release
 install: clean ## install the package to the active Python's site-packages
 	python -m pip install --upgrade pip
 	python -m pip install -r requirements_dev.txt
-
-cmodules: $(TARGET) ## create extended Python C modules
-
-%.so: $(SRC)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)

@@ -185,13 +185,13 @@ def test_korf():
     solver = Korf(use_pruning_tables=False)
     depth_test(solver, max_depth, num_cubes)
 
-    max_depth = 8
+    max_depth = 12
     solver = Korf()
     depth_test(solver, max_depth, num_cubes)
 
 
 def test_thistlethwaite():
-    num_cubes = 100
+    num_cubes = 1000
     solver = Thistlethwaite()
     with pytest.raises(ValueError, match=r"phase must be < 4 \(got 4\)"):
         solver.phase_coords((), 4)
