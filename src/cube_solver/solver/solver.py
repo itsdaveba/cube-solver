@@ -1,4 +1,6 @@
 """BaseSolver module."""
+from __future__ import annotations
+
 import time
 import numpy as np
 from copy import deepcopy
@@ -80,8 +82,13 @@ class BaseSolver(ABC):
         self.transition_tables: dict[str, np.ndarray] = {}
         """Transition tables used to compute cube state transitions."""
         if self.use_transition_tables:  # TODO test with different extension
-            self.transition_tables = utils.get_tables("transition.npz", self.transition_kwargs,
-                                                      self.generate_transition_table, accumulate=True)
+            try:
+                from .. import csolver
+                self.transition_tables = utils.get_tables("transition.npz", self.transition_kwargs,
+                                                          csolver.generate_transition_table, accumulate=True)
+            except Exception:
+                self.transition_tables = utils.get_tables("transition.npz", self.transition_kwargs,
+                                                          self.generate_transition_table, accumulate=True)
         if not self.phase_moves:
             self.phase_moves = [[*Move.face_moves()] * self.num_phases]  # TODO test with a solver with two phases with all moves
         self.pruning_tables: dict[str, np.ndarray] = {}
@@ -95,8 +102,13 @@ class BaseSolver(ABC):
                     pruning_kwargs.append(kwargs)
             if pruning_kwargs:
                 pruning_filename = f"pruning_{self.__class__.__name__.lower()}.npz"
-                self.pruning_tables = utils.get_tables(pruning_filename, pruning_kwargs,
-                                                       self.generate_pruning_table, accumulate=False)
+                try:
+                    from .. import csolver
+                    self.pruning_tables = utils.get_tables(pruning_filename, pruning_kwargs,
+                                                           csolver.generate_pruning_table, accumulate=False)
+                except Exception:
+                    self.pruning_tables = utils.get_tables(pruning_filename, pruning_kwargs,
+                                                           self.generate_pruning_table, accumulate=False)
 
         self.final_moves: list[set[Move]] = []
         """Final allowed moves for each phase except the last."""
@@ -145,6 +157,7 @@ class BaseSolver(ABC):
 
     # TODO maybe move to utils when having transition tables per phase
     # TODO maybe move to utils because is static
+    # TODO remove annotations when moved to utils
     @staticmethod
     def generate_pruning_table(self: BaseSolver, phase: int, shape: int | tuple[int, ...],
                                indexes: int | tuple[int, ...] | None, **kwargs) -> np.ndarray:

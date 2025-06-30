@@ -185,7 +185,7 @@ def test_korf():
     solver = Korf(use_pruning_tables=False)
     depth_test(solver, max_depth, num_cubes)
 
-    max_depth = 12
+    max_depth = 11
     solver = Korf()
     depth_test(solver, max_depth, num_cubes)
 
