@@ -23,8 +23,11 @@ class Kociemba(BaseSolver):
     partial_edge_perm = True
     phase_moves = [PHASE0_MOVES, PHASE1_MOVES]
     pruning_kwargs = [
-        [PruningDef(name="co_eo_eec", shape=(CO_SIZE, EO_SIZE, EEC_SIZE))],
-        [PruningDef(name="cp_eep", shape=(CP_SIZE, OP_SIZE), indexes=(0, 2)),
+        [PruningDef(name="co_eo", shape=(CO_SIZE, EO_SIZE), indexes=(0, 1)),
+         PruningDef(name="co_eec", shape=(CO_SIZE, EEC_SIZE), indexes=(0, 2)),
+         PruningDef(name="eo_eec", shape=(EO_SIZE, EEC_SIZE), indexes=(1, 2))],
+        [PruningDef(name="cp_msep", shape=(CP_SIZE, MSEP_SIZE), indexes=(0, 1)),
+         PruningDef(name="cp_eep", shape=(CP_SIZE, OP_SIZE), indexes=(0, 2)),
          PruningDef(name="msep_eep", shape=(MSEP_SIZE, OP_SIZE), indexes=(1, 2))]]
 
     def phase_coords(self, coords: FlattenCoords, phase: int) -> FlattenCoords:

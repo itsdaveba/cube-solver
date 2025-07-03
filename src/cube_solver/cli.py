@@ -25,7 +25,7 @@ ALGS = {
 
 
 @app.command()
-def maneuver(moves: Annotated[str, typer.Argument(show_default=False, help="Sequence of moves.")]):
+def maneuver(moves: Annotated[str, typer.Argument(help="Sequence of moves.")] = ""):
     """
     Apply a sequence of moves to a cube.
 

@@ -13,9 +13,8 @@ from .defs import TableDef
 def load_tables(path: str | Path) -> dict[str, np.ndarray]:
     if isinstance(path, str):
         path = Path(path)
-    with path.open("rb") as file:
-        tables = np.load(file, allow_pickle=False)
-        tables = dict(tables)
+    with np.load(path, allow_pickle=False) as data:
+        tables = dict(data)
     return tables
 
 

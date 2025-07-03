@@ -126,6 +126,7 @@ def test_solver():
             solver.solve(cube, 0, False, 0, 0)
     with pytest.raises(ValueError, match=r"coord_size must be <= 65536 \(got 239500800\)"):
         solver.generate_transition_table("ep", 239500800)
+    assert solver.generate_transition_table("pcp", 1680).shape == (1680, 18)
     scramble = Maneuver("U F2 R'")
     cube = Cube(scramble)
     assert solver.solve(cube, 0, False, 0, 0) is None
@@ -173,6 +174,10 @@ def test_solver():
 def test_dummy():
     num_cubes = 12
 
+    max_depth = 3
+    solver = DummySolver(use_transition_tables=False)
+    depth_test(solver, max_depth, num_cubes)
+
     max_depth = 4
     solver = DummySolver()
     depth_test(solver, max_depth, num_cubes)
@@ -199,7 +204,7 @@ def test_thistlethwaite():
 
 
 def test_kociemba():
-    num_cubes = 10
+    num_cubes = 1000
     solver = Kociemba()
     with pytest.raises(ValueError, match=r"phase must be < 2 \(got 2\)"):
         solver.phase_coords((), 2)

@@ -174,12 +174,11 @@ static PyObject *generate_pruning_table(PyObject *self, PyObject *args, PyObject
     const char *name = "";
     PyObject *shape;
     PyObject *idxs;
-    PyObject *tmp = self;
     char *keywords[] = {"self", "phase", "shape", "indexes", "name", NULL};
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OiOO|s", keywords, &self, &phase, &shape, &idxs, &name))
         return NULL;
-    Py_DECREF(tmp);
     // parse dims
+    PyObject *tmp;
     if (!PyTuple_Check(shape))
     {
         tmp = shape;

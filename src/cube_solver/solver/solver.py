@@ -81,7 +81,7 @@ class BaseSolver(ABC):
         """Whether to use pruning tables to reduce the tree search space."""
         self.transition_tables: dict[str, np.ndarray] = {}
         """Transition tables used to compute cube state transitions."""
-        if self.use_transition_tables:  # TODO test with different extension
+        if self.use_transition_tables:
             try:
                 from .. import csolver
                 self.transition_tables = utils.get_tables("transition.npz", self.transition_kwargs,
@@ -399,7 +399,7 @@ class BaseSolver(ABC):
         cube.apply_move(move)
         return self.get_coords(cube)
 
-    # TODO add timeout for optimal or for all, maybe optimal can be bool or int
+    # TODO print timeout check to check interval
     def solve(self, cube: Cube, max_length: int | None = None, optimal: bool = False,
               timeout: int | None = None, verbose: int = 0) -> Maneuver | list[Maneuver] | None:  # TODO cube could be None for perf testing?
         """
@@ -586,3 +586,4 @@ class BaseSolver(ABC):
             return False  # TODO not necessary if no stats
         self.prunes[phase][-1][-1] += 1
         return False
+# TODO compress transition tables with symettry or mod 3

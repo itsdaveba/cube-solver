@@ -21,7 +21,7 @@ PHASE2_MOVES = [move for move in PHASE1_MOVES if move not in RESTRICT_MOVES]
 RESTRICT_MOVES = [Move.U1, Move.U3, Move.D1, Move.D3]
 PHASE3_MOVES = [move for move in PHASE2_MOVES if move not in RESTRICT_MOVES]
 
-NUM_THREADS = 6  # TODO double check
+NUM_THREADS = 6  # TODO double check names
 THREAD_PERM_GROUP = [1, 0, 4, 5, 2, 3]
 THREAD_SELECTOR = np.full((NUM_THREADS, NUM_THREADS), NONE, dtype=int)
 filter = np.eye(NUM_THREADS, dtype=bool)
