@@ -1,8 +1,7 @@
 """Console script for cube_solver."""
 # TODO test cli
 from enum import Enum
-from cube_solver import Cube, Maneuver, Thistlethwaite, Kociemba
-from cube_solver.solver import BaseSolver
+from cube_solver import Cube, Maneuver, BaseSolver, Thistlethwaite, Kociemba
 
 # import click
 import typer

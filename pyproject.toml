@@ -57,5 +57,8 @@ cube = "cube_solver.cli:app"
 [tool.setuptools.dynamic]
 version = {attr = "cube_solver.__version__"}
 
+[tool.coverage.run]
+omit = ["setup.py", "tests/*"]
+
 [tool.coverage.report]
 exclude_also = ["overload"]

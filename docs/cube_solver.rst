@@ -2,7 +2,7 @@ cube\_solver package
 ====================
 
 .. automodule:: cube_solver
-   :members: Cube, Maneuver, apply_move, apply_maneuver
+   :members: Cube, Maneuver, apply_move, apply_maneuver, BaseSolver
    :undoc-members:
    :show-inheritance:
 
@@ -22,5 +22,6 @@ Submodules
    :maxdepth: 2
 
    cube_solver.cli
+   cube_solver.csolver
    cube_solver.defs
    cube_solver.logger

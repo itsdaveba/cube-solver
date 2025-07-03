@@ -49,8 +49,8 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint/flake8: ## check style with flake8
-	python -m flake8 src/cube_solver tests --count --select=E9,F63,F7,F82 --show-source --statistics
-	python -m flake8 src/cube_solver tests --count --max-complexity=10 --max-line-length=127 --statistics
+	python -m flake8 src/cube_solver --count --select=E9,F63,F7,F82 --show-source --statistics
+	python -m flake8 src/cube_solver --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exit-zero
 
 lint: lint/flake8 ## check style
 

@@ -86,7 +86,7 @@ class BaseSolver(ABC):
                 from .. import csolver
                 self.transition_tables = utils.get_tables("transition.npz", self.transition_kwargs,
                                                           csolver.generate_transition_table, accumulate=True)
-            except Exception:
+            except Exception:  # pragma: no cover
                 self.transition_tables = utils.get_tables("transition.npz", self.transition_kwargs,
                                                           self.generate_transition_table, accumulate=True)
         if not self.phase_moves:
@@ -122,11 +122,11 @@ class BaseSolver(ABC):
             next_moves.update({move: [mv for mv in NEXT_MOVES[move] if mv in phase_moves] for move in phase_moves})
             self.next_moves.append(next_moves)
 
-        self.nodes: list[list[list[int]]]  # TODO needed?
+        self.nodes: list[int]  # TODO needed?
         """Number of visited nodes during a solve."""
-        self.solve_checks: list[list[list[int]]]  # TODO needed?
+        self.checks: list[int]  # TODO needed?
         """Number of solve checks during a solve."""
-        self.prune_checks: list[list[list[int]]]
+        self.prunes: list[int]
         """Number of prune checks during a solve."""  # TODO add more?
 
     # TODO get transition table for each phase
@@ -265,7 +265,7 @@ class BaseSolver(ABC):
             flatten += (coord,) if isinstance(coord, int) else coord
         return flatten
 
-    @abstractmethod
+    @abstractmethod  # TODO make statik and move to utils?
     def phase_coords(self, coords: FlattenCoords, phase: int) -> FlattenCoords:
         """
         Get the coordinates for the specified phase.
@@ -433,7 +433,7 @@ class BaseSolver(ABC):
         Examples
         --------
         >>> from cube_solver import Cube, Kociemba
-        >>> cube = Cube("U F R")
+        >>> cube = Cube("U F R")  # TODO add a random cube?
         >>> solver = Kociemba()
         >>> solver.solve(cube)
         "R' F' U'"
@@ -464,12 +464,9 @@ class BaseSolver(ABC):
         if self.cube.permutation_parity is None:
             raise ValueError("invalid cube state")
 
-        # TODO test performance with and without stats
-        # TODO only record at each phase
-        self.num_nodes = 0  # TODO check and maybe change for just nodes
-        self.nodes = [[] for _ in range(self.num_phases)]
-        self.checks = [[] for _ in range(self.num_phases)]
-        self.prunes = [[] for _ in range(self.num_phases)]
+        self.nodes = [0] * self.num_phases
+        self.checks = [0] * self.num_phases
+        self.prunes = [0] * self.num_phases
 
         self.max_length = max_length
         self.optimal = optimal  # TODO add to __init__?
@@ -521,19 +518,13 @@ class BaseSolver(ABC):
                 if self.verbose == 1:
                     solution = Maneuver([move for sol in self.solution for move in sol[-2::-1]], reduce=False)
                     logger.info(f"Solution: {solution} ({len(solution)})")
-                else:
+                elif self.verbose == 2:
                     solution = [Maneuver(phase_solution[::-1]) for phase_solution in self.solution]
                     logger.info(f"Solution: {' | '.join([f'{sol} ({len(sol)})' for sol in solution])}")
                 return False
             return True
         depth = 0
-        self.nodes[phase].append([])
-        self.checks[phase].append([])
-        self.prunes[phase].append([])
         while True if self.max_length is None else current_length + depth <= self.max_length:
-            self.nodes[phase][-1].append(0)
-            self.checks[phase][-1].append(0)
-            self.prunes[phase][-1].append(0)
             self.solution[phase].append(Move.NONE)
             if self.search(position, phase, depth, current_length):
                 return True
@@ -565,25 +556,24 @@ class BaseSolver(ABC):
         bool
             ``True`` if a solution is found, ``False`` otherwise.
         """
-        self.nodes[phase][-1][-1] += 1
-        if self.timeout is not None and self.num_nodes % 100000 == 0 and int(time.time() - self.start) >= self.timeout:
+        self.nodes[phase] += 1
+        if self.timeout is not None and int(time.time() - self.start) >= self.timeout:
             self.terminate = True
             return False
-        self.num_nodes += 1
         if depth == 0:
             if phase == self.num_phases - 1 or (self.solution[phase][0] in self.final_moves[phase]):
-                self.checks[phase][-1][-1] += 1
+                self.checks[phase] += 1
                 if self.is_solved(position, phase):
                     return self.phase_search(position, phase + 1, current_length)
             return False
         if not self.prune(position, phase, depth):
-            for move in self.next_moves[phase][self.solution[phase][depth]]:  # TODO get last move from solution
+            for move in self.next_moves[phase][self.solution[phase][depth]]:
                 self.solution[phase][depth - 1] = move
                 if self.search(self.next_position(position, move), phase, depth - 1, current_length + 1):
                     return True
                 elif self.terminate or (self.optimal and self.return_phase):
                     return False
             return False  # TODO not necessary if no stats
-        self.prunes[phase][-1][-1] += 1
+        self.prunes[phase] += 1
         return False
 # TODO compress transition tables with symettry or mod 3
