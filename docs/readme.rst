@@ -13,7 +13,8 @@ Cube Solver
 Rubik's Cube Solver
 
 * Free software: MIT License
-* Documentation: https://cube-solver.readthedocs.io.
+* GitHub repo: https://github.com/itsdaveba/cube-solver
+* Documentation: https://cube-solver.readthedocs.io
 
 
 Features

@@ -11,6 +11,22 @@ from .defs import TableDef
 # TODO document
 
 def load_tables(path: str | Path) -> dict[str, np.ndarray]:
+    """
+    Load the tables from a file.
+
+    Parameters
+    ----------
+    path : str or Path
+        Path of the file.
+
+    Returns
+    -------
+    tables : dict
+        Dictionary containig the tables.
+    """
+    if not isinstance(path, (str, Path)):
+        raise TypeError(f"path must be str or Path, not {type(path).__name__}")
+
     if isinstance(path, str):
         path = Path(path)
     with np.load(path, allow_pickle=False) as data:
@@ -19,6 +35,21 @@ def load_tables(path: str | Path) -> dict[str, np.ndarray]:
 
 
 def save_tables(path: str | Path, tables: dict[str, np.ndarray]):
+    """
+    Save the tables into a single file.
+
+    Parameters
+    ----------
+    path : str or Path
+        Path of the file.
+    tables : dict
+        Dictionary containig the tables.
+    """
+    if not isinstance(path, (str, Path)):
+        raise TypeError(f"path must be str or Path, not {type(path).__name__}")
+    if not isinstance(tables, dict):
+        raise TypeError(f"tables must be dict, not {type(tables).__name__}")
+
     if isinstance(path, str):
         path = Path(path)
     path.parent.mkdir(exist_ok=True)

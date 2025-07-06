@@ -61,4 +61,4 @@ version = {attr = "cube_solver.__version__"}
 omit = ["setup.py", "tests/*"]
 
 [tool.coverage.report]
-exclude_also = ["overload"]
+exclude_also = ["overload", "TYPE_CHECKING"]

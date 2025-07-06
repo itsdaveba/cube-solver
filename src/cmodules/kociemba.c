@@ -37,7 +37,7 @@ void kociemba_set_coords(int *coords, int *phase_coords, int phase)
     else if (phase == 1)
     {
         coords[2] = phase_coords[0];
-        coords[3] = phase_coords[1] / 24;
+        coords[3] = phase_coords[1] / OP_SIZE;
         coords[5] = phase_coords[1] + (COMB_8C4_MINUS_ONE - coords[3] - coords[3] / OP_SIZE) * OP_SIZE;
         coords[4] = COMB_12C4_MINUS_ONE * OP_SIZE + phase_coords[2];
     }

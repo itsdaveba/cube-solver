@@ -154,7 +154,7 @@ class Maneuver(str):
         "U R' F'"
         >>> A - B  # '-' subtraction, same as A B'
         "U R' F"
-        >>> 2 * A  # '*' multiplication, same as A A
+        >>> 2 * A  # '*' scalar multiplication, same as A A
         "U R' U R'"
         >>> A * B  # '*' conjugation, same as A B A'
         "U R' F' R U'"
@@ -202,7 +202,7 @@ class Maneuver(str):
     @overload
     def __getitem__(self, key: slice) -> Maneuver: ...
 
-    def __getitem__(self, key: int | slice) -> Move | Maneuver:
+    def __getitem__(self, key: int | slice) -> Move | Maneuver:  # type: ignore
         if not isinstance(key, (int, slice)):
             raise TypeError(f"Maneuver indices must be int or slice, not {type(key).__name__}")
         if isinstance(key, int):
@@ -212,7 +212,7 @@ class Maneuver(str):
                 raise IndexError("Maneuver index out of range")
         return Maneuver([*self.moves[key]])
 
-    def __iter__(self) -> Iterator[Move]:
+    def __iter__(self) -> Iterator[Move]:  # type: ignore
         for move in self.moves:
             yield move
 
@@ -242,14 +242,14 @@ class Maneuver(str):
         other = Maneuver(other)
         return other.__sub__(self)
 
-    def __mul__(self, other: int | str | list[Move]) -> Maneuver:
+    def __mul__(self, other: int | str | list[Move]) -> Maneuver:  # type: ignore
         if isinstance(other, int):
             return Maneuver([*self.moves] * other)
         if not isinstance(other, Maneuver):
             other = Maneuver(other)
         return self.__add__(other).__sub__(self)
 
-    def __rmul__(self, other: int | str | list[Move]) -> Maneuver:
+    def __rmul__(self, other: int | str | list[Move]) -> Maneuver:  # type: ignore
         if isinstance(other, int):
             return Maneuver([*self.moves] * other)
         other = Maneuver(other)
@@ -278,7 +278,7 @@ class Maneuver(str):
         return Maneuver([move.inverse for move in self.moves[::-1]])
 
     @classmethod
-    def random(cls, length: int = 25) -> Maneuver:  # TODO include other move types? Make truly random by reaching a random state
+    def random(cls, length: int = 25) -> Maneuver:
         """
         Generate a random maneuver.
 

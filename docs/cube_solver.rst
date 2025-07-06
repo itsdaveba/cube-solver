@@ -1,8 +1,8 @@
-cube\_solver package
+Cube Solver package
 ====================
 
 .. automodule:: cube_solver
-   :members: Cube, Maneuver, apply_move, apply_maneuver, BaseSolver
+   :members: Cube, Maneuver, BaseSolver
    :undoc-members:
    :show-inheritance:
 
@@ -10,7 +10,7 @@ Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
    cube_solver.cube
    cube_solver.solver
