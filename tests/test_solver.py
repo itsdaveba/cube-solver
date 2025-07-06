@@ -80,6 +80,128 @@ def depth_test(solver: BaseSolver, max_depth: int, num_cubes: int):  # TODO add 
         print()
 
 
+def test_utils():
+    # flatten and unflatten
+    cube = Cube()
+    coords = cube.get_coords(False, False)
+    flatten_coords = utils.flatten(coords)
+    assert utils.unflatten(flatten_coords, False, False) == coords
+    coords = cube.get_coords(False, True)
+    flatten_coords = utils.flatten(coords)
+    assert utils.unflatten(flatten_coords, False, True) == coords
+    coords = cube.get_coords(True, False)
+    flatten_coords = utils.flatten(coords)
+    assert utils.unflatten(flatten_coords, True, False) == coords
+    coords = cube.get_coords(True, True)
+    flatten_coords = utils.flatten(coords)
+    assert flatten_coords == (0, 0, 0, 1656, 0, 11856, 1656)
+    assert utils.unflatten(flatten_coords, True, True) == coords
+
+    # select
+    assert utils.select(flatten_coords, None) == flatten_coords
+    assert utils.select(flatten_coords, 5) == (11856,)
+    assert utils.select(flatten_coords, (3, 5, 6)) == (1656, 11856, 1656)
+
+    # load and save
+    with pytest.raises(TypeError, match=r"path must be str or Path, not NoneType"):
+        utils.save_tables(None, None)
+    with pytest.raises(TypeError, match=r"tables must be dict, not NoneType"):
+        utils.save_tables("tables/test.npz", None)
+    utils.save_tables("tables/test.npz", {"test": np.array([0])})
+    with pytest.raises(TypeError, match=r"path must be str or Path, not NoneType"):
+        utils.load_tables(None)
+    assert utils.load_tables("tables/test.npz") == {"test": [0]}
+
+    # get tables
+    with pytest.raises(TypeError, match=r"filename must be str, not NoneType"):
+        utils.get_tables(None, None, None, None)
+    with pytest.raises(TypeError, match=r"tables_defs must be list, not NoneType"):
+        utils.get_tables("", None, None, None)
+    with pytest.raises(TypeError, match=r"generate_table_fn must be Callable, not NoneType"):
+        utils.get_tables("", [None], None, None)
+    def fn(**kwargs):
+        return np.array([0])
+    with pytest.raises(TypeError, match=r"accumulate must be bool, not NoneType"):
+        utils.get_tables("", [None], fn, None)
+    with pytest.raises(TypeError, match=r"tables_defs elements must be TableDef, not NoneType"):
+        utils.get_tables("", [None], fn)
+    tables = utils.get_tables("test", [PruningDef("test")], fn)
+    assert tables == {"test": [0]}
+    tables = utils.get_tables("test", [PruningDef("test"), PruningDef("TEST")], fn)
+    assert tables == {"test": [0], "TEST": [0]}
+    tables = utils.get_tables("test", [PruningDef("TEST")], fn, True)
+    assert tables == {"test": [0], "TEST": [0]}
+    tables = utils.get_tables("test", [PruningDef("TEST")], fn)
+    assert tables == {"TEST": [0]}
+    tables = utils.get_tables("test", [PruningDef("TEST")], fn)
+    assert tables == {"TEST": [0]}
+    os.remove("tables/test")
+    os.remove("tables/test.npz")
+
+    # generate transition table
+    class TestSolver(BaseSolver):
+        partial_corner_perm = True
+        partial_edge_perm = False
+        @staticmethod
+        def get_phase_coords(coords: FlattenCoords, phase: int) -> FlattenCoords:  # TODO change name
+            return coords
+        @staticmethod  # TODO check coords type and pahse_coords type
+        def get_coords_from_phase_coords(phase_coords: FlattenCoords, phase: int) -> FlattenCoords:  # TODO change name
+            return phase_coords
+    with pytest.raises(ValueError, match=r"size must be <= 65536 \(got 239500800\)"):
+        solver = TestSolver()
+    class TestSolver(BaseSolver):
+        partial_corner_perm = True
+        partial_edge_perm = True
+        pruning_defs = [[PruningDef("eo", indexes=1)]]
+        @staticmethod
+        def get_phase_coords(coords: FlattenCoords, phase: int) -> FlattenCoords:  # TODO change name
+            return coords
+        @staticmethod  # TODO check coords type and pahse_coords type
+        def get_coords_from_phase_coords(phase_coords: FlattenCoords, phase: int) -> FlattenCoords:  # TODO change name
+            return phase_coords
+    solver = TestSolver()
+    with pytest.raises(TypeError, match=r"phase must be int, not NoneType"):
+        utils.generate_transition_table(solver, None, None)
+    with pytest.raises(TypeError, match=r"index must be int, not NoneType"):
+        utils.generate_transition_table(solver, -2, None)
+    with pytest.raises(ValueError, match=r"phase must be >= -1 and < 1 \(got -2\)"):
+        utils.generate_transition_table(solver, -2, -1)
+    with pytest.raises(ValueError, match=r"phase must be >= -1 and < 1 \(got 1\)"):
+        utils.generate_transition_table(solver, 1, -1)
+    with pytest.raises(ValueError, match=r"index must be >= 0 and < 4 \(got -1\)"):
+        utils.generate_transition_table(solver, -1, -1)
+    with pytest.raises(ValueError, match=r"index must be >= 0 and < 4 \(got 4\)"):
+        utils.generate_transition_table(solver, -1, 4)
+    with pytest.raises(ValueError, match=r"missing required keyword argument: 'name'"):
+        utils.generate_transition_table(solver, -1, 2)
+    assert np.all(utils.generate_transition_table(solver, -1, 2, name="pcp") == solver.transition_tables["pcp"])
+    assert np.all(utils.generate_transition_table(solver, 0, 1) == solver.transition_tables["eo"])
+
+    # generate pruning table
+    with pytest.raises(TypeError, match=r"phase must be int, not NoneType"):
+        utils.generate_pruning_table(solver, None, "")
+    with pytest.raises(TypeError, match=r"indexes must be int, tuple, or None, not str"):
+        utils.generate_pruning_table(solver, -1, "")
+    with pytest.raises(ValueError, match=r"phase must be >= 0 and < 1 \(got -1\)"):
+        utils.generate_pruning_table(solver, -1, (None,))
+    with pytest.raises(ValueError, match=r"phase must be >= 0 and < 1 \(got 1\)"):
+        utils.generate_pruning_table(solver, 1, (None,))
+    with pytest.raises(TypeError, match=r"indexes elements must be int, not NoneType"):
+        utils.generate_pruning_table(solver, 0, (None,))
+    with pytest.raises(ValueError, match=r"indexes elements must be >= 0 and < 4 \(got \(-1,\)\)"):
+        utils.generate_pruning_table(solver, 0, (-1,))
+    with pytest.raises(ValueError, match=r"indexes elements must be >= 0 and < 4 \(got \(4,\)\)"):
+        utils.generate_pruning_table(solver, 0, (4,))
+    with pytest.raises(ValueError, match=r"indexes must be >= 0 and < 4 \(got -1\)"):
+        utils.generate_pruning_table(solver, 0, -1)
+    with pytest.raises(ValueError, match=r"indexes must be >= 0 and < 4 \(got 4\)"):
+        utils.generate_pruning_table(solver, 0, 4)
+    assert np.all(utils.generate_pruning_table(solver, 0, (1,)) == solver.pruning_tables["eo"])
+    assert np.all(utils.generate_pruning_table(solver, 0, 1) == solver.pruning_tables["eo"])
+    os.remove("tables/pruning_testsolver.npz")
+
+
 def test_solver():
     cube = Cube()
     cube.set_coord("pep", 0)
