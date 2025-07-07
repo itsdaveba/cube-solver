@@ -36,7 +36,7 @@ To install **Cube Solver**, run the following command in your terminal:
 
 .. code-block:: console
 
-    pip install cube-solver
+    $ pip install cube-solver
 
 This is the preferred method to install **Cube Solver**, as it will always install the most recent stable release.
 
@@ -207,7 +207,7 @@ The order of the string representation is::
     Cube: BWGOWYRRRWBGWOBYYWYGBYGWRWOWOWRRRGRYOBOYBGRGOGOYGYBBOB
     INFO: Solution: U2 R' B U2 L' F' U F2 L R2 U L2 U F2 B2 U2 L2 D L2 B2 D (21)
     INFO: Solution: U B' L2 F D' R L F' R U' B' U' B2 D2 R2 B2 D F2 U2 F2 (20)
-    Suboptimal: U B' L2 F D' R L F' R U' B' U' B2 D2 R2 B2 D F2 U2 F2 (20)              # stop search after 10 seconds
+    Suboptimal: U B' L2 F D' R L F' R U' B' U' B2 D2 R2 B2 D F2 U2 F2 (20)
 
 To use **Cube Solver** in a Python project:
 
