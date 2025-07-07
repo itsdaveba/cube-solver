@@ -85,7 +85,7 @@ class BaseSolver(ABC):
         """Transition tables used to compute cube state transitions."""
         if self.use_transition_tables:
             try:
-                from .. import csolver
+                from .. import csolver  # type: ignore
                 self.transition_tables = utils.get_tables("transition.npz", self.transition_defs,
                                                           csolver.generate_transition_table, accumulate=True)
             except Exception:  # pragma: no cover
@@ -103,7 +103,7 @@ class BaseSolver(ABC):
             if pruning_defs:
                 pruning_filename = f"pruning_{self.__class__.__name__.lower()}.npz"
                 try:
-                    from .. import csolver
+                    from .. import csolver  # type: ignore
                     self.pruning_tables = utils.get_tables(pruning_filename, pruning_defs, csolver.generate_pruning_table)
                 except Exception:
                     self.pruning_tables = utils.get_tables(pruning_filename, pruning_defs, utils.generate_pruning_table)
@@ -292,8 +292,9 @@ class BaseSolver(ABC):
         cube.apply_move(move)
         return self.get_coords(cube)
 
+    # TODO cube could be None for perf testing?
     def solve(self, cube: Cube, max_length: int | None = None, optimal: bool = False,
-              timeout: int | None = None, verbose: int = 0) -> Maneuver | list[Maneuver] | None:  # TODO cube could be None for perf testing?
+              timeout: int | None = None, verbose: int = 0) -> Maneuver | list[Maneuver] | None:
         """
         Solve the cube position.
 

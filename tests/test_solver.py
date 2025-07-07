@@ -307,7 +307,6 @@ def test_thistlethwaite():
 
 
 def test_kociemba():
-    Kociemba()
     num_cubes = 100
 
     solver = Kociemba(True)

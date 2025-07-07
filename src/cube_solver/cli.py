@@ -92,7 +92,8 @@ def solve(cube: Annotated[str, typer.Argument(help="Cube string representation."
     """
     solver: BaseSolver = ALGS[algorithm]()
     if not cube and not scramble and not random:
-        console.print("Must provide either the 'cube' argument, the '--scramble' / '-s' option, or the '--random' / '-r' option.")
+        msg = "Must provide either the 'cube' argument, the '--scramble' / '-s' option, or the '--random' / '-r' option."
+        console.print(msg)
         raise typer.Exit()
     if cube and scramble:
         console.print("The '--scramble' / '-s' option cannot be used with the 'cube' argument.")
