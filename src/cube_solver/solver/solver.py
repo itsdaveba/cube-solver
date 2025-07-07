@@ -24,6 +24,7 @@ for cubie in NEXT_MOVES[Move.NONE]:
 # TODO transition talbes per phase
 # TODO compress transition tables with symettry or mod 3
 # TODO finish docs and add examples where necessary
+# TODO test algorithm with two phases with all face moves
 class BaseSolver(ABC):
     num_phases: int = 1
     """Number of phases of the solving algorithm."""
@@ -137,55 +138,6 @@ class BaseSolver(ABC):
         """Solver string representation."""
         return self.__class__.__name__
 
-    def get_coords(self, cube: Cube) -> CoordsType:
-        """
-        Get cube coordinates.
-
-        Get the `corner orientation`, `edge orientation`,
-        `(partial) corner permutation` and `(partial) edge permutation` coordinates,
-        according to :attr:`partial_corner_perm` and :attr:`partial_edge_perm`.
-
-        Parameters
-        ----------
-        cube : Cube
-            Cube object.
-
-        Returns
-        -------
-        coords : tuple of (int or tuple of int)
-            Cube coordinates in the following order:
-            `corner orientation`, `edge orientation`, `(partial) corner permutation`, `(partial) edge permutation`,
-            according to :attr:`partial_corner_perm` and :attr:`partial_edge_perm`.
-
-        See Also
-        --------
-        cube_solver.Cube.get_coords
-        """
-        return cube.get_coords(self.partial_corner_perm, self.partial_edge_perm)
-
-    def set_coords(self, cube: Cube, coords: CoordsType):
-        """
-        Set cube coordinates.
-
-        Set the `corner orientation`, `edge orientation`,
-        `(partial) corner permutation` and `(partial) edge permutation` coordinates,
-        according to :attr:`partial_corner_perm` and :attr:`partial_edge_perm`.
-
-        Parameters
-        ----------
-        cube : Cube
-            Cube object.
-        coords : tuple of (int or tuple of int)
-            Cube coordinates in the following order:
-            `corner orientation`, `edge orientation`, `(partial) corner permutation`, `(partial) edge permutation`,
-            according to :attr:`partial_corner_perm` and :attr:`partial_edge_perm`.
-
-        See Also
-        --------
-        cube_solver.Cube.set_coords
-        """
-        cube.set_coords(coords, self.partial_corner_perm, self.partial_edge_perm)
-
     @staticmethod
     @abstractmethod
     def phase_coords(coords: FlattenCoords, phase: int) -> FlattenCoords:
@@ -210,9 +162,76 @@ class BaseSolver(ABC):
         the ``coords`` parameter is the flattened version of the output from the :meth:`get_coords` method.
         """
 
+    def get_coords(self, cube: Cube) -> CoordsType:
+        """
+        Get cube coordinates.
+
+        Get the `corner orientation`, `edge orientation`,
+        `(partial) corner permutation` and `(partial) edge permutation` coordinates,
+        according to :attr:`partial_corner_perm` and :attr:`partial_edge_perm`.
+
+        Parameters
+        ----------
+        cube : Cube
+            Cube object.
+
+        Returns
+        -------
+        coords : tuple of (int or tuple of int)
+            Cube coordinates in the following order:
+            `corner orientation`, `edge orientation`, `(partial) corner permutation`, `(partial) edge permutation`,
+            according to :attr:`partial_corner_perm` and :attr:`partial_edge_perm`.
+
+        See Also
+        --------
+        cube_solver.Cube.get_coords
+
+        Examples
+        --------
+        >>> from cube_solver import Cube, Kociemba
+        >>> solver = Kociemba()
+        >>> cube = Cube("U F2 R2")
+        >>> solver.get_coords(cube)
+        (0, 0, 26939, (1007, 11859, 673))
+        """
+        return cube.get_coords(self.partial_corner_perm, self.partial_edge_perm)
+
+    def set_coords(self, cube: Cube, coords: CoordsType):
+        """
+        Set cube coordinates.
+
+        Set the `corner orientation`, `edge orientation`,
+        `(partial) corner permutation` and `(partial) edge permutation` coordinates,
+        according to :attr:`partial_corner_perm` and :attr:`partial_edge_perm`.
+
+        Parameters
+        ----------
+        cube : Cube
+            Cube object.
+        coords : tuple of (int or tuple of int)
+            Cube coordinates in the following order:
+            `corner orientation`, `edge orientation`, `(partial) corner permutation`, `(partial) edge permutation`,
+            according to :attr:`partial_corner_perm` and :attr:`partial_edge_perm`.
+
+        See Also
+        --------
+        cube_solver.Cube.set_coords
+
+        Examples
+        --------
+        >>> from cube_solver import Cube, Kociemba
+        >>> solver = Kociemba()
+        >>> cube = Cube(random_state=True)
+        >>> coords = (0, 0, 26939, (1007, 11859, 673))
+        >>> solver.set_coords(cube, coords)
+        >>> solver.get_coords(cube)
+        (0, 0, 26939, (1007, 11859, 673))
+        """
+        cube.set_coords(coords, self.partial_corner_perm, self.partial_edge_perm)
+
     def is_solved(self, position: Cube | CoordsType, phase: int) -> bool:
         """
-        Whether the position is solved at the specified phase.
+        Whether the cube position is solved at the specified phase.
 
         Parameters
         ----------
@@ -225,6 +244,16 @@ class BaseSolver(ABC):
         -------
         bool
             ``True`` if the cube position is solved, ``False`` otherwise.
+
+        Examples
+        --------
+        >>> from cube_solver import Cube, Kociemba
+        >>> solver = Kociemba()
+        >>> cube = Cube("U F2 R2")
+        >>> solver.is_solved(cube, phase=0)
+        True
+        >>> solver.is_solved(cube, phase=1)
+        False
         """
         if isinstance(position, Cube):
             position = self.get_coords(position)
@@ -250,6 +279,16 @@ class BaseSolver(ABC):
         -------
         bool
             ``True`` if the search tree should be pruned, ``False`` otherwise.
+
+        Examples
+        --------
+        >>> from cube_solver import Cube, Kociemba
+        >>> solver = Kociemba()
+        >>> cube = Cube("U F2 R2")
+        >>> solver.prune(cube, phase=1, depth=2)
+        True
+        >>> solver.prune(cube, phase=1, depth=3)
+        False
         """
         if self.pruning_tables:
             if isinstance(position, Cube):
@@ -281,6 +320,17 @@ class BaseSolver(ABC):
         -------
         next_position : Cube or tuple of (int or tuple of int)
             Cube object or cube coordinates with the move applied.
+
+        Examples
+        --------
+        >>> from cube_solver import Cube, Move, Kociemba
+        >>> solver = Kociemba()
+        >>> cube = Cube("R2")
+        >>> coords = solver.get_coords(cube)
+        >>> solver.next_position(cube, Move.R2)
+        WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY
+        >>> solver.next_position(coords, Move.R2)
+        (0, 0, 0, (0, 11856, 1656))
         """
         if isinstance(position, Cube):
             return apply_move(position, move)
@@ -328,8 +378,8 @@ class BaseSolver(ABC):
         Examples
         --------
         >>> from cube_solver import Cube, Kociemba
-        >>> cube = Cube("L2 U R D' B2 D2 F B D")
         >>> solver = Kociemba()
+        >>> cube = Cube("L2 U R D' B2 D2 F B D")
         >>> solver.solve(cube)
         "D' F' B' U2 F2 D L' F2 D2 L2 F2 U D L2 B2 D L2"
         >>> solver.solve(cube, optimal=True, verbose=2)
@@ -377,7 +427,7 @@ class BaseSolver(ABC):
 
         solution = None
         position = self.get_coords(cube) if self.use_transition_tables else cube
-        if self.phase_search(position):
+        if self._phase_search(position):
             solution = self._solution
         if self._optimal:
             solution = self._best_solution
@@ -388,8 +438,7 @@ class BaseSolver(ABC):
         return None
 
     # TODO make iterative version and compare
-    # TODO test starting with phase > 0
-    def phase_search(self, position: Cube | CoordsType, phase: int = 0, current_length: int = 0) -> bool:
+    def _phase_search(self, position: Cube | CoordsType, phase: int = 0, current_length: int = 0) -> bool:
         """
         Solve the cube position from the specified phase.
 
@@ -398,7 +447,7 @@ class BaseSolver(ABC):
         position : Cube or tuple of (int or tuple of int)
             Cube object or cube coordinates to search.
         phase : int, optional
-            Phase to solve from. Default is ``0``.
+            Phase to solve from (0-indexed). Default is ``0``.
         current_length : int, optional
             Current solution length. Default is ``0``.
 
@@ -423,7 +472,7 @@ class BaseSolver(ABC):
         depth = 0
         while True if self._max_length is None else current_length + depth <= self._max_length:
             self._solution[phase].append(Move.NONE)
-            if self.search(position, phase, depth, current_length):
+            if self._search(position, phase, depth, current_length):
                 return True
             elif self.terminated or (self._optimal and self._return_phase):
                 self._return_phase = False
@@ -433,7 +482,7 @@ class BaseSolver(ABC):
         self._solution[phase] = []
         return False
 
-    def search(self, position: Cube | CoordsType, phase: int, depth: int, current_length: int) -> bool:
+    def _search(self, position: Cube | CoordsType, phase: int, depth: int, current_length: int) -> bool:
         """
         Solve the cube position from the specified phase at the specified depth.
 
@@ -442,7 +491,7 @@ class BaseSolver(ABC):
         position : Cube or tuple of (int or tuple of int)
             Cube object or cube coordinates to search.
         phase : int
-            Phase to solve from.
+            Phase to solve from (0-indexed).
         depth : int
             Current search depth.
         current_length : int
@@ -461,12 +510,12 @@ class BaseSolver(ABC):
             if phase == self.num_phases - 1 or (self._solution[phase][0] in self.final_moves[phase]):
                 self.checks[phase] += 1
                 if self.is_solved(position, phase):
-                    return self.phase_search(position, phase + 1, current_length)
+                    return self._phase_search(position, phase + 1, current_length)
             return False
         if not self.prune(position, phase, depth):
             for move in self.next_moves[phase][self._solution[phase][depth]]:
                 self._solution[phase][depth - 1] = move
-                if self.search(self.next_position(position, move), phase, depth - 1, current_length + 1):
+                if self._search(self.next_position(position, move), phase, depth - 1, current_length + 1):
                     return True
                 elif self.terminated or (self._optimal and self._return_phase):
                     return False

@@ -1,4 +1,28 @@
-"""Kociemba solver."""
+"""
+Kociemba solver.
+
+Implementation of the two-phase algorithm proposed by Herbert Kociemba.
+
+For more information, see: https://kociemba.org/cube.htm
+
+Examples
+--------
+>>> from cube_solver import Cube, Kociemba
+>>> solver = Kociemba()
+>>> cube = Cube("L2 U R D' B2 D2 F B D")
+>>> solver.solve(cube)
+"D' F' B' U2 F2 D L' F2 D2 L2 F2 U D L2 B2 D L2"
+
+Solution divided by phases.
+
+>>> solver.solve(cube, verbose=2)
+["D' F' B' U2 F2 D L", 'L2 F2 D2 L2 F2 U D L2 B2 D L2']
+
+Find the optimal solution.
+
+>>> solver.solve(cube, optimal=True)
+"D' F' B' D2 B2 D R' U' L2"
+"""
 from ..cube.enums import Move
 from ..cube.defs import CORNER_ORIENTATION_SIZE as CO_SIZE
 from ..cube.defs import EDGE_ORIENTATION_SIZE as EO_SIZE

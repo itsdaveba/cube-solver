@@ -1,4 +1,23 @@
-"""Thistlethwaite solver."""
+"""
+Thistlethwaite solver.
+
+Implementation of the four-phase algorithm proposed by Morwen B. Thistlethwaite.
+
+For more information, see: https://www.jaapsch.net/puzzles/thistle.htm
+
+Examples
+--------
+>>> from cube_solver import Cube, Korf
+>>> solver = Thistlethwaite()
+>>> cube = Cube("L2 U R D' B2 D2 F B D")
+>>> solver.solve(cube)
+"D F B U2 B2 L2 U L' D F2 B2 R2 F2 L2 D2 F2 B2 L2 F2"
+
+Solution divided by phases.
+
+>>> solver.solve(cube, verbose=2)
+['D F B', 'U2 B2 L2 U L', 'L2 D', 'F2 B2 R2 F2 L2 D2 F2 B2 L2 F2']
+"""
 import numpy as np
 
 from ..cube.enums import Move

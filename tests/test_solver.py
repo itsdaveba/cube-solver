@@ -151,7 +151,7 @@ def test_utils():
         utils.generate_pruning_table(solver, None, None, "")
     with pytest.raises(TypeError, match=r"shape must be int or tuple, not NoneType"):
         utils.generate_pruning_table(solver, -1, None, "")
-    with pytest.raises(TypeError, match=r"indexes must be int, tuple, or None, not str"):
+    with pytest.raises(TypeError, match=r"indexes must be int or tuple or None, not str"):
         utils.generate_pruning_table(solver, -1, (None,), "")
     with pytest.raises(ValueError, match=r"phase must be >= 0 and < 1 \(got -1\)"):
         utils.generate_pruning_table(solver, -1, (None,), (None,))

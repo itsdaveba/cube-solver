@@ -31,6 +31,17 @@ def flatten(coords: CoordsType) -> FlattenCoords:
     -------
     flatten_coords : tuple of int
         Flattened cube coordinates.
+
+    Examples
+    --------
+    >>> from cube_solver import Cube
+    >>> from cube_solver.solver import utils
+    >>> cube = Cube()
+    >>> coords = cube.get_coords(partial_corner_perm=True, partial_edge_perm=True)
+    >>> coords
+    (0, 0, (0, 1656), (0, 11856, 1656))
+    >>> utils.flatten(coords)
+    (0, 0, 0, 1656, 0, 11856, 1656)
     """
     flatten_coords = ()
     for coord in coords:
@@ -54,6 +65,20 @@ def select(coords: FlattenCoords, indexes: int | tuple[int, ...] | None) -> Flat
     -------
     selected_coords : tuple of int
         Selected coordinates.
+
+    Examples
+    --------
+    >>> from cube_solver import Cube
+    >>> from cube_solver.solver import utils
+    >>> cube = Cube()
+    >>> coords = cube.get_coords(partial_corner_perm=True, partial_edge_perm=True)
+    >>> flatten_coords = utils.flatten(coords)
+    >>> utils.select(flatten_coords, None)
+    (0, 0, 0, 1656, 0, 11856, 1656)
+    >>> utils.select(flatten_coords, 5)
+    (11856,)
+    >>> utils.select(flatten_coords, (3, 5, 6))
+    (1656, 11856, 1656)
     """
     if indexes is None:
         return coords
@@ -126,7 +151,7 @@ def get_tables(filename: str, tables_defs: Sequence[TableDef],
     generate_table_fn : Callable
         Function to generate the table.
         It must accept the TableDef keyword arguments.
-    accumulate : bool, optional.
+    accumulate : bool, optional
         Whether to keep the tables not included in ``tables_defs``.
         Default is ``False``.
 
@@ -174,25 +199,19 @@ def get_tables(filename: str, tables_defs: Sequence[TableDef],
 
 def generate_transition_table(coord_name: str, coord_size: int) -> np.ndarray:
     """
-    Generate the phase coordinate transition table.
+    Generate the cube coordinate transition table.
 
     Parameters
     ----------
-    solver : BaseSolver
-        Solver object.
-    phase : int
-        Solver phase (0-indexed).
-        If ``-1``, use the cube coordinates instead of the phase coordinates.
-    index : int
-        Index of the phase coordinates to use for the transition table.
-    name : str or None, optional
-        Cube coordinate name if ``phase`` is ``-1``, ignored otherwise.
-        Default is ``None``.
+    coord_name : str
+        Cube coordinate name.
+    coord_size : int
+        Cube coordinate size.
 
     Returns
     -------
     transition_table : ndarray
-        Phase coordinate transition table.
+        Cube coordinate transition table.
     """
     if not isinstance(coord_name, str):
         raise TypeError(f"coord_name must be str, not {type(coord_name).__name__}")
@@ -237,7 +256,7 @@ def generate_pruning_table(solver: BaseSolver, phase: int, shape: int | tuple[in
     if not isinstance(shape, (int, tuple)):
         raise TypeError(f"shape must be int or tuple, not {type(shape).__name__}")
     if indexes is not None and not isinstance(indexes, (int, tuple)):
-        raise TypeError(f"indexes must be int, tuple, or None, not {type(indexes).__name__}")
+        raise TypeError(f"indexes must be int or tuple or None, not {type(indexes).__name__}")
     if phase < 0 or phase >= solver.num_phases:
         raise ValueError(f"phase must be >= 0 and < {solver.num_phases} (got {phase})")
     if isinstance(shape, tuple):

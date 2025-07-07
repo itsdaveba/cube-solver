@@ -1,7 +1,15 @@
 """
 DummySolver solver.
 
-Simple solver that does not use pruning tables.
+Implementation of a simple one-phase algorithm that does not use pruning tables.
+
+Examples
+--------
+>>> from cube_solver import Cube, DummySolver
+>>> solver = DummySolver()
+>>> cube = Cube("L2 U R D'")
+>>> solver.solve(cube)
+"D R' U' L2"
 """
 from .defs import FlattenCoords
 from .solver import BaseSolver
