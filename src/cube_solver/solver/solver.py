@@ -30,17 +30,20 @@ class BaseSolver(ABC):
     """Whether the solving algorithm uses the normal or the partial corner permutation."""
     partial_edge_perm: bool
     """Whether the solving algorithm uses the normal or the partial edge permutation."""
+    phase_moves: list[list[Move]]
+    """Available moves for each phase."""
     transition_defs: list[TransitionDef]
     """Transition table definitions for each phase."""
     pruning_defs: list[list[PruningDef]]
     """Pruning table definitions for each phase."""
-    phase_moves: list[list[Move]]
-    """Available moves for each phase."""
 
     def __init_subclass__(cls):
         for attr in ("partial_corner_perm", "partial_edge_perm"):
             if not hasattr(cls, attr):
                 raise AttributeError(f"'{cls.__name__}' class must define class attribute '{attr}'")
+
+        if not hasattr(cls, "phase_moves"):
+            cls.phase_moves = [[*Move.face_moves()] * cls.num_phases]
 
         cls.transition_defs = [
             TransitionDef(coord_name="co", coord_size=CORNER_ORIENTATION_SIZE),
@@ -52,9 +55,6 @@ class BaseSolver(ABC):
 
         if not hasattr(cls, "pruning_defs"):
             cls.pruning_defs = [[] for _ in range(cls.num_phases)]
-
-        if not hasattr(cls, "phase_moves"):
-            cls.phase_moves = [[*Move.face_moves()] * cls.num_phases]
 
     def __init__(self, use_transition_tables: bool = True, use_pruning_tables: bool = True):
         """
@@ -79,6 +79,18 @@ class BaseSolver(ABC):
         init_coords = utils.flatten(self.get_coords(Cube()))
         self.solved_coords: list[FlattenCoords] = [self.phase_coords(init_coords, phase) for phase in range(self.num_phases)]
         """Solved flatten coordinates for each phase."""
+
+        self.next_moves: list[dict[Move, list[Move]]] = []
+        """Allowed next moves based on the previous move, for each phase."""
+        for phase_moves in self.phase_moves:
+            next_moves = {Move.NONE: phase_moves}
+            next_moves.update({move: [mv for mv in NEXT_MOVES[move] if mv in phase_moves] for move in phase_moves})
+            self.next_moves.append(next_moves)
+
+        self.final_moves: list[set[Move]] = []
+        """Final allowed moves for each phase, except the last."""
+        for i in range(self.num_phases - 1):
+            self.final_moves.append({Move.NONE} | set(self.phase_moves[i]) - set(self.phase_moves[i+1]))
 
         self.use_transition_tables: bool = use_transition_tables
         """Whether to use transition tables for cube state transitions."""
@@ -110,17 +122,6 @@ class BaseSolver(ABC):
                     self.pruning_tables = utils.get_tables(pruning_filename, pruning_defs, csolver.generate_pruning_table)
                 except Exception:
                     self.pruning_tables = utils.get_tables(pruning_filename, pruning_defs, utils.generate_pruning_table)
-        self.final_moves: list[set[Move]] = []
-        """Final allowed moves for each phase except the last."""
-        for i in range(self.num_phases - 1):
-            self.final_moves.append({Move.NONE} | set(self.phase_moves[i]) - set(self.phase_moves[i+1]))
-
-        self.next_moves: list[dict[Move, list[Move]]] = []
-        """Allowed next moves based on the previous move, for each phase."""
-        for phase_moves in self.phase_moves:
-            next_moves = {Move.NONE: phase_moves}
-            next_moves.update({move: [mv for mv in NEXT_MOVES[move] if mv in phase_moves] for move in phase_moves})
-            self.next_moves.append(next_moves)
 
         self.nodes: list[int] = [0] * self.num_phases
         """Number of visited nodes during a solve for each phase."""

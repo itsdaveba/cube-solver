@@ -22,18 +22,18 @@ PHASE2_MOVES = [move for move in PHASE1_MOVES if move not in RESTRICT_MOVES]
 RESTRICT_MOVES = [Move.U1, Move.U3, Move.D1, Move.D3]
 PHASE3_MOVES = [move for move in PHASE2_MOVES if move not in RESTRICT_MOVES]
 
-NUM_THREADS = 6  # TODO double check names
-THREAD_PERM_GROUP = [1, 0, 4, 5, 2, 3]
-THREAD_SELECTOR = np.full((NUM_THREADS, NUM_THREADS), NONE, dtype=int)
+NUM_THREADS = 6
+thread_perm_group = [1, 0, 4, 5, 2, 3]
+thread_selector = np.full((NUM_THREADS, NUM_THREADS), NONE, dtype=int)
 filter = np.eye(NUM_THREADS, dtype=bool)
 for i in range(NUM_THREADS):
-    THREAD_SELECTOR[filter] = i
-    filter = filter[THREAD_PERM_GROUP] if i % 2 == 0 else np.rot90(filter, 2)
+    thread_selector[filter] = i
+    filter = filter[thread_perm_group] if i % 2 == 0 else np.rot90(filter, 2)
 CORNER_THREAD = np.full((NUM_THREADS, NUM_THREADS), NONE, dtype=int)
-for i, y in enumerate(THREAD_SELECTOR):
+for i, y in enumerate(thread_selector):
     CORNER_THREAD[y, range(NUM_THREADS)] = i
-CORNER_THREAD = np.vstack((CORNER_THREAD, CORNER_THREAD[THREAD_PERM_GROUP]))
-CORNER_THREAD = np.hstack((CORNER_THREAD, CORNER_THREAD[:, THREAD_PERM_GROUP]))
+CORNER_THREAD = np.vstack((CORNER_THREAD, CORNER_THREAD[thread_perm_group]))
+CORNER_THREAD = np.hstack((CORNER_THREAD, CORNER_THREAD[:, thread_perm_group]))
 CORNER_THREAD = np.vstack((CORNER_THREAD, np.flipud(CORNER_THREAD)))
 CORNER_THREAD = np.hstack((CORNER_THREAD, np.fliplr(CORNER_THREAD)))
 
@@ -42,11 +42,11 @@ class Thistlethwaite(BaseSolver):
     num_phases = 4
     partial_corner_perm = True
     partial_edge_perm = True
+    phase_moves = [PHASE0_MOVES, PHASE1_MOVES, PHASE2_MOVES, PHASE3_MOVES]
     pruning_defs = [
         [PruningDef(name="eo", shape=EO_SIZE)], [PruningDef(name="co_eec", shape=(CO_SIZE, EEC_SIZE))],
         [PruningDef(name="cc_ct_msec", shape=(CC_SIZE, NUM_THREADS, MSEC_SIZE))],
         [PruningDef(name="cop_eop", shape=(OP_SIZE, OP_SIZE // NUM_THREADS, OP_SIZE, OP_SIZE, OP_SIZE // 2))]]
-    phase_moves = [PHASE0_MOVES, PHASE1_MOVES, PHASE2_MOVES, PHASE3_MOVES]  # TODO move before pruning_defs in solver.py?
 
     @staticmethod
     def phase_coords(coords: FlattenCoords, phase: int) -> FlattenCoords:
