@@ -23,8 +23,9 @@ for cubie in NEXT_MOVES[Move.NONE]:
 
 # TODO transition talbes per phase
 # TODO compress transition tables with symettry or mod 3
+# TODO finish docs and add examples where necessary
 class BaseSolver(ABC):
-    num_phases: int = 1  # TODO add tests for class attributes?
+    num_phases: int = 1
     """Number of phases of the solving algorithm."""
     partial_corner_perm: bool
     """Whether the solving algorithm uses the normal or the partial corner permutation."""
@@ -209,7 +210,6 @@ class BaseSolver(ABC):
         the ``coords`` parameter is the flattened version of the output from the :meth:`get_coords` method.
         """
 
-    # TODO add examples?
     def is_solved(self, position: Cube | CoordsType, phase: int) -> bool:
         """
         Whether the position is solved at the specified phase.
@@ -295,7 +295,6 @@ class BaseSolver(ABC):
         cube.apply_move(move)
         return self.get_coords(cube)
 
-    # TODO cube could be None for perf testing?
     def solve(self, cube: Cube, max_length: int | None = None, optimal: bool = False,
               timeout: int | None = None, verbose: int = 0) -> Maneuver | list[Maneuver] | None:
         """
@@ -329,12 +328,12 @@ class BaseSolver(ABC):
         Examples
         --------
         >>> from cube_solver import Cube, Kociemba
-        >>> cube = Cube("U F R")  # TODO add a random cube? add the one used in usage?
+        >>> cube = Cube("L2 U R D' B2 D2 F B D")
         >>> solver = Kociemba()
         >>> solver.solve(cube)
-        "R' F' U'"
+        "D' F' B' U2 F2 D L' F2 D2 L2 F2 U D L2 B2 D L2"
         >>> solver.solve(cube, optimal=True, verbose=2)
-        ["R' F'", "U'"]
+        ["D' F' B' D2 B2 D R'", "U' L2"]
         """
         if not isinstance(cube, Cube):
             raise TypeError(f"cube must be Cube, not {type(cube).__name__}")

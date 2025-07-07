@@ -1,5 +1,6 @@
 """Console script for cube_solver."""
 # TODO test cli
+# TODO typer color
 from enum import Enum
 from cube_solver import Cube, Maneuver, BaseSolver, Thistlethwaite, Kociemba
 
@@ -24,7 +25,8 @@ ALGS = {
 
 
 @app.command()
-def maneuver(moves: Annotated[str, typer.Argument(help="Sequence of moves.")] = ""):  # TODO add from cube repr
+def maneuver(moves: Annotated[str, typer.Argument(help="Sequence of moves.")] = "",
+             cube: Annotated[str, typer.Option("--cube", "-c", help="Starting cube string representation.")] = ""):
     """
     Apply a sequence of moves to a cube.
 
@@ -34,9 +36,10 @@ def maneuver(moves: Annotated[str, typer.Argument(help="Sequence of moves.")] = 
     \n\n* Wide moves (e.g. Uw, Fw2, Rw' or u, f2, r').
     \n\n* Rotations (e.g. x, y2, z').
     """
-    cube = Cube(moves)
-    console.print(cube)
-    console.print(f"Cube: {repr(cube)}")
+    _cube = Cube(repr=cube) if cube else Cube()
+    _cube.apply_maneuver(moves)
+    console.print(_cube)
+    console.print(f"Cube: {repr(_cube)}")
 
 
 @app.command()
@@ -107,7 +110,7 @@ def solve(cube: Annotated[str, typer.Argument(help="Cube string representation."
     _cube = Cube(repr=cube) if cube else Cube(scramble) if scramble else Cube(random_state=True)
     if verbose:
         console.print(_cube)
-        console.print(f"Cube: {repr(_cube)}")  # TODO typer color
+        console.print(f"Cube: {repr(_cube)}")
         solution = solver.solve(_cube, length, optimal, timeout, verbose)
         if solution is not None:
             length = len(solution) if isinstance(solution, Maneuver) else sum(len(sol) for sol in solution)

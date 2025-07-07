@@ -19,20 +19,17 @@ class TransitionDef:
 
     Parameters
     ----------
-    name : str
-        Table name.
-    solver : BaseSolver
-        Solver object.
-    phase : int
-        Solver phase (0-indexed).
-    index : int
-        Index of the phase coordinates to use for the transition table.
+    coord_name : str
+        Cube coordinate name.
+    coord_size : int
+        Cube coordinate size.
     """
     coord_name: str  #: :meta private:
     coord_size: int  #: :meta private:
 
-    @property  # TODO document
+    @property
     def name(self) -> str:
+        """Transition table name."""
         return self.coord_name
 
 
@@ -44,14 +41,16 @@ class PruningDef:
     Parameters
     ----------
     name : str
-        Table name.
+        Pruning table name.
+    shape : int or tuple of int
+        Pruning table shape.
+    indexes : int or tuple of int or None, optional
+        Index or indexes of the phase coordinates to use for the pruning table.
+        If ``None``, use all the phase coordinates.
     solver : BaseSolver or None, optional
         Solver object. Default is ``None``.
     phase : int or None, optional
         Solver phase (0-indexed). Default is ``None``.
-    indexes : int or tuple of int or None, optional
-        Index or indexes of the phase coordinates to use for the pruning table.
-        If ``None``, use all the phase coordinates.
     """
     name: str  #: :meta private:
     shape: int | tuple[int, ...]

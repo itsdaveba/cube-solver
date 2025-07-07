@@ -137,7 +137,7 @@ def test_enums():
     assert len([*Move.rotations()]) == 9
 
 
-def test_utils(response):
+def test_utils():
     # orientation array
     with pytest.raises(TypeError, match=r"coord must be int, not NoneType"):
         utils.get_orientation_array(None, None, None, None)
@@ -397,7 +397,7 @@ def check_cube(cube: Cube, permutation_parity: bool | None, orientation: list[in
     assert cube.permutation_parity == permutation_parity
 
 
-def test_cube(response):
+def test_cube():
     cube = Cube()
     assert cube.is_solved
     assert repr(cube) == "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY"

@@ -23,7 +23,7 @@ class Kociemba(BaseSolver):
     partial_corner_perm = False
     partial_edge_perm = True
     phase_moves = [PHASE0_MOVES, PHASE1_MOVES]
-    pruning_defs = [  # TODO get shape from index information?
+    pruning_defs = [
         [PruningDef(name="co_eo", shape=(CO_SIZE, EO_SIZE), indexes=(0, 1)),
          PruningDef(name="co_eec", shape=(CO_SIZE, EEC_SIZE), indexes=(0, 2)),
          PruningDef(name="eo_eec", shape=(EO_SIZE, EEC_SIZE), indexes=(1, 2))],
