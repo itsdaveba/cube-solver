@@ -41,28 +41,28 @@ class Thistlethwaite(BaseSolver):
     num_phases = 4
     partial_corner_perm = True
     partial_edge_perm = True
-    phase_moves = [PHASE0_MOVES, PHASE1_MOVES, PHASE2_MOVES, PHASE3_MOVES]
-    pruning_kwargs = [
-        [PruningDef(name="eo", shape=(EO_SIZE,))],
-        [PruningDef(name="co_eec", shape=(CO_SIZE, EEC_SIZE))],
+    pruning_defs = [
+        [PruningDef(name="eo", shape=EO_SIZE)], [PruningDef(name="co_eec", shape=(CO_SIZE, EEC_SIZE))],
         [PruningDef(name="cc_ct_msec", shape=(CC_SIZE, NUM_THREADS, MSEC_SIZE))],
         [PruningDef(name="cop_eop", shape=(OP_SIZE, OP_SIZE // NUM_THREADS, OP_SIZE, OP_SIZE, OP_SIZE // 2))]]
+    phase_moves = [PHASE0_MOVES, PHASE1_MOVES, PHASE2_MOVES, PHASE3_MOVES]  # TODO move before pruning_defs in solver.py?
 
-    def phase_coords(self, coords: FlattenCoords, phase: int) -> FlattenCoords:
+    @staticmethod
+    def phase_coords(coords: FlattenCoords, phase: int) -> FlattenCoords:
         if phase == 0:
             edge_orientation = coords[1]
             return (edge_orientation,)
-        elif phase == 1:
+        if phase == 1:
             corner_orientation = coords[0]
             equator_edge_combination = coords[5] // OP_SIZE
             return (corner_orientation, equator_edge_combination)
-        elif phase == 2:
+        if phase == 2:
             corner_combination = coords[2] // OP_SIZE
             corner_thread = CORNER_THREAD[coords[2] % OP_SIZE, coords[3] % OP_SIZE].item()
             middle_standing_edge_combination = coords[4] // OP_SIZE
             return (corner_combination, corner_thread, middle_standing_edge_combination)
-        elif phase == 3:
+        if phase == 3:
             corner_orbit_permutation = (coords[2], (coords[3] % OP_SIZE) // NUM_THREADS)
             edge_orbit_permutation = (coords[4], coords[5] % OP_SIZE, (coords[6] % OP_SIZE) // 2)
             return corner_orbit_permutation + edge_orbit_permutation
-        raise ValueError(f"phase must be < {self.num_phases} (got {phase})")
+        raise ValueError(f"phase must be >= 0 and < {Thistlethwaite.num_phases} (got {phase})")

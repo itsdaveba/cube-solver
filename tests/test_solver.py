@@ -5,14 +5,8 @@ import numpy as np
 
 from cube_solver import Cube, Maneuver, apply_maneuver
 from cube_solver import BaseSolver, DummySolver, Korf, Thistlethwaite, Kociemba
-from cube_solver.solver.defs import FlattenCoords, PruningDef
+from cube_solver.solver.defs import FlattenCoords, TransitionDef, PruningDef
 from cube_solver.solver import utils
-
-
-def num_nodes(depth: int) -> int:
-    if depth <= 2:
-        return 104 * depth * depth - 87 * depth + 1
-    return num_nodes(depth - 1) * 12 + num_nodes(depth - 2) * 18
 
 
 def solve_test(solver: BaseSolver, num_cubes: int):
@@ -81,21 +75,16 @@ def depth_test(solver: BaseSolver, max_depth: int, num_cubes: int):  # TODO add 
 
 
 def test_utils():
-    # flatten and unflatten
+    # flatten
     cube = Cube()
-    coords = cube.get_coords(False, False)
-    flatten_coords = utils.flatten(coords)
-    assert utils.unflatten(flatten_coords, False, False) == coords
-    coords = cube.get_coords(False, True)
-    flatten_coords = utils.flatten(coords)
-    assert utils.unflatten(flatten_coords, False, True) == coords
-    coords = cube.get_coords(True, False)
-    flatten_coords = utils.flatten(coords)
-    assert utils.unflatten(flatten_coords, True, False) == coords
-    coords = cube.get_coords(True, True)
-    flatten_coords = utils.flatten(coords)
+    flatten_coords = utils.flatten(cube.get_coords(False, False))
+    assert flatten_coords == (0, 0, 0, 0)
+    flatten_coords = utils.flatten(cube.get_coords(False, True))
+    assert flatten_coords == (0, 0, 0, 0, 11856, 1656)
+    flatten_coords = utils.flatten(cube.get_coords(True, False))
+    assert flatten_coords == (0, 0, 0, 1656, 0)
+    flatten_coords = utils.flatten(cube.get_coords(True, True))
     assert flatten_coords == (0, 0, 0, 1656, 0, 11856, 1656)
-    assert utils.unflatten(flatten_coords, True, True) == coords
 
     # select
     assert utils.select(flatten_coords, None) == flatten_coords
@@ -119,21 +108,21 @@ def test_utils():
         utils.get_tables("", None, None, None)
     with pytest.raises(TypeError, match=r"generate_table_fn must be Callable, not NoneType"):
         utils.get_tables("", [None], None, None)
-    def fn(**kwargs):
-        return np.array([0])
+    def fn(coord_size, **kwargs):
+        return np.zeros(coord_size, dtype=int)
     with pytest.raises(TypeError, match=r"accumulate must be bool, not NoneType"):
         utils.get_tables("", [None], fn, None)
     with pytest.raises(TypeError, match=r"tables_defs elements must be TableDef, not NoneType"):
         utils.get_tables("", [None], fn)
-    tables = utils.get_tables("test", [PruningDef("test")], fn)
+    tables = utils.get_tables("test", [TransitionDef("test", 1)], fn)
     assert tables == {"test": [0]}
-    tables = utils.get_tables("test", [PruningDef("test"), PruningDef("TEST")], fn)
+    tables = utils.get_tables("test", [TransitionDef("test", 1), TransitionDef("TEST", 1)], fn)
     assert tables == {"test": [0], "TEST": [0]}
-    tables = utils.get_tables("test", [PruningDef("TEST")], fn, True)
+    tables = utils.get_tables("test", [TransitionDef("TEST", 1)], fn, True)
     assert tables == {"test": [0], "TEST": [0]}
-    tables = utils.get_tables("test", [PruningDef("TEST")], fn)
+    tables = utils.get_tables("test", [TransitionDef("TEST", 1)], fn)
     assert tables == {"TEST": [0]}
-    tables = utils.get_tables("test", [PruningDef("TEST")], fn)
+    tables = utils.get_tables("test", [TransitionDef("TEST", 1)], fn)
     assert tables == {"TEST": [0]}
     os.remove("tables/test")
     os.remove("tables/test.npz")
@@ -141,64 +130,39 @@ def test_utils():
     # generate transition table
     class TestSolver(BaseSolver):
         partial_corner_perm = True
-        partial_edge_perm = False
-        @staticmethod
-        def get_phase_coords(coords: FlattenCoords, phase: int) -> FlattenCoords:  # TODO change name
-            return coords
-        @staticmethod  # TODO check coords type and pahse_coords type
-        def get_coords_from_phase_coords(phase_coords: FlattenCoords, phase: int) -> FlattenCoords:  # TODO change name
-            return phase_coords
-    with pytest.raises(ValueError, match=r"size must be <= 65536 \(got 239500800\)"):
-        solver = TestSolver()
-    class TestSolver(BaseSolver):
-        partial_corner_perm = True
         partial_edge_perm = True
-        pruning_defs = [[PruningDef("eo", indexes=1)]]
+        pruning_defs = [[PruningDef("pcp", 1680, 2)]]
         @staticmethod
-        def get_phase_coords(coords: FlattenCoords, phase: int) -> FlattenCoords:  # TODO change name
+        def phase_coords(coords: FlattenCoords, phase: int) -> FlattenCoords:
             return coords
-        @staticmethod  # TODO check coords type and pahse_coords type
-        def get_coords_from_phase_coords(phase_coords: FlattenCoords, phase: int) -> FlattenCoords:  # TODO change name
-            return phase_coords
     solver = TestSolver()
-    with pytest.raises(TypeError, match=r"phase must be int, not NoneType"):
-        utils.generate_transition_table(solver, None, None)
-    with pytest.raises(TypeError, match=r"index must be int, not NoneType"):
-        utils.generate_transition_table(solver, -2, None)
-    with pytest.raises(ValueError, match=r"phase must be >= -1 and < 1 \(got -2\)"):
-        utils.generate_transition_table(solver, -2, -1)
-    with pytest.raises(ValueError, match=r"phase must be >= -1 and < 1 \(got 1\)"):
-        utils.generate_transition_table(solver, 1, -1)
-    with pytest.raises(ValueError, match=r"index must be >= 0 and < 4 \(got -1\)"):
-        utils.generate_transition_table(solver, -1, -1)
-    with pytest.raises(ValueError, match=r"index must be >= 0 and < 4 \(got 4\)"):
-        utils.generate_transition_table(solver, -1, 4)
-    with pytest.raises(ValueError, match=r"missing required keyword argument: 'name'"):
-        utils.generate_transition_table(solver, -1, 2)
-    assert np.all(utils.generate_transition_table(solver, -1, 2, name="pcp") == solver.transition_tables["pcp"])
-    assert np.all(utils.generate_transition_table(solver, 0, 1) == solver.transition_tables["eo"])
+    with pytest.raises(TypeError, match=r"coord_name must be str, not NoneType"):
+        utils.generate_transition_table(None, None)
+    with pytest.raises(TypeError, match=r"coord_size must be int, not NoneType"):
+        utils.generate_transition_table("pcp", None)
+    with pytest.raises(ValueError, match=r"coord_size must be > 0 and <= 65536 \(got 0\)"):
+        utils.generate_transition_table("pcp", 0)
+    with pytest.raises(ValueError, match=r"coord_size must be > 0 and <= 65536 \(got 65537\)"):
+        utils.generate_transition_table("pcp", 65537)
+    assert np.all(utils.generate_transition_table("pcp", 1680) == solver.transition_tables["pcp"])
 
     # generate pruning table
     with pytest.raises(TypeError, match=r"phase must be int, not NoneType"):
-        utils.generate_pruning_table(solver, None, "")
+        utils.generate_pruning_table(solver, None, None, "")
+    with pytest.raises(TypeError, match=r"shape must be int or tuple, not NoneType"):
+        utils.generate_pruning_table(solver, -1, None, "")
     with pytest.raises(TypeError, match=r"indexes must be int, tuple, or None, not str"):
-        utils.generate_pruning_table(solver, -1, "")
+        utils.generate_pruning_table(solver, -1, (None,), "")
     with pytest.raises(ValueError, match=r"phase must be >= 0 and < 1 \(got -1\)"):
-        utils.generate_pruning_table(solver, -1, (None,))
+        utils.generate_pruning_table(solver, -1, (None,), (None,))
     with pytest.raises(ValueError, match=r"phase must be >= 0 and < 1 \(got 1\)"):
-        utils.generate_pruning_table(solver, 1, (None,))
+        utils.generate_pruning_table(solver, 1, (None,), (None,))
+    with pytest.raises(TypeError, match=r"shape elements must be int, not NoneType"):
+        utils.generate_pruning_table(solver, 0, (None,), (None,))
     with pytest.raises(TypeError, match=r"indexes elements must be int, not NoneType"):
-        utils.generate_pruning_table(solver, 0, (None,))
-    with pytest.raises(ValueError, match=r"indexes elements must be >= 0 and < 4 \(got \(-1,\)\)"):
-        utils.generate_pruning_table(solver, 0, (-1,))
-    with pytest.raises(ValueError, match=r"indexes elements must be >= 0 and < 4 \(got \(4,\)\)"):
-        utils.generate_pruning_table(solver, 0, (4,))
-    with pytest.raises(ValueError, match=r"indexes must be >= 0 and < 4 \(got -1\)"):
-        utils.generate_pruning_table(solver, 0, -1)
-    with pytest.raises(ValueError, match=r"indexes must be >= 0 and < 4 \(got 4\)"):
-        utils.generate_pruning_table(solver, 0, 4)
-    assert np.all(utils.generate_pruning_table(solver, 0, (1,)) == solver.pruning_tables["eo"])
-    assert np.all(utils.generate_pruning_table(solver, 0, 1) == solver.pruning_tables["eo"])
+        utils.generate_pruning_table(solver, 0, (1680,), (None,))
+    assert np.all(utils.generate_pruning_table(solver, 0, (1680,), (2,)) == solver.pruning_tables["pcp"])
+    assert np.all(utils.generate_pruning_table(solver, 0, 1680, 2) == solver.pruning_tables["pcp"])
     os.remove("tables/pruning_testsolver.npz")
 
 
@@ -219,13 +183,15 @@ def test_solver():
     class TestSolver(BaseSolver):
         partial_corner_perm = True
         partial_edge_perm = True
-        def phase_coords(self, coords: FlattenCoords, phase: int) -> FlattenCoords:
+        @staticmethod
+        def phase_coords(coords: FlattenCoords, phase: int) -> FlattenCoords:
             return coords
     with pytest.raises(TypeError, match=r"use_transition_tables must be bool, not NoneType"):
         TestSolver(None, None)
     with pytest.raises(TypeError, match=r"use_pruning_tables must be bool, not NoneType"):
         TestSolver(False, None)
     solver = TestSolver(False, False)
+    assert repr(solver) == "TestSolver"
     assert solver.transition_tables == {}
     assert solver.pruning_tables == {}
     with pytest.raises(TypeError, match=r"cube must be Cube, not NoneType"):
@@ -251,85 +217,100 @@ def test_solver():
     with pytest.warns(UserWarning, match=r"invalid cube parity"):
         with pytest.raises(ValueError, match=r"invalid cube state"):
             solver.solve(cube, 0, False, 0, 0)
-    with pytest.raises(ValueError, match=r"coord_size must be <= 65536 \(got 239500800\)"):
-        solver.generate_transition_table("ep", 239500800)
     scramble = Maneuver("U F2 R'")
     cube = Cube(scramble)
     assert solver.solve(cube, 0, False, 0, 0) is None
-    assert solver.terminate
+    assert solver.terminated
     assert solver.solve(cube, 0, False, None, 0) is None
-    assert not solver.terminate
+    assert not solver.terminated
+    assert solver.solve(cube, None, False, None, 0) == scramble.inverse
+    assert not solver.terminated
     assert solver.solve(cube, None, True, None, 0) == scramble.inverse
-    assert not solver.terminate
+    assert not solver.terminated
     assert solver.solve(cube, None, True, None, 1) == scramble.inverse
-    assert not solver.terminate
+    assert not solver.terminated
     assert solver.solve(cube, None, True, None, 2) == [scramble.inverse]
-    assert not solver.terminate
+    assert not solver.terminated
     solver = TestSolver(True, False)
     assert solver.transition_tables != {}
+    assert solver.pruning_tables == {}
+    assert solver.solve(cube) == scramble.inverse
+    solver = TestSolver(False, True)
+    assert solver.transition_tables == {}
     assert solver.pruning_tables == {}
     assert solver.solve(cube) == scramble.inverse
     class TestSolver(BaseSolver):
         partial_corner_perm = True
         partial_edge_perm = True
-        pruning_kwargs = [[PruningDef(name="partial_corner_perm", shape=1680, indexes=2)]]
-        def phase_coords(self, coords: FlattenCoords, phase: int) -> FlattenCoords:
+        pruning_defs = [[PruningDef("pcp", 1680, 2)]]
+        @staticmethod
+        def phase_coords(coords: FlattenCoords, phase: int) -> FlattenCoords:
             return coords
     solver = TestSolver(False, True)
     assert solver.transition_tables == {}
     assert solver.pruning_tables != {}
     assert solver.solve(cube) == scramble.inverse
-    class TestSolver(BaseSolver):
-        partial_corner_perm = True
-        partial_edge_perm = True
-        pruning_kwargs = [[PruningDef(name="pcp", shape=1680, indexes=2)]]
-        def phase_coords(self, coords: FlattenCoords, phase: int) -> FlattenCoords:
-            return coords
     solver = TestSolver(True, True)
     assert solver.transition_tables != {}
     assert solver.pruning_tables != {}
     assert solver.solve(cube) == scramble.inverse
-    assert np.all(solver.generate_transition_table("pcp", 1680) == solver.transition_tables["pcp"])
-    tables = utils.load_tables("tables/transition.npz")
-    utils.save_tables("tables/transition.npz", tables)
     os.remove("tables/pruning_testsolver.npz")
 
 
 def test_dummy():
+    DummySolver()
     num_cubes = 12
 
-    max_depth = 3
-    solver = DummySolver(use_transition_tables=False)
+    max_depth = 2
+    solver = DummySolver(False, False)
     depth_test(solver, max_depth, num_cubes)
 
-    max_depth = 4
-    solver = DummySolver()
+    max_depth = 3
+    solver = DummySolver(True, False)
     depth_test(solver, max_depth, num_cubes)
 
 
 def test_korf():
+    Korf()
     num_cubes = 12
 
-    max_depth = 4
-    solver = Korf(use_pruning_tables=False)
+    max_depth = 2
+    solver = Korf(False, False)
     depth_test(solver, max_depth, num_cubes)
 
-    max_depth = 11
-    solver = Korf()
+    max_depth = 3
+    solver = Korf(True, False)
+    depth_test(solver, max_depth, num_cubes)
+
+    max_depth = 5
+    solver = Korf(False, True)
+    depth_test(solver, max_depth, num_cubes)
+
+    max_depth = 7
+    solver = Korf(True, True)
     depth_test(solver, max_depth, num_cubes)
 
 
 def test_thistlethwaite():
+    Thistlethwaite()
     num_cubes = 100
-    solver = Thistlethwaite()
-    with pytest.raises(ValueError, match=r"phase must be < 4 \(got 4\)"):
+
+    solver = Thistlethwaite(False)
+    with pytest.raises(ValueError, match=r"phase must be >= 0 and < 4 \(got -1\)"):
+        solver.phase_coords((), -1)
+    solve_test(solver, num_cubes)
+
+    solver = Thistlethwaite(True)
+    with pytest.raises(ValueError, match=r"phase must be >= 0 and < 4 \(got 4\)"):
         solver.phase_coords((), 4)
     solve_test(solver, num_cubes)
 
 
 def test_kociemba():
+    Kociemba()
     num_cubes = 100
-    solver = Kociemba()
-    with pytest.raises(ValueError, match=r"phase must be < 2 \(got 2\)"):
-        solver.phase_coords((), 2)
+
+    solver = Kociemba(True)
+    with pytest.raises(ValueError, match=r"phase must be >= 0 and < 2 \(got -1\)"):
+        solver.phase_coords((), -1)
     solve_test(solver, num_cubes)

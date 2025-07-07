@@ -22,7 +22,7 @@ class Kociemba(BaseSolver):
     partial_corner_perm = False
     partial_edge_perm = True
     phase_moves = [PHASE0_MOVES, PHASE1_MOVES]
-    pruning_kwargs = [
+    pruning_defs = [  # TODO get shape from index information?
         [PruningDef(name="co_eo", shape=(CO_SIZE, EO_SIZE), indexes=(0, 1)),
          PruningDef(name="co_eec", shape=(CO_SIZE, EEC_SIZE), indexes=(0, 2)),
          PruningDef(name="eo_eec", shape=(EO_SIZE, EEC_SIZE), indexes=(1, 2))],
@@ -30,7 +30,8 @@ class Kociemba(BaseSolver):
          PruningDef(name="cp_eep", shape=(CP_SIZE, OP_SIZE), indexes=(0, 2)),
          PruningDef(name="msep_eep", shape=(MSEP_SIZE, OP_SIZE), indexes=(1, 2))]]
 
-    def phase_coords(self, coords: FlattenCoords, phase: int) -> FlattenCoords:
+    @staticmethod
+    def phase_coords(coords: FlattenCoords, phase: int) -> FlattenCoords:
         if phase == 0:
             corner_orientation = coords[0]
             edge_orientation = coords[1]
@@ -41,4 +42,4 @@ class Kociemba(BaseSolver):
             middle_standing_edge_permutation = coords[5] + (coords[3] - CC_SIZE + 1 + coords[3] // OP_SIZE) * OP_SIZE
             equator_edge_permutation = coords[4] % OP_SIZE
             return (corner_permutation, middle_standing_edge_permutation, equator_edge_permutation)
-        raise ValueError(f"phase must be < {self.num_phases} (got {phase})")
+        raise ValueError(f"phase must be >= 0 and < {Kociemba.num_phases} (got {phase})")

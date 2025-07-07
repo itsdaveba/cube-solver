@@ -1,11 +1,8 @@
 """BaseSolver module."""
-from __future__ import annotations
-
 import time
 import numpy as np
 from copy import deepcopy
 from typing import overload
-from collections import deque
 from abc import ABC, abstractmethod
 
 from ..logger import logger
@@ -14,7 +11,7 @@ from ..cube import Cube, Move, Maneuver, apply_move
 from ..cube.defs import CORNER_ORIENTATION_SIZE, EDGE_ORIENTATION_SIZE
 from ..cube.defs import CORNER_PERMUTATION_SIZE, EDGE_PERMUTATION_SIZE
 from ..cube.defs import PARTIAL_CORNER_PERMUTATION_SIZE, PARTIAL_EDGE_PERMUTATION_SIZE
-from .defs import NONE, FlattenCoords, TransitionDef, PruningDef
+from .defs import FlattenCoords, TransitionDef, PruningDef
 from . import utils
 
 MOVE_TO_INDEX = np.zeros(max(len(Move), max(Move) + 1), dtype=int)
@@ -22,32 +19,39 @@ for cubie in NEXT_MOVES[Move.NONE]:
     MOVE_TO_INDEX[cubie] = NEXT_MOVES[Move.NONE].index(cubie)
 
 
+# TODO transition talbes per phase
 class BaseSolver(ABC):
     num_phases: int = 1  # TODO add tests for class attributes?
     """Number of phases of the solving algorithm."""
     partial_corner_perm: bool
-    """Whether the solving algorithm uses the normal or the partial corner permutation. """
+    """Whether the solving algorithm uses the normal or the partial corner permutation."""
     partial_edge_perm: bool
-    """Whether the solving algorithm uses the normal or the partial edge permutation. """
-    transition_kwargs: list[TransitionDef]
-    """List of transition table definitions."""
-    pruning_kwargs: list[list[PruningDef]] = []
-    """List of pruning table definitions for each phase."""
-    phase_moves: list[list[Move]] = []
-    """List of available moves for each phase."""
+    """Whether the solving algorithm uses the normal or the partial edge permutation."""
+    transition_defs: list[TransitionDef]
+    """Transition table definitions for each phase."""
+    pruning_defs: list[list[PruningDef]]
+    """Pruning table definitions for each phase."""
+    phase_moves: list[list[Move]]
+    """Available moves for each phase."""
 
     def __init_subclass__(cls):
         for attr in ("partial_corner_perm", "partial_edge_perm"):
             if not hasattr(cls, attr):
                 raise AttributeError(f"'{cls.__name__}' class must define class attribute '{attr}'")
 
-        cls.transition_kwargs = [
+        cls.transition_defs = [
             TransitionDef(coord_name="co", coord_size=CORNER_ORIENTATION_SIZE),
             TransitionDef(coord_name="eo", coord_size=EDGE_ORIENTATION_SIZE),
-            TransitionDef(coord_name="pcp" if cls.partial_corner_perm else "cp",
-                          coord_size=PARTIAL_CORNER_PERMUTATION_SIZE if cls.partial_corner_perm else CORNER_PERMUTATION_SIZE),
-            TransitionDef(coord_name="pep" if cls.partial_edge_perm else "ep",
-                          coord_size=PARTIAL_EDGE_PERMUTATION_SIZE if cls.partial_edge_perm else EDGE_PERMUTATION_SIZE)]
+            TransitionDef(coord_name="pcp", coord_size=PARTIAL_CORNER_PERMUTATION_SIZE) if cls.partial_corner_perm else
+            TransitionDef(coord_name="cp", coord_size=CORNER_PERMUTATION_SIZE),
+            TransitionDef(coord_name="pep", coord_size=PARTIAL_EDGE_PERMUTATION_SIZE) if cls.partial_edge_perm else
+            TransitionDef(coord_name="ep", coord_size=EDGE_PERMUTATION_SIZE)]
+
+        if not hasattr(cls, "pruning_defs"):
+            cls.pruning_defs = [[] for _ in range(cls.num_phases)]
+
+        if not hasattr(cls, "phase_moves"):
+            cls.phase_moves = [[*Move.face_moves()] * cls.num_phases]
 
     def __init__(self, use_transition_tables: bool = True, use_pruning_tables: bool = True):
         """
@@ -69,9 +73,7 @@ class BaseSolver(ABC):
         if not isinstance(use_pruning_tables, bool):
             raise TypeError(f"use_pruning_tables must be bool, not {type(use_pruning_tables).__name__}")
 
-        self.cube: Cube = Cube()
-        """Internal :class:`cube_solver.Cube` object. Used to generate transition and pruning tables."""
-        init_coords = self.flatten(self.get_coords(self.cube))
+        init_coords = utils.flatten(self.get_coords(Cube()))
         self.solved_coords: list[FlattenCoords] = [self.phase_coords(init_coords, phase) for phase in range(self.num_phases)]
         """Solved flatten coordinates for each phase."""
 
@@ -84,32 +86,27 @@ class BaseSolver(ABC):
         if self.use_transition_tables:
             try:
                 from .. import csolver
-                self.transition_tables = utils.get_tables("transition.npz", self.transition_kwargs,
+                self.transition_tables = utils.get_tables("transition.npz", self.transition_defs,
                                                           csolver.generate_transition_table, accumulate=True)
             except Exception:  # pragma: no cover
-                self.transition_tables = utils.get_tables("transition.npz", self.transition_kwargs,
-                                                          self.generate_transition_table, accumulate=True)
-        if not self.phase_moves:
-            self.phase_moves = [[*Move.face_moves()] * self.num_phases]  # TODO test with a solver with two phases with all moves
+                self.transition_tables = utils.get_tables("transition.npz", self.transition_defs,
+                                                          utils.generate_transition_table, accumulate=True)
         self.pruning_tables: dict[str, np.ndarray] = {}
         """Pruning tables used to reduce the tree search space."""
         if self.use_pruning_tables:
-            pruning_kwargs = []
-            for phase, phase_kwargs in enumerate(self.pruning_kwargs):
+            pruning_defs = []
+            for phase, phase_kwargs in enumerate(self.pruning_defs):
                 for kwargs in phase_kwargs:
-                    kwargs.self = self
+                    kwargs.solver = self
                     kwargs.phase = phase
-                    pruning_kwargs.append(kwargs)
-            if pruning_kwargs:
+                    pruning_defs.append(kwargs)
+            if pruning_defs:
                 pruning_filename = f"pruning_{self.__class__.__name__.lower()}.npz"
                 try:
                     from .. import csolver
-                    self.pruning_tables = utils.get_tables(pruning_filename, pruning_kwargs,
-                                                           csolver.generate_pruning_table, accumulate=False)
+                    self.pruning_tables = utils.get_tables(pruning_filename, pruning_defs, csolver.generate_pruning_table)
                 except Exception:
-                    self.pruning_tables = utils.get_tables(pruning_filename, pruning_kwargs,
-                                                           self.generate_pruning_table, accumulate=False)
-
+                    self.pruning_tables = utils.get_tables(pruning_filename, pruning_defs, utils.generate_pruning_table)
         self.final_moves: list[set[Move]] = []
         """Final allowed moves for each phase except the last."""
         for i in range(self.num_phases - 1):
@@ -122,81 +119,20 @@ class BaseSolver(ABC):
             next_moves.update({move: [mv for mv in NEXT_MOVES[move] if mv in phase_moves] for move in phase_moves})
             self.next_moves.append(next_moves)
 
-        self.nodes: list[int]  # TODO needed?
-        """Number of visited nodes during a solve."""
-        self.checks: list[int]  # TODO needed?
-        """Number of solve checks during a solve."""
-        self.prunes: list[int]
-        """Number of prune checks during a solve."""  # TODO add more?
+        self.nodes: list[int] = [0] * self.num_phases
+        """Number of visited nodes during a solve for each phase."""
+        self.checks: list[int] = [0] * self.num_phases
+        """Number of solve checks during a solve for each phase."""
+        self.prunes: list[int] = [0] * self.num_phases
+        """Number of pruned nodes during a solve for each phase."""
+        self.terminated: bool = False
+        """Whether the solve search was terminated due to a timeout."""
 
-    # TODO get transition table for each phase
-    # TODO add log: generating transition tables?, move to utils
-    def generate_transition_table(self, coord_name: str, coord_size: int) -> np.ndarray:
-        """
-        Generate the cube coordinate transition table.
+    def __repr__(self) -> str:
+        """Solver string representation."""
+        return self.__class__.__name__
 
-        Parameters
-        ----------
-        coord_name : {'co', 'eo', 'cp', 'ep', 'pcp', 'pep'}
-            Cube coordinate name.
-        coord_size : int
-            Size of the cube coordinate.
-
-        Returns
-        -------
-        transition_table : ndarray
-            Cube coordinate transition table.
-        """
-        if coord_size - 1 > np.iinfo(np.uint16).max:
-            raise ValueError(f"coord_size must be <= {np.iinfo(np.uint16).max + 1} (got {coord_size})")
-        transition_table = np.zeros((coord_size, len(NEXT_MOVES[Move.NONE])), dtype=np.uint16)
-        for coord in range(coord_size):
-            self.cube.set_coord(coord_name, coord)
-            transition_table[coord] = [apply_move(self.cube, Move(mv)).get_coord(coord_name) for mv in NEXT_MOVES[Move.NONE]]
-        return transition_table
-
-    # TODO maybe move to utils when having transition tables per phase
-    # TODO maybe move to utils because is static
-    # TODO remove annotations when moved to utils
-    @staticmethod
-    def generate_pruning_table(self: BaseSolver, phase: int, shape: int | tuple[int, ...],
-                               indexes: int | tuple[int, ...] | None, **kwargs) -> np.ndarray:
-        """
-        Generate the phase coordinates pruning table.
-
-        Parameters
-        ----------
-        phase : int
-            Solver phase (0-indexed).
-        shape : int or tuple of int
-            Shape of the pruning table.
-        indexes : int or tuple of int or None
-            Index or indexes of the phase coordinates to use for the pruning table.
-            If ``None``, use all the phase coordinates.
-
-        Returns
-        -------
-        pruning_table : ndarray
-            Phase coordinates pruning table.
-        """
-        self.cube.reset()
-        coords = self.get_coords(self.cube)
-        phase_coords = self.phase_coords(self.flatten(coords), phase)
-        prune_coords = self.prune_coords(phase_coords, indexes)
-        pruning_table = np.full(shape, NONE, dtype=np.int8)
-        pruning_table[prune_coords] = 0
-        queue = deque([(coords, 0)])  # TODO pass the pruning coords and have transition tables for that
-        while queue:
-            coords, depth = queue.popleft()
-            for move in self.phase_moves[phase]:
-                next_coords = self.next_position(coords, Move(move))
-                phase_coords = self.phase_coords(self.flatten(next_coords), phase)
-                prune_coords = self.prune_coords(phase_coords, indexes)
-                if pruning_table[prune_coords] == NONE:
-                    pruning_table[prune_coords] = depth + 1
-                    queue.append((next_coords, depth + 1))
-        return pruning_table
-
+    # TODO maybe not necesarry after transition tables per phase
     def get_coords(self, cube: Cube) -> CoordsType:
         """
         Get cube coordinates.
@@ -246,27 +182,9 @@ class BaseSolver(ABC):
         """
         cube.set_coords(coords, self.partial_corner_perm, self.partial_edge_perm)
 
-    def flatten(self, coords: CoordsType) -> FlattenCoords:
-        """
-        Get the flatten cube coordinates.
-
-        Parameters
-        ----------
-        coords : tuple of (int or tuple of int)
-            Cube coordinates.
-
-        Returns
-        -------
-        flatten_coords : tuple of int
-            Flatten cube coordinates.
-        """
-        flatten = ()
-        for coord in coords:
-            flatten += (coord,) if isinstance(coord, int) else coord
-        return flatten
-
-    @abstractmethod  # TODO make statik and move to utils?
-    def phase_coords(self, coords: FlattenCoords, phase: int) -> FlattenCoords:
+    @staticmethod
+    @abstractmethod
+    def phase_coords(coords: FlattenCoords, phase: int) -> FlattenCoords:
         """
         Get the coordinates for the specified phase.
 
@@ -288,29 +206,6 @@ class BaseSolver(ABC):
         the ``coords`` parameter is the flattened version of the output from the :meth:`get_coords` method.
         """
 
-    def prune_coords(self, phase_coords: FlattenCoords, indexes: int | tuple[int, ...] | None) -> FlattenCoords:
-        """
-        Get the prune coordinates.
-
-        Parameters
-        ----------
-        phase_coords : tuple of int
-            Phase coordinates.
-        indexes : int or tuple of int or None
-            Index or indexes of the phase coordinates to use as the prune coordinates.
-            If ``None``, use all the phase coordinates.
-
-        Returns
-        -------
-        prune_coords : tuple of int
-            Prune coordinates.
-        """
-        if indexes is None:
-            return phase_coords
-        if isinstance(indexes, int):
-            return (phase_coords[indexes],)
-        return tuple(phase_coords[index] for index in indexes)
-
     # TODO add examples?
     def is_solved(self, position: Cube | CoordsType, phase: int) -> bool:
         """
@@ -330,7 +225,7 @@ class BaseSolver(ABC):
         """
         if isinstance(position, Cube):
             position = self.get_coords(position)
-        phase_coords = self.phase_coords(self.flatten(position), phase)
+        phase_coords = self.phase_coords(utils.flatten(position), phase)
         return phase_coords == self.solved_coords[phase]
 
     def prune(self, position: Cube | CoordsType, phase: int, depth: int) -> bool:
@@ -356,9 +251,9 @@ class BaseSolver(ABC):
         if self.pruning_tables:
             if isinstance(position, Cube):
                 position = self.get_coords(position)
-            phase_coords = self.phase_coords(self.flatten(position), phase)
-            for kwargs in self.pruning_kwargs[phase]:
-                prune_coords = self.prune_coords(phase_coords, kwargs.indexes)
+            phase_coords = self.phase_coords(utils.flatten(position), phase)
+            for kwargs in self.pruning_defs[phase]:
+                prune_coords = utils.select(phase_coords, kwargs.indexes)
                 if self.pruning_tables[kwargs.name][prune_coords] > depth:
                     return True
         return False
@@ -388,18 +283,15 @@ class BaseSolver(ABC):
             return apply_move(position, move)
         if self.use_transition_tables:
             next_position = ()
-            for coord, kwargs in zip(position, self.transition_kwargs):
-                if isinstance(coord, int):
-                    next_position += (self.transition_tables[kwargs.coord_name][coord, MOVE_TO_INDEX[move]].item(),)
-                else:
-                    next_position += (tuple(self.transition_tables[kwargs.coord_name][coord, MOVE_TO_INDEX[move]].tolist()),)
+            for coord, kwargs in zip(position, self.transition_defs):
+                next_coord = self.transition_tables[kwargs.name][coord, MOVE_TO_INDEX[move]]
+                next_position += (next_coord.item(),) if isinstance(coord, int) else (tuple(next_coord.tolist()),)
             return next_position
-        cube = Cube()  # TODO use self?
+        cube = Cube()
         self.set_coords(cube, position)
         cube.apply_move(move)
         return self.get_coords(cube)
 
-    # TODO print timeout check to check interval
     def solve(self, cube: Cube, max_length: int | None = None, optimal: bool = False,
               timeout: int | None = None, verbose: int = 0) -> Maneuver | list[Maneuver] | None:  # TODO cube could be None for perf testing?
         """
@@ -460,34 +352,36 @@ class BaseSolver(ABC):
             cube.coords
         except ValueError:
             raise ValueError("invalid cube state")
-        self.cube = Cube(repr=(repr(cube)))
-        if self.cube.permutation_parity is None:
+        cube = Cube(repr=(repr(cube)))
+        if cube.permutation_parity is None:
             raise ValueError("invalid cube state")
 
-        self.nodes = [0] * self.num_phases
-        self.checks = [0] * self.num_phases
-        self.prunes = [0] * self.num_phases
+        for phase in range(self.num_phases):
+            self.nodes[phase] = 0
+            self.checks[phase] = 0
+            self.prunes[phase] = 0
+        self.terminated = False
 
-        self.max_length = max_length
-        self.optimal = optimal  # TODO add to __init__?
-        self.timeout = timeout
-        self.verbose = verbose
-        self.return_phase = False
-        self.start = time.time()
-        self.terminate = False
-        self.best_solution = None
-        self.solution = [[] for _ in range(self.num_phases)]
+        self._max_length = max_length
+        self._optimal = optimal
+        self._timeout = timeout
+        self._verbose = verbose
 
-        solution = []
-        position = self.get_coords(self.cube) if self.use_transition_tables else self.cube
+        self._return_phase = False
+        self._start = time.time()
+        self._best_solution = None
+        self._solution = [[] for _ in range(self.num_phases)]
+
+        solution = None
+        position = self.get_coords(cube) if self.use_transition_tables else cube
         if self.phase_search(position):
-            solution = self.solution
-        if self.optimal:
-            solution = self.best_solution
+            solution = self._solution
+        if self._optimal:
+            solution = self._best_solution
         if solution:
             if verbose == 2:
-                return [Maneuver(phase_solution[::-1]) for phase_solution in solution]
-            return Maneuver([move for phase_solution in solution for move in phase_solution[::-1]])
+                return [Maneuver(phase_solution[-2::-1]) for phase_solution in solution]
+            return Maneuver([move for phase_solution in solution for move in phase_solution[-2::-1]])
         return None
 
     # TODO make iterative version and compare
@@ -511,29 +405,29 @@ class BaseSolver(ABC):
             ``True`` if a solution is found, ``False`` otherwise.
         """
         if phase == self.num_phases:
-            if self.optimal:
-                self.return_phase = True
-                self.max_length = current_length - 1
-                self.best_solution = deepcopy(self.solution)
-                if self.verbose == 1:
-                    solution = Maneuver([move for sol in self.solution for move in sol[-2::-1]], reduce=False)
+            if self._optimal:
+                self._return_phase = True
+                self._max_length = current_length - 1
+                self._best_solution = deepcopy(self._solution)
+                if self._verbose == 1:
+                    solution = Maneuver([move for sol in self._solution for move in sol[-2::-1]], reduce=False)
                     logger.info(f"Solution: {solution} ({len(solution)})")
-                elif self.verbose == 2:
-                    solution = [Maneuver(phase_solution[::-1]) for phase_solution in self.solution]
+                elif self._verbose == 2:
+                    solution = [Maneuver(phase_solution[-2::-1]) for phase_solution in self._solution]
                     logger.info(f"Solution: {' | '.join([f'{sol} ({len(sol)})' for sol in solution])}")
                 return False
             return True
         depth = 0
-        while True if self.max_length is None else current_length + depth <= self.max_length:
-            self.solution[phase].append(Move.NONE)
+        while True if self._max_length is None else current_length + depth <= self._max_length:
+            self._solution[phase].append(Move.NONE)
             if self.search(position, phase, depth, current_length):
                 return True
-            elif self.terminate or (self.optimal and self.return_phase):
-                self.return_phase = False
-                self.solution[phase] = []
+            elif self.terminated or (self._optimal and self._return_phase):
+                self._return_phase = False
+                self._solution[phase] = []
                 return False
             depth += 1
-        self.solution[phase] = []
+        self._solution[phase] = []
         return False
 
     def search(self, position: Cube | CoordsType, phase: int, depth: int, current_length: int) -> bool:
@@ -557,21 +451,21 @@ class BaseSolver(ABC):
             ``True`` if a solution is found, ``False`` otherwise.
         """
         self.nodes[phase] += 1
-        if self.timeout is not None and int(time.time() - self.start) >= self.timeout:
-            self.terminate = True
+        if self._timeout is not None and int(time.time() - self._start) >= self._timeout:
+            self.terminated = True
             return False
         if depth == 0:
-            if phase == self.num_phases - 1 or (self.solution[phase][0] in self.final_moves[phase]):
+            if phase == self.num_phases - 1 or (self._solution[phase][0] in self.final_moves[phase]):
                 self.checks[phase] += 1
                 if self.is_solved(position, phase):
                     return self.phase_search(position, phase + 1, current_length)
             return False
         if not self.prune(position, phase, depth):
-            for move in self.next_moves[phase][self.solution[phase][depth]]:
-                self.solution[phase][depth - 1] = move
+            for move in self.next_moves[phase][self._solution[phase][depth]]:
+                self._solution[phase][depth - 1] = move
                 if self.search(self.next_position(position, move), phase, depth - 1, current_length + 1):
                     return True
-                elif self.terminate or (self.optimal and self.return_phase):
+                elif self.terminated or (self._optimal and self._return_phase):
                     return False
             return False  # TODO not necessary if no stats
         self.prunes[phase] += 1

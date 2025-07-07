@@ -24,7 +24,7 @@ ALGS = {
 
 
 @app.command()
-def maneuver(moves: Annotated[str, typer.Argument(help="Sequence of moves.")] = ""):
+def maneuver(moves: Annotated[str, typer.Argument(help="Sequence of moves.")] = ""):  # TODO add from cube repr
     """
     Apply a sequence of moves to a cube.
 
@@ -111,7 +111,7 @@ def solve(cube: Annotated[str, typer.Argument(help="Cube string representation."
         if solution is not None:
             length = len(solution) if isinstance(solution, Maneuver) else sum(len(sol) for sol in solution)
             if optimal:
-                if solver.terminate:
+                if solver.terminated:
                     console.print(f"Suboptimal: {solution} ({length})")
                 else:
                     console.print(f"Optimal: {solution} ({length})")

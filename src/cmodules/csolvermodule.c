@@ -172,10 +172,11 @@ static PyObject *generate_pruning_table(PyObject *self, PyObject *args, PyObject
     // parse args
     int phase;
     const char *name = "";
+    PyObject *solver;
     PyObject *shape;
     PyObject *idxs;
-    char *keywords[] = {"self", "phase", "shape", "indexes", "name", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OiOO|s", keywords, &self, &phase, &shape, &idxs, &name))
+    char *keywords[] = {"solver", "phase", "shape", "indexes", "name", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OiOO|s", keywords, &solver, &phase, &shape, &idxs, &name))
         return NULL;
     // parse dims
     PyObject *tmp;
@@ -218,7 +219,7 @@ static PyObject *generate_pruning_table(PyObject *self, PyObject *args, PyObject
     int (*get_phase_coords_size)(int);
     void (*get_phase_coords)(int *, int *, int);
     void (*set_coords)(int *, int *, int);
-    name = self->ob_type->tp_name;
+    name = solver->ob_type->tp_name;
     if (!strcmp(name, "Korf"))
     {
         get_phase_coords_size = &korf_get_phase_coords_size;
@@ -241,11 +242,11 @@ static PyObject *generate_pruning_table(PyObject *self, PyObject *args, PyObject
         return NULL;
 
     // class attributes
-    PyObject *pcp = PyObject_GetAttrString(self, "partial_corner_perm");
-    PyObject *pep = PyObject_GetAttrString(self, "partial_edge_perm");
+    PyObject *pcp = PyObject_GetAttrString(solver, "partial_corner_perm");
+    PyObject *pep = PyObject_GetAttrString(solver, "partial_edge_perm");
     int partial_corner_perm = _PyLong_AsInt(pcp);
     int partial_edge_perm = _PyLong_AsInt(pep);
-    PyObject *phase_moves = PyObject_GetAttrString(self, "phase_moves");
+    PyObject *phase_moves = PyObject_GetAttrString(solver, "phase_moves");
     phase_moves = PyList_GetItem(phase_moves, phase);
     int n_moves = PyList_Size(phase_moves);
     int moves[n_moves];
@@ -258,7 +259,7 @@ static PyObject *generate_pruning_table(PyObject *self, PyObject *args, PyObject
     // transition tables
     PyObject *trans_table;
     npy_uint16 *transition_tables[4];
-    PyObject *trans_tables = PyObject_GetAttrString(self, "transition_tables");
+    PyObject *trans_tables = PyObject_GetAttrString(solver, "transition_tables");
     trans_table = PyDict_GetItemString(trans_tables, "co");
     transition_tables[0] = PyArray_DATA((PyArrayObject *)trans_table);
     trans_table = PyDict_GetItemString(trans_tables, "eo");

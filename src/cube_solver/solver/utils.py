@@ -9,8 +9,8 @@ from typing import Sequence, Callable
 from typing_extensions import TYPE_CHECKING
 
 from ..logger import logger
-from ..defs import CoordsType
-from ..cube import Cube, apply_move
+from ..defs import CoordsType, NEXT_MOVES
+from ..cube import Cube, Move, apply_move  # TODO check all relative imports
 from .defs import NONE, FlattenCoords, TableDef
 
 if TYPE_CHECKING:
@@ -35,33 +35,6 @@ def flatten(coords: CoordsType) -> FlattenCoords:
     for coord in coords:
         flatten_coords += (coord,) if isinstance(coord, int) else coord
     return flatten_coords
-
-
-def unflatten(coords: FlattenCoords, partial_corner_perm: bool, partial_edge_perm: bool) -> CoordsType:
-    """
-    Get the unflattened cube coordinates.
-
-    Parameters
-    ----------
-    coords : tuple of int
-        Flattened cube coordinates.
-    partial_corner_perm : bool
-        If ``True``, unflatten the `partial corner permutation` coordinate,
-        otherwise unflatten the normal `corner permutation` coordinate.
-    partial_edge_perm : bool
-        If ``True``, unflatten the `partial edge permutation` coordinate,
-        otherwise unflatten the normal `edge permutation` coordinate.
-
-    Returns
-    -------
-    unflatten_coords : tuple of (int or tuple of int)
-        Unflattened cube coordinates.
-    """
-    unflatten_coords = tuple(coords[:2])
-    unflatten_coords += (tuple(coords[2:4]),) if partial_corner_perm else (coords[2],)
-    i = 4 if partial_corner_perm else 3
-    unflatten_coords += (tuple(coords[i:]),) if partial_edge_perm else (coords[i],)
-    return unflatten_coords
 
 
 def select(coords: FlattenCoords, indexes: int | tuple[int, ...] | None) -> FlattenCoords:
@@ -198,8 +171,7 @@ def get_tables(filename: str, tables_defs: Sequence[TableDef],
     return tables
 
 
-# TODO double check when phase == -1
-def generate_transition_table(solver: BaseSolver, phase: int, index: int, name: str | None = None) -> np.ndarray:
+def generate_transition_table(coord_name: str, coord_size: int) -> np.ndarray:
     """
     Generate the phase coordinate transition table.
 
@@ -221,42 +193,25 @@ def generate_transition_table(solver: BaseSolver, phase: int, index: int, name: 
     transition_table : ndarray
         Phase coordinate transition table.
     """
-    if not isinstance(phase, int):
-        raise TypeError(f"phase must be int, not {type(phase).__name__}")
-    if not isinstance(index, int):
-        raise TypeError(f"index must be int, not {type(index).__name__}")
-    if phase < NONE or phase >= solver.num_phases:
-        raise ValueError(f"phase must be >= -1 and < {solver.num_phases} (got {phase})")
-    if index < 0 or index >= len(solver.phase_coords_sizes[phase]):
-        raise ValueError(f"index must be >= 0 and < {len(solver.phase_coords_sizes[phase])} (got {index})")
-    if phase == NONE and name is None:
-        raise ValueError("missing required keyword argument: 'name'")
+    if not isinstance(coord_name, str):
+        raise TypeError(f"coord_name must be str, not {type(coord_name).__name__}")
+    if not isinstance(coord_size, int):
+        raise TypeError(f"coord_size must be int, not {type(coord_size).__name__}")
 
-    size = solver.phase_coords_sizes[phase][index]
-    if size - 1 > np.iinfo(np.uint16).max:
-        raise ValueError(f"size must be <= {np.iinfo(np.uint16).max + 1} (got {size})")
-    transition_table = np.zeros((size, len(solver.phase_moves[phase])), dtype=np.uint16)
+    if coord_size <= 0 or coord_size - 1 > np.iinfo(np.uint16).max:
+        raise ValueError(f"coord_size must be > 0 and <= {np.iinfo(np.uint16).max + 1} (got {coord_size})")
+    transition_table = np.zeros((coord_size, len(NEXT_MOVES[Move.NONE])), dtype=np.uint16)
 
     cube = Cube()
-    if phase == NONE:
-        assert name is not None
-        for coord in range(size):
-            cube.set_coord(name, coord)
-            transition_table[coord] = [apply_move(cube, move).get_coord(name) for move in solver.phase_moves[phase]]
-        return transition_table
-    coords = flatten(cube.get_coords(solver.partial_corner_perm, solver.partial_edge_perm))
-    phase_coords = [*solver.get_phase_coords(coords, phase)]
-    for phase_coords[index] in range(size):
-        coords = solver.get_coords_from_phase_coords(tuple(phase_coords), phase)
-        coords = unflatten(coords, solver.partial_corner_perm, solver.partial_edge_perm)
-        cube.set_coords(coords, solver.partial_corner_perm, solver.partial_edge_perm)
-        for m, move in enumerate(solver.phase_moves[phase]):
-            coords = apply_move(cube, move).get_coords(solver.partial_corner_perm, solver.partial_edge_perm)
-            transition_table[phase_coords[index], m] = solver.get_phase_coords(flatten(coords), phase)[index]
+    for coord in range(coord_size):
+        cube.set_coord(coord_name, coord)
+        transition_table[coord] = [apply_move(cube, move).get_coord(coord_name) for move in NEXT_MOVES[Move.NONE]]
     return transition_table
 
 
-def generate_pruning_table(solver: BaseSolver, phase: int, indexes: int | tuple[int, ...] | None, **kwargs) -> np.ndarray:
+# TODO get shape from indexes
+def generate_pruning_table(solver: BaseSolver, phase: int, shape: int | tuple[int, ...],
+                           indexes: int | tuple[int, ...] | None, **kwargs) -> np.ndarray:
     """
     Generate the phase coordinates pruning table.
 
@@ -279,34 +234,33 @@ def generate_pruning_table(solver: BaseSolver, phase: int, indexes: int | tuple[
     """
     if not isinstance(phase, int):
         raise TypeError(f"phase must be int, not {type(phase).__name__}")
+    if not isinstance(shape, (int, tuple)):
+        raise TypeError(f"shape must be int or tuple, not {type(shape).__name__}")
     if indexes is not None and not isinstance(indexes, (int, tuple)):
         raise TypeError(f"indexes must be int, tuple, or None, not {type(indexes).__name__}")
     if phase < 0 or phase >= solver.num_phases:
         raise ValueError(f"phase must be >= 0 and < {solver.num_phases} (got {phase})")
-    n = len(solver.phase_coords_sizes[phase])
+    if isinstance(shape, tuple):
+        for size in shape:
+            if not isinstance(size, int):
+                raise TypeError(f"shape elements must be int, not {type(size).__name__}")
     if isinstance(indexes, tuple):
         for index in indexes:
             if not isinstance(index, int):
                 raise TypeError(f"indexes elements must be int, not {type(index).__name__}")
-            if index < 0 or index >= n:
-                raise ValueError(f"indexes elements must be >= 0 and < {n} (got {indexes})")
-    elif indexes is not None and (indexes < 0 or indexes >= n):
-        raise ValueError(f"indexes must be >= 0 and < {n} (got {indexes})")
 
-    shape = select(solver.phase_coords_sizes[phase], indexes)
     pruning_table = np.full(shape, NONE, dtype=np.int8)
-
-    cube = Cube()
-    coords = cube.get_coords(solver.partial_corner_perm, solver.partial_edge_perm)
-    phase_coords = solver.get_phase_coords(flatten(coords), phase)
+    init_coords = solver.get_coords(Cube())
+    phase_coords = solver.phase_coords(flatten(init_coords), phase)
     prune_coords = select(phase_coords, indexes)
     pruning_table[prune_coords] = 0
-    queue = deque([(phase_coords, 0)])
+    queue = deque([(init_coords, 0)])
     while queue:
-        phase_coords, depth = queue.popleft()
+        coords, depth = queue.popleft()
         for move in solver.phase_moves[phase]:
-            next_coords = flatten(solver.next_position(phase_coords, phase, move))
-            prune_coords = select(next_coords, indexes)
+            next_coords = solver.next_position(coords, move)
+            phase_coords = solver.phase_coords(flatten(next_coords), phase)
+            prune_coords = select(phase_coords, indexes)
             if pruning_table[prune_coords] == NONE:
                 pruning_table[prune_coords] = depth + 1
                 queue.append((next_coords, depth + 1))
