@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+from typing import Union, List
 
 from cube_solver import Cube, Maneuver, apply_move, apply_maneuver
 from cube_solver.cube import utils
@@ -390,7 +391,7 @@ def test_utils():
     assert np.all(comb == combination)
 
 
-def check_cube(cube: Cube, permutation_parity: bool | None, orientation: list[int], permutation: list[int]):
+def check_cube(cube: Cube, permutation_parity: Union[bool,  None], orientation: List[int], permutation: List[int]):
     # state
     assert np.all(cube.orientation == orientation)
     assert np.all(cube.permutation == permutation)

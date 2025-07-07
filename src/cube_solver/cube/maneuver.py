@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import random
-from typing import Iterator, overload
 from collections import Counter
 from itertools import combinations
+from typing import Union, List, Tuple, Iterator, overload
 
 from .cube import Cube
 from .enums import Move
@@ -25,7 +25,7 @@ for first, second in combinations(moves, 2):
         REDUCED_MOVES[key] = [second]
 
 
-def _reduce_moves(moves: list[Move]) -> list[Move]:
+def _reduce_moves(moves: List[Move]) -> List[Move]:
     """
     Given a sequence of moves, reduce consecutive
     moves along the same axis where possible.
@@ -49,7 +49,7 @@ def _reduce_moves(moves: list[Move]) -> list[Move]:
     return moves
 
 
-def _reduced(counter: Counter, moves: list[Move], i: int, n: int) -> list[Move] | None:
+def _reduced(counter: Counter, moves: List[Move], i: int, n: int) -> Union[List[Move],  None]:
     """
     Update counter and reduce consecutive
     moves along the same axis where possible.
@@ -83,7 +83,7 @@ def _reduced(counter: Counter, moves: list[Move], i: int, n: int) -> list[Move] 
 
 
 class Maneuver(str):
-    def __new__(cls, moves: str | list[Move], reduce: bool = True):
+    def __new__(cls, moves: Union[str, List[Move]], reduce: bool = True):
         """
         Create :class:`Maneuver` object.
 
@@ -161,7 +161,7 @@ class Maneuver(str):
         >>> A @ B  # '@' commutator, same as A B A' B'
         "U R' F' R U' F"
         """
-        cls.moves: tuple[Move, ...]
+        cls.moves: Tuple[Move, ...]
 
         if not isinstance(moves, (str, list)):
             raise TypeError(f"moves must be str or list, not {type(moves).__name__}")
@@ -202,7 +202,7 @@ class Maneuver(str):
     @overload
     def __getitem__(self, key: slice) -> Maneuver: ...
 
-    def __getitem__(self, key: int | slice) -> Move | Maneuver:  # type: ignore
+    def __getitem__(self, key: Union[int, slice]) -> Union[Move, Maneuver]:  # type: ignore
         if not isinstance(key, (int, slice)):
             raise TypeError(f"Maneuver indices must be int or slice, not {type(key).__name__}")
         if isinstance(key, int):
@@ -216,7 +216,7 @@ class Maneuver(str):
         for move in self.moves:
             yield move
 
-    def __contains__(self, item: str | Move) -> bool:
+    def __contains__(self, item: Union[str, Move]) -> bool:
         if isinstance(item, str):
             item = Move.from_string(item)
         return item in self.moves
@@ -224,43 +224,43 @@ class Maneuver(str):
     def __neg__(self) -> Maneuver:
         return self.inverse
 
-    def __add__(self, other: str | list[Move]) -> Maneuver:
+    def __add__(self, other: Union[str, List[Move]]) -> Maneuver:
         if not isinstance(other, Maneuver):
             other = Maneuver(other)
         return Maneuver([*self.moves] + [*other.moves])
 
-    def __radd__(self, other: str | list[Move]) -> Maneuver:
+    def __radd__(self, other: Union[str, List[Move]]) -> Maneuver:
         other = Maneuver(other)
         return other.__add__(self)
 
-    def __sub__(self, other: str | list[Move]) -> Maneuver:
+    def __sub__(self, other: Union[str, List[Move]]) -> Maneuver:
         if not isinstance(other, Maneuver):
             other = Maneuver(other)
         return self.__add__(other.__neg__())
 
-    def __rsub__(self, other: str | list[Move]) -> Maneuver:
+    def __rsub__(self, other: Union[str, List[Move]]) -> Maneuver:
         other = Maneuver(other)
         return other.__sub__(self)
 
-    def __mul__(self, other: int | str | list[Move]) -> Maneuver:  # type: ignore
+    def __mul__(self, other: Union[int, str, List[Move]]) -> Maneuver:  # type: ignore
         if isinstance(other, int):
             return Maneuver([*self.moves] * other)
         if not isinstance(other, Maneuver):
             other = Maneuver(other)
         return self.__add__(other).__sub__(self)
 
-    def __rmul__(self, other: int | str | list[Move]) -> Maneuver:  # type: ignore
+    def __rmul__(self, other: Union[int, str, List[Move]]) -> Maneuver:  # type: ignore
         if isinstance(other, int):
             return Maneuver([*self.moves] * other)
         other = Maneuver(other)
         return other.__mul__(self)
 
-    def __matmul__(self, other: str | list[Move]) -> Maneuver:
+    def __matmul__(self, other: Union[str, List[Move]]) -> Maneuver:
         if not isinstance(other, Maneuver):
             other = Maneuver(other)
         return self.__mul__(other).__sub__(other)
 
-    def __rmatmul__(self, other: str | list[Move]) -> Maneuver:
+    def __rmatmul__(self, other: Union[str, List[Move]]) -> Maneuver:
         other = Maneuver(other)
         return other.__matmul__(self)
 

@@ -6,6 +6,7 @@ import warnings
 import numpy as np
 from copy import deepcopy
 from itertools import chain
+from typing import Union, Tuple, Dict
 
 from ..defs import CoordType, CoordsType
 from .defs import NONE, SIZE, NUM_DIMS, NUM_CORNERS, NUM_EDGES, NUM_ORBIT_ELEMS
@@ -65,7 +66,7 @@ warnings.simplefilter("always")
 
 
 class Cube:
-    def __init__(self, scramble: str | None = None, repr: str | None = None, random_state: bool = False):
+    def __init__(self, scramble: Union[str, None] = None, repr: Union[str, None] = None, random_state: bool = False):
         """
         Create :class:`Cube` object.
 
@@ -157,7 +158,7 @@ class Cube:
         if not isinstance(random_state, bool):
             raise TypeError(f"random_state must be bool, not {type(random_state).__name__}")
 
-        self._color_scheme: dict[Face, Color]
+        self._color_scheme: Dict[Face, Color]
         """
         Color shceme of the cube.
         Used to generate and parse the string representation.
@@ -203,7 +204,7 @@ class Cube:
         * Corners: [``UBL``, ``UFR``, ``DBR``, ``DFL``, ``UBR``, ``UFL``, ``DBL``, ``DFR``]
         * Edges: [``UB``, ``UF``, ``DB``, ``DF``, ``UL``, ``UR``, ``DL``, ``DR``, ``BL``, ``BR``, ``FL``, ``FR``]
         """
-        self.permutation_parity: bool | None
+        self.permutation_parity: Union[bool, None]
         """
         Permutation parity.
 
@@ -222,7 +223,7 @@ class Cube:
             self.apply_maneuver(scramble)
 
     @property
-    def coords(self) -> tuple[int, ...]:
+    def coords(self) -> Tuple[int, ...]:
         """
         Cube coordinates.
 
@@ -254,7 +255,7 @@ class Cube:
         return tuple(coord if isinstance(coord, int) else coord[0] for coord in coords)
 
     @coords.setter
-    def coords(self, coords: tuple[int, ...]):
+    def coords(self, coords: Tuple[int, ...]):
         self.set_coords(coords)
 
     @property
@@ -366,7 +367,7 @@ class Cube:
 
         face_repr = [repr[i:i+SIZE*SIZE] for i in range(0, len(REPR_ORDER)*SIZE*SIZE, SIZE*SIZE)]
         for face, _repr in zip(REPR_ORDER, face_repr):
-            self._colors[face._index][face.axis.name] = np.reshape([*map(Color.from_char, _repr)], shape=(SIZE, SIZE))
+            self._colors[face._index][face.axis.name] = np.reshape([*map(Color.from_char, _repr)], (SIZE, SIZE))
 
         # centers
         inv_color_scheme = {color: Face.NONE for color in Color.colors()}

@@ -4,6 +4,7 @@ import numpy as np
 from copy import deepcopy
 from typing import overload
 from abc import ABC, abstractmethod
+from typing import Union, List, Dict, Set
 
 from ..logger import logger
 from ..defs import CoordsType, NEXT_MOVES
@@ -32,11 +33,11 @@ class BaseSolver(ABC):
     """Whether the solving algorithm uses the normal or the partial corner permutation."""
     partial_edge_perm: bool
     """Whether the solving algorithm uses the normal or the partial edge permutation."""
-    phase_moves: list[list[Move]]
+    phase_moves: List[List[Move]]
     """Available moves for each phase."""
-    transition_defs: list[TransitionDef]
+    transition_defs: List[TransitionDef]
     """Transition table definitions for each phase."""
-    pruning_defs: list[list[PruningDef]]
+    pruning_defs: List[List[PruningDef]]
     """Pruning table definitions for each phase."""
 
     def __init_subclass__(cls):
@@ -79,17 +80,17 @@ class BaseSolver(ABC):
             raise TypeError(f"use_pruning_tables must be bool, not {type(use_pruning_tables).__name__}")
 
         init_coords = utils.flatten(self.get_coords(Cube()))
-        self.solved_coords: list[FlattenCoords] = [self.phase_coords(init_coords, phase) for phase in range(self.num_phases)]
+        self.solved_coords: List[FlattenCoords] = [self.phase_coords(init_coords, phase) for phase in range(self.num_phases)]
         """Solved flatten coordinates for each phase."""
 
-        self.next_moves: list[dict[Move, list[Move]]] = []
+        self.next_moves: List[Dict[Move, List[Move]]] = []
         """Allowed next moves based on the previous move, for each phase."""
         for phase_moves in self.phase_moves:
             next_moves = {Move.NONE: phase_moves}
             next_moves.update({move: [mv for mv in NEXT_MOVES[move] if mv in phase_moves] for move in phase_moves})
             self.next_moves.append(next_moves)
 
-        self.final_moves: list[set[Move]] = []
+        self.final_moves: List[Set[Move]] = []
         """Final allowed moves for each phase, except the last."""
         for i in range(self.num_phases - 1):
             self.final_moves.append({Move.NONE} | set(self.phase_moves[i]) - set(self.phase_moves[i+1]))
@@ -98,7 +99,7 @@ class BaseSolver(ABC):
         """Whether to use transition tables for cube state transitions."""
         self.use_pruning_tables: bool = use_pruning_tables
         """Whether to use pruning tables to reduce the tree search space."""
-        self.transition_tables: dict[str, np.ndarray] = {}
+        self.transition_tables: Dict[str, np.ndarray] = {}
         """Transition tables used to compute cube state transitions."""
         if self.use_transition_tables:
             try:
@@ -108,7 +109,7 @@ class BaseSolver(ABC):
             except Exception:  # pragma: no cover
                 self.transition_tables = utils.get_tables("transition.npz", self.transition_defs,
                                                           utils.generate_transition_table, accumulate=True)
-        self.pruning_tables: dict[str, np.ndarray] = {}
+        self.pruning_tables: Dict[str, np.ndarray] = {}
         """Pruning tables used to reduce the tree search space."""
         if self.use_pruning_tables:
             pruning_defs = []
@@ -125,11 +126,11 @@ class BaseSolver(ABC):
                 except Exception:
                     self.pruning_tables = utils.get_tables(pruning_filename, pruning_defs, utils.generate_pruning_table)
 
-        self.nodes: list[int] = [0] * self.num_phases
+        self.nodes: List[int] = [0] * self.num_phases
         """Number of visited nodes during a solve for each phase."""
-        self.checks: list[int] = [0] * self.num_phases
+        self.checks: List[int] = [0] * self.num_phases
         """Number of solve checks during a solve for each phase."""
-        self.prunes: list[int] = [0] * self.num_phases
+        self.prunes: List[int] = [0] * self.num_phases
         """Number of pruned nodes during a solve for each phase."""
         self.terminated: bool = False
         """Whether the solve search was terminated due to a timeout."""
@@ -229,7 +230,7 @@ class BaseSolver(ABC):
         """
         cube.set_coords(coords, self.partial_corner_perm, self.partial_edge_perm)
 
-    def is_solved(self, position: Cube | CoordsType, phase: int) -> bool:
+    def is_solved(self, position: Union[Cube, CoordsType], phase: int) -> bool:
         """
         Whether the cube position is solved at the specified phase.
 
@@ -260,7 +261,7 @@ class BaseSolver(ABC):
         phase_coords = self.phase_coords(utils.flatten(position), phase)
         return phase_coords == self.solved_coords[phase]
 
-    def prune(self, position: Cube | CoordsType, phase: int, depth: int) -> bool:
+    def prune(self, position: Union[Cube, CoordsType], phase: int, depth: int) -> bool:
         """
         Whether to prune the search tree.
 
@@ -305,7 +306,7 @@ class BaseSolver(ABC):
     @overload
     def next_position(self, position: CoordsType, move: Move) -> CoordsType: ...
 
-    def next_position(self, position: Cube | CoordsType, move: Move) -> Cube | CoordsType:
+    def next_position(self, position: Union[Cube, CoordsType], move: Move) -> Union[Cube, CoordsType]:
         """
         Get the next cube position.
 
@@ -345,8 +346,8 @@ class BaseSolver(ABC):
         cube.apply_move(move)
         return self.get_coords(cube)
 
-    def solve(self, cube: Cube, max_length: int | None = None, optimal: bool = False,
-              timeout: int | None = None, verbose: int = 0) -> Maneuver | list[Maneuver] | None:
+    def solve(self, cube: Cube, max_length: Union[int,  None] = None, optimal: bool = False,
+              timeout: Union[int, None] = None, verbose: int = 0) -> Union[Maneuver, List[Maneuver], None]:
         """
         Solve the cube position.
 
@@ -438,7 +439,7 @@ class BaseSolver(ABC):
         return None
 
     # TODO make iterative version and compare
-    def _phase_search(self, position: Cube | CoordsType, phase: int = 0, current_length: int = 0) -> bool:
+    def _phase_search(self, position: Union[Cube, CoordsType], phase: int = 0, current_length: int = 0) -> bool:
         """
         Solve the cube position from the specified phase.
 
@@ -482,7 +483,7 @@ class BaseSolver(ABC):
         self._solution[phase] = []
         return False
 
-    def _search(self, position: Cube | CoordsType, phase: int, depth: int, current_length: int) -> bool:
+    def _search(self, position: Union[Cube, CoordsType], phase: int, depth: int, current_length: int) -> bool:
         """
         Solve the cube position from the specified phase at the specified depth.
 

@@ -1,6 +1,7 @@
 """Cube utils module."""
 import math
 import numpy as np
+from typing import Tuple
 
 from .defs import FACTORIAL, COMBINATION
 
@@ -131,7 +132,7 @@ def get_orientation_coord(orientation: np.ndarray, v: int, is_modulo: bool = Fal
     return coord.item()
 
 
-def get_permutation_array(coord: int, n: int, force_even_parity: bool = False) -> tuple[np.ndarray, bool]:
+def get_permutation_array(coord: int, n: int, force_even_parity: bool = False) -> Tuple[np.ndarray, bool]:
     """
     Get permutation array and permutation parity.
 
@@ -401,7 +402,7 @@ def get_combination_coord(combination: np.ndarray) -> int:
         return np.sum([math.comb(c, i + 1) for i, c in enumerate(combination)]).item()
 
 
-def get_partial_permutation_array(coord: int, n: int) -> tuple[np.ndarray, np.ndarray]:
+def get_partial_permutation_array(coord: int, n: int) -> Tuple[np.ndarray, np.ndarray]:
     """
     Get permutation array and combination array.
 

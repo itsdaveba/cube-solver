@@ -1,8 +1,12 @@
 """Common definitions."""
+from typing import Union, Tuple
+
 from .cube.enums import Move, Layer
 
-CoordType = int | tuple[int, ...]
-CoordsType = tuple[CoordType, ...]
+CoordType = Union[int, Tuple[int, ...]]
+"""Cube coordinate type."""
+CoordsType = Tuple[CoordType, ...]
+"""Cube coordinates type."""
 
 face_moves = [*Move.face_moves()]
 main_layers = (Layer.UP, Layer.FRONT, Layer.RIGHT)

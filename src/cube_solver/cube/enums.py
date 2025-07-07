@@ -1,8 +1,8 @@
 """Enums module."""
 from __future__ import annotations
 
-from typing import Iterator
 from enum import Enum, auto
+from typing import Union, List, Tuple, Iterator
 
 from .defs import NONE
 
@@ -131,7 +131,7 @@ class Layer(IntEnum):
         return layer_axis[self]
 
     @property
-    def perm(self) -> list[list[Cubie]]:
+    def perm(self) -> List[List[Cubie]]:
         """Layer permutation."""
         return layer_perm[self]
 
@@ -277,7 +277,7 @@ class Face(IntEnum):
         return face_opposite[self]
 
     @property
-    def _index(self) -> tuple[int | slice, ...]:
+    def _index(self) -> Tuple[Union[int, slice], ...]:
         """Face index of the color representation array."""
         return face_cubie_index[self]
 
@@ -378,7 +378,7 @@ class Cubie(IntEnum):
         return cubie_orbit[self]
 
     @property
-    def faces(self) -> list[Face]:
+    def faces(self) -> List[Face]:
         """Cubie visible faces."""
         if self == Cubie.NONE:
             return [Face.NONE]
@@ -390,7 +390,7 @@ class Cubie(IntEnum):
         return faces
 
     @property
-    def _index(self) -> tuple[int, ...]:
+    def _index(self) -> Tuple[int, ...]:
         """Cubie index of the color representation array."""
         return cubie_index[self]
 
@@ -410,7 +410,7 @@ class Cubie(IntEnum):
         return 20 <= self < 26
 
     @classmethod
-    def from_faces(cls, faces: list[Face]) -> Cubie:
+    def from_faces(cls, faces: List[Face]) -> Cubie:
         """
         Return the corresponding :class:`Cubie` enum.
 
@@ -561,7 +561,7 @@ class Move(IntEnum):
         return Move[self.name[:-1] + str(-int(self.name[-1]) % 4)]
 
     @property
-    def layers(self) -> list[Layer]:
+    def layers(self) -> List[Layer]:
         """Move layers."""
         if self == Move.NONE:
             return [Layer.NONE]
@@ -573,7 +573,7 @@ class Move(IntEnum):
         return layers
 
     @property
-    def shifts(self) -> list[int]:
+    def shifts(self) -> List[int]:
         """Permutation shift for each layer."""
         if self == Move.NONE:
             return [0]

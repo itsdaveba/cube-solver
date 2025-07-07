@@ -1,5 +1,5 @@
-Cube Solver package
-====================
+API Documentation
+=================
 
 .. automodule:: cube_solver
    :members: Cube, Maneuver, BaseSolver

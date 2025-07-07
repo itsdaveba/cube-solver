@@ -99,7 +99,7 @@ def test_utils():
     utils.save_tables("tables/test.npz", {"test": np.array([0])})
     with pytest.raises(TypeError, match=r"path must be str or Path, not NoneType"):
         utils.load_tables(None)
-    assert utils.load_tables("tables/test.npz") == {"test": [0]}
+    assert np.all(utils.load_tables("tables/test.npz")["test"] == [0])
 
     # get tables
     with pytest.raises(TypeError, match=r"filename must be str, not NoneType"):
@@ -115,15 +115,16 @@ def test_utils():
     with pytest.raises(TypeError, match=r"tables_defs elements must be TableDef, not NoneType"):
         utils.get_tables("", [None], fn)
     tables = utils.get_tables("test", [TransitionDef("test", 1)], fn)
-    assert tables == {"test": [0]}
-    tables = utils.get_tables("test", [TransitionDef("test", 1), TransitionDef("TEST", 1)], fn)
-    assert tables == {"test": [0], "TEST": [0]}
+    assert np.all(tables["test"] == [0])
+    tables = utils.get_tables("test", [TransitionDef("test", 2), TransitionDef("TEST", 2)], fn)
+    assert np.all(tables["test"] == [0])
+    assert np.all(tables["TEST"] == [0, 0])
     tables = utils.get_tables("test", [TransitionDef("TEST", 1)], fn, True)
-    assert tables == {"test": [0], "TEST": [0]}
+    assert np.all(tables["test"] == [0])
+    assert np.all(tables["TEST"] == [0, 0])
     tables = utils.get_tables("test", [TransitionDef("TEST", 1)], fn)
-    assert tables == {"TEST": [0]}
-    tables = utils.get_tables("test", [TransitionDef("TEST", 1)], fn)
-    assert tables == {"TEST": [0]}
+    assert "test" not in tables.keys()
+    assert np.all(tables["TEST"] == [0, 0])
     os.remove("tables/test")
     os.remove("tables/test.npz")
 

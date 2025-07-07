@@ -5,14 +5,14 @@ import numpy as np
 from pathlib import Path
 from collections import deque
 from dataclasses import asdict
-from typing import Sequence, Callable
 from typing_extensions import TYPE_CHECKING
+from typing import Union, Tuple, Sequence, Dict, Callable
 
 from ..logger import logger
 from ..defs import CoordsType, NEXT_MOVES
 from ..cube.enums import Move
 from ..cube.cube import Cube, apply_move
-from .defs import NONE, FlattenCoords, TableDef
+from .defs import NONE, FlattenCoords, TransitionDef, PruningDef, TableDef
 
 if TYPE_CHECKING:
     from .solver import BaseSolver
@@ -49,7 +49,7 @@ def flatten(coords: CoordsType) -> FlattenCoords:
     return flatten_coords
 
 
-def select(coords: FlattenCoords, indexes: int | tuple[int, ...] | None) -> FlattenCoords:
+def select(coords: FlattenCoords, indexes: Union[int, Tuple[int, ...], None]) -> FlattenCoords:
     """
     Select coordinates.
 
@@ -87,7 +87,7 @@ def select(coords: FlattenCoords, indexes: int | tuple[int, ...] | None) -> Flat
     return tuple(coords[index] for index in indexes)
 
 
-def load_tables(path: str | Path) -> dict[str, np.ndarray]:
+def load_tables(path: Union[str, Path]) -> Dict[str, np.ndarray]:
     """
     Load the tables from a file.
 
@@ -111,7 +111,7 @@ def load_tables(path: str | Path) -> dict[str, np.ndarray]:
     return tables
 
 
-def save_tables(path: str | Path, tables: dict[str, np.ndarray]):
+def save_tables(path: Union[str, Path], tables: Dict[str, np.ndarray]):
     """
     Save the tables into a single file.
 
@@ -135,7 +135,7 @@ def save_tables(path: str | Path, tables: dict[str, np.ndarray]):
 
 
 def get_tables(filename: str, tables_defs: Sequence[TableDef],
-               generate_table_fn: Callable[..., np.ndarray], accumulate: bool = False) -> dict[str, np.ndarray]:
+               generate_table_fn: Callable[..., np.ndarray], accumulate: bool = False) -> Dict[str, np.ndarray]:
     """
     Create or load tables from the ``tables/`` directory according to the ``tables_defs``.
 
@@ -170,7 +170,7 @@ def get_tables(filename: str, tables_defs: Sequence[TableDef],
     if not isinstance(accumulate, bool):
         raise TypeError(f"accumulate must be bool, not {type(accumulate).__name__}")
     for kwargs in tables_defs:
-        if not isinstance(kwargs, TableDef):
+        if not isinstance(kwargs, (TransitionDef, PruningDef)):
             raise TypeError(f"tables_defs elements must be TableDef, not {type(kwargs).__name__}")
 
     path = Path(f"tables/{filename}")
@@ -229,8 +229,8 @@ def generate_transition_table(coord_name: str, coord_size: int) -> np.ndarray:
     return transition_table
 
 
-def generate_pruning_table(solver: BaseSolver, phase: int, shape: int | tuple[int, ...],
-                           indexes: int | tuple[int, ...] | None, **kwargs) -> np.ndarray:
+def generate_pruning_table(solver: BaseSolver, phase: int, shape: Union[int, Tuple[int, ...]],
+                           indexes: Union[int, Tuple[int, ...], None], **kwargs) -> np.ndarray:
     """
     Generate the phase coordinates pruning table.
 

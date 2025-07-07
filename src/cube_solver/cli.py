@@ -6,6 +6,7 @@ from cube_solver import Cube, Maneuver, BaseSolver, Thistlethwaite, Kociemba
 
 # import click
 import typer
+from typing import Union
 from rich.console import Console
 from typing_extensions import Annotated
 
@@ -72,10 +73,10 @@ def scramble(length: Annotated[int, typer.Option("--length", "-l", show_envvar=F
 def solve(cube: Annotated[str, typer.Argument(help="Cube string representation.")] = "",
           algorithm: Annotated[Algorithm, typer.Option("--algorithm", "-a", show_envvar=False,
                                                        help="Solver algorithm.", show_choices=True)] = Algorithm.KOCIEMBA,
-          length: Annotated[int | None, typer.Option("--length", "-l", show_envvar=False,
-                                                     help="Maximum solution length.")] = None,
-          timeout: Annotated[int | None, typer.Option("--timeout", "-t", show_envvar=False,
-                                                      help="Maximum time in seconds.")] = None,
+          length: Annotated[Union[int, None], typer.Option("--length", "-l", show_envvar=False,
+                                                           help="Maximum solution length.")] = None,
+          timeout: Annotated[Union[int, None], typer.Option("--timeout", "-t", show_envvar=False,
+                                                            help="Maximum time in seconds.")] = None,
           scramble: Annotated[str, typer.Option("--scramble", "-s", show_envvar=False, help="Cube scramble.")] = "",
           random: Annotated[bool, typer.Option("--random", "-r", help="Solve a random cube.")] = False,
           optimal: Annotated[bool, typer.Option("--optimal", "-o", help="Find the optimal solution.")] = False,
