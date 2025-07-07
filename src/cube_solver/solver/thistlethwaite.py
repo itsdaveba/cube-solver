@@ -5,7 +5,8 @@ from ..cube.enums import Move
 from ..cube.defs import CORNER_ORIENTATION_SIZE as CO_SIZE
 from ..cube.defs import EDGE_ORIENTATION_SIZE as EO_SIZE
 from ..cube.defs import NONE, NUM_CORNERS, NUM_EDGES, FACTORIAL, COMBINATION, NUM_ORBIT_ELEMS
-from .solver import BaseSolver, PruningDef, FlattenCoords
+from .defs import FlattenCoords, PruningDef
+from .solver import BaseSolver
 
 
 EEC_SIZE = COMBINATION[NUM_EDGES, NUM_ORBIT_ELEMS].item()  # equator edge combination

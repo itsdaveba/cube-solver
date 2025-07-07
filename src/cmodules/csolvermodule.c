@@ -52,8 +52,8 @@ static void get_coords(int *coords, int partial_corner_perm, int partial_edge_pe
         for (int orbit = 0; orbit < 3; orbit++)
             coords[i++] = get_partial_permutation_coord(edge_permutation, EDGE_ORBITS, orbit, NUM_EDGES);
 }
-// TODO move to utils?
-void next_position(int *next_coords, int *coords, int move, npy_uint16 *transition_tables[], int partial_corner_perm, int partial_edge_perm)
+
+static void next_position(int *next_coords, int *coords, int move, npy_uint16 *transition_tables[], int partial_corner_perm, int partial_edge_perm)
 {
     next_coords[0] = transition_tables[0][NUM_MOVES * coords[0] + move];
     next_coords[1] = transition_tables[1][NUM_MOVES * coords[1] + move];
@@ -297,7 +297,6 @@ static PyObject *generate_pruning_table(PyObject *self, PyObject *args, PyObject
         for (npy_intp i = 0; i < table_size; i++)
             if (data[i] == depth)
             {
-                // TODO avoid this and make transition tables for each phase
                 set_phase_coords(phase_coords, i, indexes, dims, nd);
                 set_coords(coords, phase_coords, phase);
                 for (int m = 0; m < n_moves; m++)

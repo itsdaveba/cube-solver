@@ -3,7 +3,8 @@ DummySolver solver.
 
 Simple solver that does not use pruning tables.
 """
-from .solver import BaseSolver, FlattenCoords
+from .defs import FlattenCoords
+from .solver import BaseSolver
 
 
 class DummySolver(BaseSolver):

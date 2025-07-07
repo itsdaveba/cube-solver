@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Iterator
 from enum import Enum, auto
+
 from .defs import NONE
 
 

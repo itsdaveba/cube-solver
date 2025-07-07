@@ -7,7 +7,9 @@ from abc import ABC, abstractmethod
 
 from ..logger import logger
 from ..defs import CoordsType, NEXT_MOVES
-from ..cube import Cube, Move, Maneuver, apply_move
+from ..cube.enums import Move
+from ..cube.maneuver import Maneuver
+from ..cube.cube import Cube, apply_move
 from ..cube.defs import CORNER_ORIENTATION_SIZE, EDGE_ORIENTATION_SIZE
 from ..cube.defs import CORNER_PERMUTATION_SIZE, EDGE_PERMUTATION_SIZE
 from ..cube.defs import PARTIAL_CORNER_PERMUTATION_SIZE, PARTIAL_EDGE_PERMUTATION_SIZE
@@ -20,6 +22,7 @@ for cubie in NEXT_MOVES[Move.NONE]:
 
 
 # TODO transition talbes per phase
+# TODO compress transition tables with symettry or mod 3
 class BaseSolver(ABC):
     num_phases: int = 1  # TODO add tests for class attributes?
     """Number of phases of the solving algorithm."""
@@ -132,7 +135,6 @@ class BaseSolver(ABC):
         """Solver string representation."""
         return self.__class__.__name__
 
-    # TODO maybe not necesarry after transition tables per phase
     def get_coords(self, cube: Cube) -> CoordsType:
         """
         Get cube coordinates.
@@ -326,7 +328,7 @@ class BaseSolver(ABC):
         Examples
         --------
         >>> from cube_solver import Cube, Kociemba
-        >>> cube = Cube("U F R")  # TODO add a random cube?
+        >>> cube = Cube("U F R")  # TODO add a random cube? add the one used in usage?
         >>> solver = Kociemba()
         >>> solver.solve(cube)
         "R' F' U'"
@@ -468,7 +470,6 @@ class BaseSolver(ABC):
                     return True
                 elif self.terminated or (self._optimal and self._return_phase):
                     return False
-            return False  # TODO not necessary if no stats
+            return False
         self.prunes[phase] += 1
         return False
-# TODO compress transition tables with symettry or mod 3

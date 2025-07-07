@@ -4,7 +4,8 @@ from ..cube.defs import CORNER_ORIENTATION_SIZE as CO_SIZE
 from ..cube.defs import EDGE_ORIENTATION_SIZE as EO_SIZE
 from ..cube.defs import CORNER_PERMUTATION_SIZE as CP_SIZE
 from ..cube.defs import NUM_CORNERS, NUM_EDGES, FACTORIAL, COMBINATION, NUM_ORBIT_ELEMS
-from .solver import BaseSolver, PruningDef, FlattenCoords
+from .defs import FlattenCoords, PruningDef
+from .solver import BaseSolver
 
 
 CC_SIZE = COMBINATION[NUM_CORNERS, NUM_ORBIT_ELEMS].item()  # corner combination

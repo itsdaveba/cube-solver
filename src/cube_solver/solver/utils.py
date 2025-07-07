@@ -10,7 +10,8 @@ from typing_extensions import TYPE_CHECKING
 
 from ..logger import logger
 from ..defs import CoordsType, NEXT_MOVES
-from ..cube import Cube, Move, apply_move  # TODO check all relative imports
+from ..cube.enums import Move
+from ..cube.cube import Cube, apply_move
 from .defs import NONE, FlattenCoords, TableDef
 
 if TYPE_CHECKING:
@@ -209,7 +210,6 @@ def generate_transition_table(coord_name: str, coord_size: int) -> np.ndarray:
     return transition_table
 
 
-# TODO get shape from indexes
 def generate_pruning_table(solver: BaseSolver, phase: int, shape: int | tuple[int, ...],
                            indexes: int | tuple[int, ...] | None, **kwargs) -> np.ndarray:
     """

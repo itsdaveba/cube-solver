@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-
-"""Tests for `cube` package."""
-
 import pytest
 import numpy as np
 
@@ -10,17 +6,7 @@ from cube_solver.cube import utils
 from cube_solver.cube.enums import Axis, Orbit, Layer, Color, Face, Cubie, Move
 
 
-@pytest.fixture
-def response():
-    """Sample pytest fixture.  # TODO double check this
-
-    See more at: http://doc.pytest.org/en/latest/fixture.html
-    """
-    # import requests
-    # return requests.get('https://github.com/audreyr/cookiecutter-pypackage')
-
-
-def test_enums(response):
+def test_enums():
     # axis
     assert hasattr(Axis, "NONE")
     assert all(axis.is_cartesian for axis in Axis.cartesian_axes())

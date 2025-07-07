@@ -33,7 +33,7 @@ def solve_test(solver: BaseSolver, num_cubes: int):
             print(f" {i}")
         print("#", end="")
     print(f" {num_cubes}")
-    nodes = np.mean(nodes, axis=0)  # TODO add solve length
+    nodes = np.mean(nodes, axis=0)
     print("\nMean Time\tMean Solution Length\tMean Phase Nodes")
     print("--------------------------------------------------------")
     print(f"{np.mean(times):.4f} sec", end="\t")
@@ -43,7 +43,7 @@ def solve_test(solver: BaseSolver, num_cubes: int):
     print()
 
 
-def depth_test(solver: BaseSolver, max_depth: int, num_cubes: int):  # TODO add stats about nodes and checks
+def depth_test(solver: BaseSolver, max_depth: int, num_cubes: int):
     print()
     print("\nDepth Test")
     print("----------")

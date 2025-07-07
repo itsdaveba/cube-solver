@@ -3,7 +3,8 @@ from ..cube.defs import CORNER_ORIENTATION_SIZE as CO_SIZE
 from ..cube.defs import EDGE_ORIENTATION_SIZE as EO_SIZE
 from ..cube.defs import CORNER_PERMUTATION_SIZE as CP_SIZE
 from ..cube.defs import PARTIAL_EDGE_PERMUTATION_SIZE as PEP_SIZE
-from .solver import BaseSolver, PruningDef, FlattenCoords
+from .defs import FlattenCoords, PruningDef
+from .solver import BaseSolver
 
 
 class Korf(BaseSolver):
