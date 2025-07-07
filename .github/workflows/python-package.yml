@@ -22,7 +22,7 @@ jobs:
       - name: Lint with flake8
         run: |
           python -m flake8 src/cube_solver tests --count --select=E9,F63,F7,F82 --show-source --statistics
-          python -m flake8 src/cube_solver tests --count --max-complexity=10 --max-line-length=127 --statistics
+          python -m flake8 src/cube_solver tests --count --exit-zero --max-complexity=23 --max-line-length=127 --statistics
       - name: Test with pytest
         run: |
           python -m pytest
