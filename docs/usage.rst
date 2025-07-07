@@ -6,7 +6,7 @@ After installation (see :doc:`installation guide <installation>`), you can use t
 
 .. code-block:: console
 
-    $ cube --help  # TODO show outputs so it can be seen in the readme in github
+    $ cube --help
 
 To perform a maneuver to a cube, use the ``maneuver`` subcommand:
 
@@ -170,13 +170,17 @@ To use **Cube Solver** in a Python project:
 
 .. code-block:: python
 
-    from cube_solver import Cube, Kociemba
+    from cube_solver import Cube, Maneuver, Kociemba
 
-    cube = Cube(random_state=True)
+    scramble = Maneuver.random()
+    print(f"Scramble: {scramble}")
+
+    cube = Cube(scramble)
     print(cube)
     print(f"Cube: {repr(cube)}")
 
     solver = Kociemba()
     solution = solver.solve(cube)
     assert solution is not None
+    assert solution == scramble.inverse
     print(f"Solution: {solution} ({len(solution)})")
