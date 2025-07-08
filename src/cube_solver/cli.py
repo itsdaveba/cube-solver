@@ -9,7 +9,7 @@ from typing_extensions import Annotated
 
 
 # TODO typer color
-app = typer.Typer(no_args_is_help=True, add_completion=False)
+app = typer.Typer(add_completion=False)
 console = Console()
 
 
