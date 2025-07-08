@@ -24,7 +24,6 @@ for cubie in NEXT_MOVES[Move.NONE]:
 
 # TODO transition talbes per phase
 # TODO compress transition tables with symettry or mod 3
-# TODO finish docs and add examples where necessary
 # TODO test algorithm with two phases with all face moves
 class BaseSolver(ABC):
     num_phases: int = 1
@@ -438,7 +437,8 @@ class BaseSolver(ABC):
             return Maneuver([move for phase_solution in solution for move in phase_solution[-2::-1]])
         return None
 
-    # TODO make iterative version and compare
+
+    # TODO make iterative version and compare performance
     def _phase_search(self, position: Union[Cube, CoordsType], phase: int = 0, current_length: int = 0) -> bool:
         """
         Solve the cube position from the specified phase.

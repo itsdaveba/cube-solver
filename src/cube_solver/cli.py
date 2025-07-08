@@ -1,15 +1,14 @@
 """Console script for cube_solver."""
-# TODO test cli
-# TODO typer color
 from enum import Enum
 from cube_solver import Cube, Maneuver, BaseSolver, Thistlethwaite, Kociemba
 
-# import click
 import typer
 from typing import Union
 from rich.console import Console
 from typing_extensions import Annotated
 
+
+# TODO typer color
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 console = Console()
 
@@ -56,7 +55,7 @@ def scramble(length: Annotated[int, typer.Option("--length", "-l", show_envvar=F
             solution = solver.solve(cube, length)
             assert isinstance(solution, Maneuver)
             scramble = solution.inverse
-            if solver.solve(cube, 1) is None:
+            if solver.solve(cube, 1) is None:  # pragma: no cover
                 break
     else:
         scramble = Maneuver.random(length)
@@ -69,7 +68,7 @@ def scramble(length: Annotated[int, typer.Option("--length", "-l", show_envvar=F
         console.print(f"{scramble}")
 
 
-@app.command(no_args_is_help=True)
+@app.command()
 def solve(cube: Annotated[str, typer.Argument(help="Cube string representation.")] = "",
           algorithm: Annotated[Algorithm, typer.Option("--algorithm", "-a", show_envvar=False,
                                                        help="Solver algorithm.", show_choices=True)] = Algorithm.KOCIEMBA,
@@ -98,16 +97,16 @@ def solve(cube: Annotated[str, typer.Argument(help="Cube string representation."
     if not cube and not scramble and not random:
         msg = "Must provide either the 'cube' argument, the '--scramble' / '-s' option, or the '--random' / '-r' option."
         console.print(msg)
-        raise typer.Exit()
+        raise typer.Exit(1)
     if cube and scramble:
         console.print("The '--scramble' / '-s' option cannot be used with the 'cube' argument.")
-        raise typer.Exit()
+        raise typer.Exit(1)
     if cube and random:
         console.print("The '--random' / '-r' option cannot be used with the 'cube' argument.")
-        raise typer.Exit()
+        raise typer.Exit(1)
     if scramble and random:
         console.print("The '--random' / '-r' option cannot be used with the '--scramble' / '-s' option.")
-        raise typer.Exit()
+        raise typer.Exit(1)
     _cube = Cube(repr=cube) if cube else Cube(scramble) if scramble else Cube(random_state=True)
     if verbose:
         console.print(_cube)
