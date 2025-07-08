@@ -258,7 +258,6 @@ def test_solver():
     os.remove("tables/pruning_testsolver.npz")
 
 
-@pytest.mark.slow()
 def test_dummy():
     DummySolver()
     num_cubes = 12
