@@ -44,6 +44,7 @@ Once you have a copy of the source, you can install it with:
 
 .. code-block:: console
 
+    $ cd cube-solver
     $ pip install .
 
 
