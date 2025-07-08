@@ -25,4 +25,4 @@ jobs:
           python -m flake8 src/cube_solver tests --count --exit-zero --max-complexity=23 --max-line-length=127 --statistics
       - name: Test with pytest
         run: |
-          python -m pytest - "not slow"
+          python -m pytest -m "not slow"
