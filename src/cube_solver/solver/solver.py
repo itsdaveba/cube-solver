@@ -76,6 +76,7 @@ class BaseSolver(ABC):
         See Also
         --------
         .solve
+            Solve a cube position.
         """
         if not isinstance(use_transition_tables, bool):
             raise TypeError(f"use_transition_tables must be bool, not {type(use_transition_tables).__name__}")
