@@ -9,7 +9,7 @@ dependencies = [
   "typer",
   "numpy"
 ]
-requires-python = ">= 3.8"
+requires-python = ">= 3.9"
 authors = [
   {name = "Dave Barragan", email = "itsdaveba@gmail.com"}
 ]
@@ -57,11 +57,8 @@ cube = "cube_solver.cli:app"
 [tool.setuptools.dynamic]
 version = {attr = "cube_solver.__version__"}
 
-[tool.pytest.ini_options]
-markers = ["slow"]
-
 [tool.coverage.run]
 omit = ["setup.py", "tests/*"]
 
 [tool.coverage.report]
-exclude_also = ["overload", "TYPE_CHECKING"]
+exclude_also = ["overload", "TYPE_CHECKING", "if __name__ == .__main__.:"]

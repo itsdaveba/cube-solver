@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
@@ -25,4 +25,4 @@ jobs:
           python -m flake8 src/cube_solver --count --exit-zero --max-complexity=23 --max-line-length=127 --statistics
       - name: Test with pytest
         run: |
-          python -m pytest -m "not slow"
+          python -m pytest
