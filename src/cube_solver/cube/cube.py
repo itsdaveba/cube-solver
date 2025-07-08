@@ -123,26 +123,26 @@ class Cube:
 
         Initial scramble.
 
-        >>> cube = Cube("U F R")
+        >>> cube = Cube("U F2 R'")
         >>> cube  # string representation of the cube state
-        WWRWWROORGGYOOYOOYGGBGGYGGYWWWRRBRRBGOOWBBWBBRRBYYBYYO
+        WWBWWBYYOGGROOROOBGGWGGWRRYBRRBRROOGYOOYBBWBBWWGYYGYYR
 
         Initial string representation.
 
-        >>> cube = Cube(repr="WWRWWROORGGYOOYOOYGGBGGYGGYWWWRRBRRBGOOWBBWBBRRBYYBYYO")
+        >>> cube = Cube(repr="WWBWWBYYOGGROOROOBGGWGGWRRYBRRBRROOGYOOYBBWBBWWGYYGYYR")
         >>> print(cube)  # print a visual layout of the cube state
                 ---------
-                | W W R |
-                | W W R |
-                | O O R |
-        ---------------------------------
-        | G G Y | G G B | W W W | G O O |
-        | O O Y | G G Y | R R B | W B B |
-        | O O Y | G G Y | R R B | W B B |
-        ---------------------------------
-                | R R B |
-                | Y Y B |
+                | W W B |
+                | W W B |
                 | Y Y O |
+        ---------------------------------
+        | G G R | G G W | B R R | Y O O |
+        | O O R | G G W | B R R | Y B B |
+        | O O B | R R Y | O O G | W B B |
+        ---------------------------------
+                | W W G |
+                | Y Y G |
+                | Y Y R |
                 ---------
 
         Initial random state.
@@ -238,12 +238,12 @@ class Cube:
         Examples
         --------
         >>> from cube_solver import Cube
-        >>> cube = Cube("U F R")
+        >>> cube = Cube("U F2 R'")
 
         Get cube coordinates.
 
         >>> cube.coords
-        (456, 673, 28179, 96690777)
+        (657, 0, 25253, 85684063)
 
         Set cube coordinates.
 
@@ -269,7 +269,7 @@ class Cube:
         >>> cube = Cube()
         >>> cube.is_solved
         True
-        >>> cube.apply_maneuver("U F R")
+        >>> cube.apply_maneuver("U F2 R'")
         >>> cube.is_solved
         False
         """
@@ -607,25 +607,25 @@ class Cube:
         Examples
         --------
         >>> from cube_solver import Cube
-        >>> cube = Cube("U F R")
+        >>> cube = Cube("U F2 R'")
 
         Get corner coordinates.
 
         >>> cube.get_coord('co')   # corner orientation
-        456
+        657
         >>> cube.get_coord('cp')   # corner permutation
-        28179
+        25253
         >>> cube.get_coord('pcp')  # partial corner permutation
-        (1273, 391)
+        (984, 679)
 
         Get edge coordinates.
 
         >>> cube.get_coord('eo')   # edge orientation
-        673
+        0
         >>> cube.get_coord('ep')   # edge permutation
-        96690777
+        85684063
         >>> cube.get_coord('pep')  # partial edge permutation
-        (7262, 2633, 8640)
+        (8087, 7016, 3576)
         """
         if not isinstance(coord_name, str):
             raise TypeError(f"coord_name must be str, not {type(coord_name).__name__}")
@@ -828,17 +828,17 @@ class Cube:
         Examples
         --------
         >>> from cube_solver import Cube
-        >>> cube = Cube("U F R")
+        >>> cube = Cube("U F2 R'")
 
         Get cube coordinates.
 
         >>> cube.get_coords()
-        (456, 673, 28179, 96690777)
+        (657, 0, 25253, 85684063)
 
         Get cube coordinates with `partial corner permutation` and `partial edge permutation`.
 
         >>> cube.get_coords(partial_corner_perm=True, partial_edge_perm=True)
-        (456, 673, (1273, 391), (7262, 2633, 8640))
+        (657, 0, (984, 679), (8087, 7016, 3576))
         """
         if not isinstance(partial_corner_perm, bool):
             raise TypeError(f"partial_corner_perm must be bool, not {type(partial_corner_perm).__name__}")
@@ -883,17 +883,17 @@ class Cube:
 
         Set cube coordinates.
 
-        >>> coords = (456, 673, 28179, 96690777)
+        >>> coords = (657, 0, 25253, 85684063)
         >>> cube.set_coords(coords)
         >>> cube
-        WWRWWROORGGYOOYOOYGGBGGYGGYWWWRRBRRBGOOWBBWBBRRBYYBYYO
+        WWBWWBYYOGGROOROOBGGWGGWRRYBRRBRROOGYOOYBBWBBWWGYYGYYR
 
         Set cube coordinates with `partial corner permutation` and `partial edge permutation`.
 
-        >>> coords = (456, 673, (1273, 391), (7262, 2633, 8640))
+        >>> coords = (657, 0, (984, 679), (8087, 7016, 3576))
         >>> cube.set_coords(coords, partial_corner_perm=True, partial_edge_perm=True)
         >>> cube
-        WWRWWROORGGYOOYOOYGGBGGYGGYWWWRRBRRBGOOWBBWBBRRBYYBYYO
+        WWBWWBYYOGGROOROOBGGWGGWRRYBRRBRROOGYOOYBBWBBWWGYYGYYR
         """
         if not isinstance(coords, tuple):
             raise TypeError(f"coords must be tuple, not {type(coords).__name__}")
