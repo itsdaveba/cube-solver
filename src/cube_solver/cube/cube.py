@@ -909,7 +909,6 @@ class Cube:
         self.set_coord("pcp" if partial_corner_perm else "cp", coords[2])
         self.set_coord("pep" if partial_edge_perm else "ep", coords[3])
 
-    # TODO test docstring
     def copy(self) -> Cube:
         """
         Return a copy of the cube.

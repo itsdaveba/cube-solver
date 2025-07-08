@@ -8,7 +8,6 @@ from rich.console import Console
 from typing_extensions import Annotated
 
 
-# TODO typer color
 app = typer.Typer(add_completion=False)
 console = Console()
 

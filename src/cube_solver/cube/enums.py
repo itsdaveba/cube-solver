@@ -7,8 +7,6 @@ from typing import Union, List, Tuple, Iterator
 from .defs import NONE
 
 
-# TODO add mirror moves
-# TODO create tables/ in home directory
 class IntEnum(int, Enum):
     """Integer enumeration."""
     __repr__ = Enum.__str__
