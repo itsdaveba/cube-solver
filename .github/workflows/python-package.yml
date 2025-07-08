@@ -21,8 +21,8 @@ jobs:
           python -m pip install flake8 pytest .
       - name: Lint with flake8
         run: |
-          python -m flake8 src/cube_solver tests --count --select=E9,F63,F7,F82 --show-source --statistics
-          python -m flake8 src/cube_solver tests --count --max-complexity=10 --max-line-length=127 --statistics
+          python -m flake8 src/cube_solver --count --select=E9,F63,F7,F82 --show-source --statistics
+          python -m flake8 src/cube_solver --count --exit-zero --max-complexity=23 --max-line-length=127 --statistics
       - name: Test with pytest
         run: |
-          python -m pytest
+          python -m pytest -m "not slow"

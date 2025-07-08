@@ -8,7 +8,7 @@ Welcome to Cube Solver's documentation!
    readme
    installation
    usage
-   modules
+   cube_solver
    contributing
    authors
    history

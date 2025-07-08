@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 75.3.2"]
+requires = ["setuptools", "numpy"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -56,3 +56,12 @@ cube = "cube_solver.cli:app"
 
 [tool.setuptools.dynamic]
 version = {attr = "cube_solver.__version__"}
+
+[tool.pytest.ini_options]
+markers = ["slow"]
+
+[tool.coverage.run]
+omit = ["setup.py", "tests/*"]
+
+[tool.coverage.report]
+exclude_also = ["overload", "TYPE_CHECKING"]

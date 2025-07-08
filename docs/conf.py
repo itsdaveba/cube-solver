@@ -32,7 +32,21 @@ import src.cube_solver
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinx_rtd_theme']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon', 'sphinx.ext.viewcode', 'sphinx_rtd_theme']
+# Control how to represent typehints.
+autodoc_typehints = "description"
+# Insert the __init__ method docstring
+autoclass_content = "init"
+# Define the order in which automodule and autoclass members are listed.
+autodoc_member_order = "bysource"
+# Autodoc default options
+autodoc_default_options = {
+    'ignore-module-all': True
+}
+# Define type aliases
+autodoc_type_aliases = {
+    'CoordsType': 'CoordsType'
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

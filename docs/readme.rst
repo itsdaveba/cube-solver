@@ -13,7 +13,8 @@ Cube Solver
 Rubik's Cube Solver
 
 * Free software: MIT License
-* Documentation: https://cube-solver.readthedocs.io.
+* GitHub repo: https://github.com/itsdaveba/cube-solver
+* Documentation: https://cube-solver.readthedocs.io
 
 
 Features
@@ -21,7 +22,8 @@ Features
 
 * Command-line interface
 * Transition and pruning tables
-* Thistlethwaite solver algorithm
+* C extension module for table generation
+* Thistlethwaite and Kociemba solver algorithms
 
 
 Credits

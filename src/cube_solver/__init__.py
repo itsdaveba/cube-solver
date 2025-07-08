@@ -4,7 +4,8 @@ __author__ = """Dave Barragan"""
 __email__ = 'itsdaveba@gmail.com'
 __version__ = '1.0.1'
 
-from cube_solver.cube import Cube
-from cube_solver.solver import Solver
+from .cube import Cube, apply_move, apply_maneuver, Move, Maneuver
+from .solver import BaseSolver, DummySolver, Korf, Thistlethwaite, Kociemba
 
-__all__ = ["Cube", "Solver"]
+__all__ = ["Cube", "apply_move", "apply_maneuver", "Move", "Maneuver",
+           "BaseSolver", "DummySolver", "Korf", "Thistlethwaite", "Kociemba"]

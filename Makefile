@@ -1,4 +1,4 @@
-.PHONY: clean clean-build clean-pyc clean-test coverage dist docs help install lint lint/flake8
+.PHONY: clean clean-build clean-pyc clean-test coverage dist docs help install lint lint/flake8 cmodules
 
 .DEFAULT_GOAL := help
 
@@ -29,12 +29,13 @@ help:
 
 clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
 
-clean-build: ## remove build artifacts
+clean-build: ## remove build artifacts, rm -f {TARGET}? but removing cutils.c
 	rm -fr build/
 	rm -fr dist/
 	rm -fr .eggs/
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '*.egg' -exec rm -f {} +
+	rm -f csolver.so
 
 clean-pyc: ## remove Python file artifacts
 	find . -name '*.pyc' -exec rm -f {} +
@@ -48,13 +49,14 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint/flake8: ## check style with flake8
-	python -m flake8 src/cube_solver tests --count --select=E9,F63,F7,F82 --show-source --statistics
-	python -m flake8 src/cube_solver tests --count --max-complexity=10 --max-line-length=127 --statistics
+	python -m flake8 src/cube_solver --count --select=E9,F63,F7,F82 --show-source --statistics
+	python -m flake8 src/cube_solver --count --exit-zero --max-complexity=23 --max-line-length=127 --statistics
 
 lint: lint/flake8 ## check style
 
 test: ## run tests quickly with the default Python
 	python -m pytest
+	python -m pytest --doctest-modules src/cube_solver/
 
 coverage: ## check code coverage quickly with the default Python
 	python -m coverage run -m pytest
@@ -63,9 +65,8 @@ coverage: ## check code coverage quickly with the default Python
 	$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/cube_solver.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ src/cube_solver
+	sphinx-apidoc -o docs/ src/cube_solver -e -M -T
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html

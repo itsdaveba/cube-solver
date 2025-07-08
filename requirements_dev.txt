@@ -5,7 +5,7 @@ numpy
 # dev
 flake8
 pytest
-coverage
+pytest-cov
 
 # docs
 Sphinx
