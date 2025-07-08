@@ -44,7 +44,8 @@ def maneuver(moves: Annotated[str, typer.Argument(help="Sequence of moves.")] = 
 
 @app.command()
 def scramble(length: Annotated[int, typer.Option("--length", "-l", show_envvar=False, help="Scramble length.")] = 25,
-             wca: Annotated[bool, typer.Option("--wca", help="Scramble following WCA rules (uses the Kociemba solver).")] = False,
+             wca: Annotated[bool, typer.Option("--wca",
+                                               help="Scramble following WCA rules (uses the Kociemba solver).")] = False,
              verbose: Annotated[int, typer.Option("--verbose", "-v", count=True,
                                                   help="Show cube layout and cube string representation.")] = 0):
     """Generate a random scramble."""
