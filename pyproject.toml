@@ -18,7 +18,7 @@ maintainers = [
 ]
 description = "Rubik's Cube Solver"
 readme = "README.rst"
-license = {file = "LICENSE"}
+license = "MIT"
 keywords = ["rubik", "cube", "solver"]
 classifiers = [
   "Development Status :: 3 - Alpha",
