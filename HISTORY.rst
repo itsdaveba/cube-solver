@@ -2,6 +2,14 @@
 History
 =======
 
+1.1.0 (2025-07-08)
+------------------
+
+* Improved command-line
+* Improved documentation
+* Kociemba solver algorithm
+* Table generation with C extension module
+
 1.0.1 (2025-05-10)
 ------------------
 
