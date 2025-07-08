@@ -159,7 +159,7 @@ class BaseSolver(ABC):
         Notes
         -----
         Depending on the class attributes :attr:`partial_corner_perm` and :attr:`partial_edge_perm`,
-        the ``coords`` parameter is the flattened version of the output from the :meth:`get_coords` method.
+        the ``coords`` parameter is the flattened version of the output from the :meth:`.get_coords` method.
         """
 
     def get_coords(self, cube: Cube) -> CoordsType:
