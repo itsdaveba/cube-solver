@@ -271,6 +271,7 @@ def test_dummy():
     depth_test(solver, max_depth, num_cubes)
 
 
+@pytest.mark.slow()
 def test_korf():
     Korf()
     num_cubes = 12
@@ -292,6 +293,7 @@ def test_korf():
     depth_test(solver, max_depth, num_cubes)
 
 
+@pytest.mark.slow()
 def test_thistlethwaite():
     Thistlethwaite()
     num_cubes = 100
@@ -307,6 +309,7 @@ def test_thistlethwaite():
     solve_test(solver, num_cubes)
 
 
+@pytest.mark.slow()
 def test_kociemba():
     num_cubes = 100
 
