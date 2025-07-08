@@ -72,6 +72,10 @@ class BaseSolver(ABC):
             Whether to use pruning tables to reduce the tree search space.
             If ``True``, creates or loads the tables from the ``tables/`` directory.
             Default is ``True``.
+
+        See Also
+        --------
+        .solve
         """
         if not isinstance(use_transition_tables, bool):
             raise TypeError(f"use_transition_tables must be bool, not {type(use_transition_tables).__name__}")
