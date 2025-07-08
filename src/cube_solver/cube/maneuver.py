@@ -115,6 +115,8 @@ class Maneuver(str):
 
         >>> Maneuver("R L") == "L R"
         True
+        >>> Maneuver("F S B'") == "z"
+        True
         >>> Maneuver("R L F2 B2 R' L' D R L F2 B2 R' L'") == "U"
         True
 
