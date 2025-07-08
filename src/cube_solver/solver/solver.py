@@ -106,7 +106,6 @@ class BaseSolver(ABC):
                 self.transition_tables = utils.get_tables("transition.npz", self.transition_defs,
                                                           csolver.generate_transition_table, accumulate=True)
             except Exception:  # pragma: no cover
-                print(f"Transition tables: {self}")
                 self.transition_tables = utils.get_tables("transition.npz", self.transition_defs,
                                                           utils.generate_transition_table, accumulate=True)
         self.pruning_tables: Dict[str, np.ndarray] = {}
@@ -124,7 +123,6 @@ class BaseSolver(ABC):
                     from .. import csolver  # type: ignore
                     self.pruning_tables = utils.get_tables(pruning_filename, pruning_defs, csolver.generate_pruning_table)
                 except Exception:
-                    print(f"Pruning tables: {self}")
                     self.pruning_tables = utils.get_tables(pruning_filename, pruning_defs, utils.generate_pruning_table)
 
         self.nodes: List[int] = [0] * self.num_phases
@@ -438,7 +436,6 @@ class BaseSolver(ABC):
                 return [Maneuver(phase_solution[-2::-1]) for phase_solution in solution]
             return Maneuver([move for phase_solution in solution for move in phase_solution[-2::-1]])
         return None
-
 
     # TODO make iterative version and compare performance
     def _phase_search(self, position: Union[Cube, CoordsType], phase: int = 0, current_length: int = 0) -> bool:
