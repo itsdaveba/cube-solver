@@ -7,7 +7,7 @@ For more information, see: https://www.jaapsch.net/puzzles/thistle.htm
 
 Examples
 --------
->>> from cube_solver import Cube, Korf
+>>> from cube_solver import Cube, Thistlethwaite
 >>> solver = Thistlethwaite()
 >>> cube = Cube("L2 U R D' B2 D2 F B D")
 >>> solver.solve(cube)
