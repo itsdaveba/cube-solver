@@ -271,6 +271,7 @@ def test_dummy():
     depth_test(solver, max_depth, num_cubes)
 
 
+@pytest.mark.slow()
 def test_korf():
     Korf()
     num_cubes = 12
