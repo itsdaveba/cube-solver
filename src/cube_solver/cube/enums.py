@@ -6,7 +6,7 @@ from typing import Union, List, Tuple, Iterator
 
 from .defs import NONE
 
-
+# TODO add mirror moves
 class IntEnum(int, Enum):
     """Integer enumeration."""
     __repr__ = Enum.__str__
@@ -75,8 +75,10 @@ class Orbit(IntEnum):
     SLICE_MIDDLE = auto()  #: `Middle` slice orbit.
     SLICE_EQUATOR = auto()  #: `Equator` slice orbit.
     SLICE_STANDING = auto()  #: `Standing` slice orbit.
-    TETRAD_111 = auto()  #: `Tetrad` orbit containing the :attr:`Cubie.UFR` corner.
-    TETRAD_M11 = auto()  #: `Tetrad` orbit containing the :attr:`Cubie.UFL` corner.
+    TETRAD_111 = auto()
+    """`Tetrad` orbit containing the :attr:`Cubie.UBL`, :attr:`Cubie.UFR`, :attr:`Cubie.DBR`, and :attr:`Cubie.DFL` corners."""
+    TETRAD_M11 = auto()
+    """`Tetrad` orbit containing the :attr:`Cubie.UBR`, :attr:`Cubie.UFL`, :attr:`Cubie.DBL`, and :attr:`Cubie.DFR` corners."""
 
     @property
     def is_slice(self) -> bool:
