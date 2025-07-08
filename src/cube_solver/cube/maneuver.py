@@ -145,6 +145,8 @@ class Maneuver(str):
         'U F2'
         >>> [move for move in maneuver]
         [Move.U1, Move.F2, Move.R3]
+        >>> list(maneuver)
+        [Move.U1, Move.F2, Move.R3]
         >>> Move.U1 in maneuver
         True
 
