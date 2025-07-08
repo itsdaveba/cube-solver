@@ -1,3 +1,4 @@
+import pytest
 from typer.testing import CliRunner
 
 from cube_solver import Maneuver
@@ -6,6 +7,7 @@ from cube_solver.cli import app
 runner = CliRunner()
 
 
+@pytest.mark.slow()
 def test_cli():
     # maneuver
     result = runner.invoke(app, ["maneuver"])
