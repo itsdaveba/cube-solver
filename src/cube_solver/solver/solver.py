@@ -106,6 +106,7 @@ class BaseSolver(ABC):
                 self.transition_tables = utils.get_tables("transition.npz", self.transition_defs,
                                                           csolver.generate_transition_table, accumulate=True)
             except Exception:  # pragma: no cover
+                print(f"Transition tables: {self}")
                 self.transition_tables = utils.get_tables("transition.npz", self.transition_defs,
                                                           utils.generate_transition_table, accumulate=True)
         self.pruning_tables: Dict[str, np.ndarray] = {}
@@ -123,6 +124,7 @@ class BaseSolver(ABC):
                     from .. import csolver  # type: ignore
                     self.pruning_tables = utils.get_tables(pruning_filename, pruning_defs, csolver.generate_pruning_table)
                 except Exception:
+                    print(f"Pruning tables: {self}")
                     self.pruning_tables = utils.get_tables(pruning_filename, pruning_defs, utils.generate_pruning_table)
 
         self.nodes: List[int] = [0] * self.num_phases

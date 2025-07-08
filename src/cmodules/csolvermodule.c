@@ -192,7 +192,7 @@ static PyObject *generate_pruning_table(PyObject *self, PyObject *args, PyObject
     for (int i = 0; i < nd; i++)
     {
         tmp = PyTuple_GetItem(shape, i);
-        dims[i] = _PyLong_AsInt(tmp);
+        dims[i] = PyLong_AsLong(tmp);
         table_size *= dims[i];
     }
     // parse indexes
@@ -209,7 +209,7 @@ static PyObject *generate_pruning_table(PyObject *self, PyObject *args, PyObject
         if (i < ni)
         {
             tmp = PyTuple_GetItem(idxs, i);
-            indexes[i] = PyLong_Check(tmp) ? _PyLong_AsInt(tmp) : NONE;
+            indexes[i] = PyLong_Check(tmp) ? PyLong_AsLong(tmp) : NONE;
         }
         else
             indexes[i] = NONE;
@@ -244,8 +244,8 @@ static PyObject *generate_pruning_table(PyObject *self, PyObject *args, PyObject
     // class attributes
     PyObject *pcp = PyObject_GetAttrString(solver, "partial_corner_perm");
     PyObject *pep = PyObject_GetAttrString(solver, "partial_edge_perm");
-    int partial_corner_perm = _PyLong_AsInt(pcp);
-    int partial_edge_perm = _PyLong_AsInt(pep);
+    int partial_corner_perm = PyLong_AsLong(pcp);
+    int partial_edge_perm = PyLong_AsLong(pep);
     PyObject *phase_moves = PyObject_GetAttrString(solver, "phase_moves");
     phase_moves = PyList_GetItem(phase_moves, phase);
     int n_moves = PyList_Size(phase_moves);
@@ -253,7 +253,7 @@ static PyObject *generate_pruning_table(PyObject *self, PyObject *args, PyObject
     for (int i = 0; i < n_moves; i++)
     {
         tmp = PyList_GetItem(phase_moves, i);
-        moves[i] = _PyLong_AsInt(tmp);
+        moves[i] = PyLong_AsLong(tmp);
     }
 
     // transition tables

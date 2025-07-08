@@ -131,7 +131,7 @@ def save_tables(path: Union[str, Path], tables: Dict[str, np.ndarray]):
         path = Path(path)
     path.parent.mkdir(exist_ok=True)
     with path.open("wb") as file:
-        np.savez(file, allow_pickle=False, **tables)
+        np.savez(file, **tables)
 
 
 def get_tables(filename: str, tables_defs: Sequence[TableDef],
