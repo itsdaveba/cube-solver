@@ -30,7 +30,7 @@ class TransitionDef:
 
     @property
     def name(self) -> str:
-        """Transition table name."""
+        """Transition table name (same as ``coord_name``)."""
         return self.coord_name
 
 
