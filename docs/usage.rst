@@ -49,7 +49,9 @@ the required tables will be generated. This process takes around 5 minutes.
 
 The cube string representation must contain characters from `{'W', 'G', 'R', 'Y', 'B', 'O'}`,
 representing the colors ``WHITE``, ``GREEN``, ``RED``, ``YELLOW``, ``BLUE``, and ``ORANGE``, respectively.
-The order of the string representation is::
+The order of the string representation is:
+
+.. code-block:: console
 
                ------------
                | 01 02 03 |
