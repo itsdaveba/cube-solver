@@ -126,6 +126,8 @@ class Maneuver(str):
         'R2 L'
         >>> Maneuver("F S' B2 F")
         'S z2'
+        >>> Maneuver("F S' B2 F", reduce=False)  # do not reduce
+        "F S' B2 F"
 
         Inverse maneuver.
 
