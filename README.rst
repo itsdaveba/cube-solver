@@ -84,7 +84,7 @@ To generate a scramble, use the ``scramble`` subcommand:
     $ cube scramble --length 30  # scramble of length 30
     F' L2 B' R D' L D2 F2 B L' F B' U' L' U' F2 B2 D' R B R D' L2 D L2 B2 L' U' L F'
 
-    $ cube scramble --wca        # scramble following WCA rules
+    $ cube scramble --wca        # scramble following WCA rules (uses the Kociemba solver)
     R2 U' F2 U' R2 B2 U2 F2 D' B2 U' F2 D2 R2 B' R' D' L' R B D' R' B2
 
 To solve a cube, use the ``solve`` subcommand.
