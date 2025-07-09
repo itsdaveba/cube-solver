@@ -93,7 +93,6 @@ def solve(cube: Annotated[str, typer.Argument(help="Cube string representation."
     \n\nafter the scramble R U R' U', is:
     \n\nWWOWWGWWGBOOOOOOOOGGYGGWGGGRRWBRRWRRBRRBBBBBBYYRYYYYYY
     """
-    solver: BaseSolver = ALGS[algorithm]()
     if not cube and not scramble and not random:
         msg = "Must provide either the 'cube' argument, the '--scramble' / '-s' option, or the '--random' / '-r' option."
         console.print(msg)
@@ -107,6 +106,7 @@ def solve(cube: Annotated[str, typer.Argument(help="Cube string representation."
     if scramble and random:
         console.print("The '--random' / '-r' option cannot be used with the '--scramble' / '-s' option.")
         raise typer.Exit(1)
+    solver: BaseSolver = ALGS[algorithm]()
     _cube = Cube(repr=cube) if cube else Cube(scramble) if scramble else Cube(random_state=True)
     if verbose:
         console.print(_cube)
