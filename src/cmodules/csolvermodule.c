@@ -186,8 +186,8 @@ static PyObject *generate_pruning_table(PyObject *self, PyObject *args, PyObject
         shape = PyTuple_Pack(1, shape);
         Py_DECREF(tmp);
     }
-    int nd = PyTuple_Size(shape);
-    npy_intp dims[nd];
+    int nd = (int)PyTuple_Size(shape);
+    npy_intp *dims = malloc(nd * sizeof(npy_intp));
     npy_intp table_size = 1;
     for (int i = 0; i < nd; i++)
     {
@@ -202,8 +202,8 @@ static PyObject *generate_pruning_table(PyObject *self, PyObject *args, PyObject
         idxs = PyTuple_Pack(1, idxs);
         Py_DECREF(tmp);
     }
-    int ni = PyTuple_Size(idxs);
-    int indexes[nd];
+    int ni = (int)PyTuple_Size(idxs);
+    int *indexes = malloc(ni * sizeof(int));
     for (int i = 0; i < nd; i++)
     {
         if (i < ni)
@@ -248,8 +248,8 @@ static PyObject *generate_pruning_table(PyObject *self, PyObject *args, PyObject
     int partial_edge_perm = PyLong_AsLong(pep);
     PyObject *phase_moves = PyObject_GetAttrString(solver, "phase_moves");
     phase_moves = PyList_GetItem(phase_moves, phase);
-    int n_moves = PyList_Size(phase_moves);
-    int moves[n_moves];
+    int n_moves = (int)PyList_Size(phase_moves);
+    int *moves = malloc(n_moves * sizeof(n_moves));
     for (int i = 0; i < n_moves; i++)
     {
         tmp = PyList_GetItem(phase_moves, i);
@@ -281,13 +281,13 @@ static PyObject *generate_pruning_table(PyObject *self, PyObject *args, PyObject
     npy_intp counter;
     npy_int8 depth = 0;
     int coords_size = 4 + partial_corner_perm + 2 * partial_edge_perm;
-    int coords[coords_size];
-    int next_coords[coords_size];
+    int *coords = malloc(coords_size * sizeof(coords_size));
+    int *next_coords = malloc(coords_size * sizeof(coords_size));;
     get_coords(coords, partial_corner_perm, partial_edge_perm);
     int phase_coords_size = get_phase_coords_size(phase);
     if (phase_coords_size == NONE)
         return NULL;
-    int phase_coords[phase_coords_size];
+    int *phase_coords = malloc(phase_coords_size * sizeof(int));
     get_phase_coords(phase_coords, coords, phase);
     npy_intp table_index = get_table_index(phase_coords, indexes, dims, nd);
     data[table_index] = depth;
@@ -313,6 +313,14 @@ static PyObject *generate_pruning_table(PyObject *self, PyObject *args, PyObject
             }
         depth++;
     } while (counter);
+
+    free(dims);
+    free(indexes);
+    free(moves);
+    free(coords);
+    free(next_coords);
+    free(phase_coords);
+
     return table;
 }
 

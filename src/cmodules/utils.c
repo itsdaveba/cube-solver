@@ -126,7 +126,7 @@ void set_phase_coords(int *phase_coords, npy_intp index, int *indexes, npy_intp 
     for (int i = nd - 1; i >= 0; i--)
     {
         idx = indexes[i] == NONE ? i : indexes[i];
-        phase_coords[idx] = index % dims[i];
+        phase_coords[idx] = (int)(index % dims[i]);
         index /= dims[i];
     }
 }
