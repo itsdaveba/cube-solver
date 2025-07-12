@@ -58,7 +58,7 @@ Generate a random scramble.
 
 **Options**:
 
-- ``-l, --length INTEGER``: Scramble length. `[default: 25]`
+- ``-l, --length INTEGER``: Scramble length. `[default: 15]`
 - ``--wca``: Scramble following WCA rules (uses the Kociemba solver).
 - ``-v, --verbose``: Show cube layout and cube string representation. `[default: 0]`
 - ``--help``: Show this message and exit.
