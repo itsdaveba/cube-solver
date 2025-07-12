@@ -17,5 +17,4 @@ Submodules
    cube_solver.solver.kociemba
    cube_solver.solver.korf
    cube_solver.solver.solver
-   cube_solver.solver.thistlethwaite
    cube_solver.solver.utils
