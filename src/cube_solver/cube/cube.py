@@ -287,7 +287,7 @@ class Cube:
 
     def __repr__(self) -> str:
         """String representation of the :class:`Cube` object."""
-        solved_colors = np.full_like(self._colors, (Color.NONE,) * NUM_DIMS)
+        solved_colors = np.full_like(self._colors, Color.NONE)
         for face in Face.faces():
             solved_colors[face._index][face.axis.name] = self._color_scheme[face]
 
@@ -431,7 +431,7 @@ class Cube:
         WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY
         """
         self._color_scheme = DEFAULT_COLOR_SCHEME.copy()
-        self._colors = np.full((SIZE,) * NUM_DIMS, (Color.NONE,) * NUM_DIMS, dtype=COLORS_TYPE)
+        self._colors = np.full((SIZE,) * NUM_DIMS, Color.NONE, dtype=COLORS_TYPE)
         self.orientation = np.zeros(NUM_CORNERS + NUM_EDGES, dtype=int)
         self.permutation = np.arange(NUM_CORNERS + NUM_EDGES, dtype=int)
         self.permutation_parity = False
