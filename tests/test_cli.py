@@ -10,28 +10,27 @@ def test_cli():
     # maneuver
     result = runner.invoke(app, ["maneuver"])
     assert result.exit_code == 0
-    assert "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY" in result.output
-    result = runner.invoke(app, ["maneuver", "U F2 R' D B2 L' M E2 S' Uw Fw2 Rw' Dw Bw2 Lw' u f2 r' d b2 l' x y2 z'"])
+    assert "WWWWOOOOGGGGRRRRBBBBYYYY" in result.output
+    result = runner.invoke(app, ["maneuver", "U F2 R' D B2 L' x y2 z'"])
     assert result.exit_code == 0
-    assert "YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO" in result.output
-    result = runner.invoke(app, ["maneuver", "-c", "YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO",
-                                 "U2 F2 L' B2 D' L' B U B D2 R2 F2 U L2 B2 U R2 F2 U B2 U' L2 B2"])
+    assert "RYBRBYBWOGORYGGOOYWWBWRG" in result.output
+    result = runner.invoke(app, ["maneuver", "-c", "RYBRBYBWOGORYGGOOYWWBWRG", "U R2 F' R U2 F'"])
     assert result.exit_code == 0
-    assert "YYYYYYYYYRRRRRRRRRGGGGGGGGGOOOOOOOOOBBBBBBBBBWWWWWWWWW" in result.output
+    assert "OOOOBBBBYYYYGGGGWWWWRRRR" in result.output
 
     # scramble
     result = runner.invoke(app, ["scramble"])
     assert result.exit_code == 0
-    assert len(Maneuver(result.output)) == 25
+    assert len(Maneuver(result.output)) == 15
     result = runner.invoke(app, ["scramble", "-l", "0", "-v"])
     assert result.exit_code == 0
-    assert "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY" in result.output
-    result = runner.invoke(app, ["scramble", "-l", "30"])
+    assert "WWWWOOOOGGGGRRRRBBBBYYYY" in result.output
+    result = runner.invoke(app, ["scramble", "-l", "20"])
     assert result.exit_code == 0
-    assert len(Maneuver(result.output)) == 30
+    assert len(Maneuver(result.output)) == 20
     result = runner.invoke(app, ["scramble", "--wca"])
     assert result.exit_code == 0
-    assert len(Maneuver(result.output)) <= 25
+    assert len(Maneuver(result.output)) <= 15
 
     # solve
     result = runner.invoke(app, ["solve"])
@@ -39,38 +38,34 @@ def test_cli():
     assert "cube" in result.output
     assert "--scramble" in result.output
     assert "--random" in result.output
-    result = runner.invoke(app, ["solve", "YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO",
-                                 "-s", "U F2 R' D B2 L' M E2 S' Uw Fw2 Rw' Dw Bw2 Lw' u f2 r' d b2 l' x y2 z'"])
+    result = runner.invoke(app, ["solve", "RYBRBYBWOGORYGGOOYWWBWRG", "-s", "U F2 R' D B2 L' x y2 z'"])
     assert result.exit_code == 1
     assert "cube" in result.output
     assert "--scramble" in result.output
     assert "--random" not in result.output
-    result = runner.invoke(app, ["solve", "YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO", "-r"])
+    result = runner.invoke(app, ["solve", "RYBRBYBWOGORYGGOOYWWBWRG", "-r"])
     assert result.exit_code == 1
     assert "cube" in result.output
     assert "--scramble" not in result.output
     assert "--random" in result.output
-    result = runner.invoke(app, ["solve", "-s", "U F2 R' D B2 L' M E2 S' Uw Fw2 Rw' Dw Bw2 Lw' u f2 r' d b2 l' x y2 z'", "-r"])
+    result = runner.invoke(app, ["solve", "-s", "U F2 R' D B2 L' x y2 z'", "-r"])
     assert result.exit_code == 1
     assert "cube" not in result.output
     assert "--scramble" in result.output
     assert "--random" in result.output
-    result = runner.invoke(app, ["solve", "YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO"])
+    result = runner.invoke(app, ["solve", "RYBRBYBWOGORYGGOOYWWBWRG"])
     assert result.exit_code == 0
-    assert result.output == "U2 F2 L' B2 D' L' B U B D2 R2 F2 U L2 B2 U R2 F2 U B2 U' L2 B2\n"
-    result = runner.invoke(app, ["solve", "-s", "U F2 R' D B2 L' M E2 S' Uw Fw2 Rw' Dw Bw2 Lw' u f2 r' d b2 l' x y2 z'"])
+    assert result.output == "U R2 F' R U2 F'\n"
+    result = runner.invoke(app, ["solve", "-s", "U F2 R' D B2 L' x y2 z'"])
     assert result.exit_code == 0
-    assert result.output == "U2 F2 L' B2 D' L' B U B D2 R2 F2 U L2 B2 U R2 F2 U B2 U' L2 B2\n"
+    assert result.output == "U R2 F' R U2 F'\n"
     result = runner.invoke(app, ["solve", "-r", "-v"])
     assert result.exit_code == 0
     assert "Solution:" in result.output
     assert "(" in result.output and ")" in result.output
-    result = runner.invoke(app, ["solve", "-r", "-v", "-t", "0"])
+    result = runner.invoke(app, ["solve", "-r", "-v", "-l", "0"])
     assert result.exit_code == 0
     assert "Solution: None" in result.output
-    result = runner.invoke(app, ["solve", "-s", "L2 U R D' B2 D2 F B D", "-o", "-v"])
+    result = runner.invoke(app, ["solve", "-r", "-a", "kociemba", "-o", "-v"])
     assert result.exit_code == 0
     assert "Optimal:" in result.output
-    result = runner.invoke(app, ["solve", "-r", "-o", "-vv", "-t", "1"])
-    assert result.exit_code == 0
-    assert "Suboptimal:" in result.output

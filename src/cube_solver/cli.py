@@ -1,6 +1,6 @@
 """Console script for cube_solver."""
 from enum import Enum
-from cube_solver import Cube, Maneuver, BaseSolver, Thistlethwaite, Kociemba
+from cube_solver import Cube, Maneuver, BaseSolver, Korf, Kociemba
 
 import typer
 from typing import Union
@@ -13,13 +13,13 @@ console = Console()
 
 
 class Algorithm(str, Enum):
+    KORF = "optimal"
     KOCIEMBA = "kociemba"
-    THISTLETHWAITE = "thistle"
 
 
 ALGS = {
-    Algorithm.KOCIEMBA: Kociemba,
-    Algorithm.THISTLETHWAITE: Thistlethwaite
+    Algorithm.KORF: Korf,
+    Algorithm.KOCIEMBA: Kociemba
 }
 
 
@@ -31,8 +31,6 @@ def maneuver(moves: Annotated[str, typer.Argument(help="Sequence of moves.")] = 
 
     Accepts the following move types:
     \n\n* Face moves (e.g. U, F2, R').
-    \n\n* Slice moves (e.g. M, E2, S').
-    \n\n* Wide moves (e.g. Uw, Fw2, Rw' or u, f2, r').
     \n\n* Rotations (e.g. x, y2, z').
     """
     _cube = Cube(repr=cube) if cube else Cube()
@@ -42,7 +40,7 @@ def maneuver(moves: Annotated[str, typer.Argument(help="Sequence of moves.")] = 
 
 
 @app.command()
-def scramble(length: Annotated[int, typer.Option("--length", "-l", show_envvar=False, help="Scramble length.")] = 25,
+def scramble(length: Annotated[int, typer.Option("--length", "-l", show_envvar=False, help="Scramble length.")] = 15,
              wca: Annotated[bool, typer.Option("--wca",
                                                help="Scramble following WCA rules (uses the Kociemba solver).")] = False,
              verbose: Annotated[int, typer.Option("--verbose", "-v", count=True,
@@ -55,7 +53,7 @@ def scramble(length: Annotated[int, typer.Option("--length", "-l", show_envvar=F
             solution = solver.solve(cube, length)
             assert isinstance(solution, Maneuver)
             scramble = solution.inverse
-            if solver.solve(cube, 1) is None:  # pragma: no cover
+            if solver.solve(cube, 3) is None:  # pragma: no cover
                 break
     else:
         scramble = Maneuver.random(length)
@@ -71,11 +69,9 @@ def scramble(length: Annotated[int, typer.Option("--length", "-l", show_envvar=F
 @app.command()
 def solve(cube: Annotated[str, typer.Argument(help="Cube string representation.")] = "",
           algorithm: Annotated[Algorithm, typer.Option("--algorithm", "-a", show_envvar=False,
-                                                       help="Solver algorithm.", show_choices=True)] = Algorithm.KOCIEMBA,
+                                                       help="Solver algorithm.", show_choices=True)] = Algorithm.KORF,
           length: Annotated[Union[int, None], typer.Option("--length", "-l", show_envvar=False,
                                                            help="Maximum solution length.")] = None,
-          timeout: Annotated[Union[int, None], typer.Option("--timeout", "-t", show_envvar=False,
-                                                            help="Maximum time in seconds.")] = None,
           scramble: Annotated[str, typer.Option("--scramble", "-s", show_envvar=False, help="Cube scramble.")] = "",
           random: Annotated[bool, typer.Option("--random", "-r", help="Solve a random cube.")] = False,
           optimal: Annotated[bool, typer.Option("--optimal", "-o", help="Find the optimal solution.")] = False,
@@ -91,7 +87,7 @@ def solve(cube: Annotated[str, typer.Argument(help="Cube string representation."
     \n\nExample:
     \n\nThe string representation of a cube with WHITE on the UP face and GREEN on the FRONT face,
     \n\nafter the scramble R U R' U', is:
-    \n\nWWOWWGWWGBOOOOOOOOGGYGGWGGGRRWBRRWRRBRRBBBBBBYYRYYYYYY
+    \n\nWOWGBOOOGYGGRWWRBRBBYRYY
     """
     if not cube and not scramble and not random:
         msg = "Must provide either the 'cube' argument, the '--scramble' / '-s' option, or the '--random' / '-r' option."
@@ -111,20 +107,17 @@ def solve(cube: Annotated[str, typer.Argument(help="Cube string representation."
     if verbose:
         console.print(_cube)
         console.print(f"Cube: {repr(_cube)}")
-        solution = solver.solve(_cube, length, optimal, timeout, verbose)
+        solution = solver.solve(_cube, length, optimal, verbose)
         if solution is not None:
             length = len(solution) if isinstance(solution, Maneuver) else sum(len(sol) for sol in solution)
             if optimal:
-                if solver.terminated:
-                    console.print(f"Suboptimal: {solution} ({length})")
-                else:
-                    console.print(f"Optimal: {solution} ({length})")
+                console.print(f"Optimal: {solution} ({length})")
             else:
                 console.print(f"Solution: {solution} ({length})")
         else:
             console.print(f"Solution: {solution}")
     else:
-        solution = solver.solve(_cube, length, optimal, timeout)
+        solution = solver.solve(_cube, length, optimal)
         console.print(f"{solution}")
 
 

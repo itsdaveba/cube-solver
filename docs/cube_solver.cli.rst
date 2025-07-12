@@ -28,8 +28,6 @@ Apply a sequence of moves to a cube.
 Accepts the following move types:
 
 - Face moves (e.g. `U`, `F2`, `R'`).
-- Slice moves (e.g. `M`, `E2`, `S'`).
-- Wide moves (e.g. `Uw`, `Fw2`, `Rw'`` or `u`, `f2`, `r'`).
 - Rotations (e.g. `x`, `y2`, `z'`).
 
 **Usage**:
@@ -93,7 +91,6 @@ on the ``FRONT`` face, after the scramble ``R U R' U'``, is: ``WWOWWGWWGBOOOOOOO
 
 - ``-a, --algorithm [kociemba|thistle]``: Solver algorithm. `[default: kociemba]`
 - ``-l, --length INTEGER``: Maximum solution length.
-- ``-t, --timeout INTEGER``: Maximum time in seconds.
 - ``-s, --scramble TEXT``: Cube scramble.
 - ``-r, --random``: Solve a random cube.
 - ``-o, --optimal``: Find the optimal solution.
