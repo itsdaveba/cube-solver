@@ -420,7 +420,7 @@ def test_cube():
     assert not next_cube.is_solved
     assert repr(cube) == "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY"
     assert repr(next_cube) == "WWBWWBYYOGGROOROOBGGWGGWRRYBRRBRROOGYOOYBBWBBWWGYYGYYR"
-    check_cube(next_cube, True,
+    check_cube(next_cube, False,
                [0, 2, 2, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                [5, 0, 1, 4, 2, 7, 6, 3, 12, 11, 10, 13, 9, 17, 14, 18, 16, 15, 19, 8])
 
@@ -430,7 +430,7 @@ def test_cube():
     cube = Cube(Maneuver([Move.U1, Move.F2, Move.R3]))
     assert not cube.is_solved
     assert repr(cube) == "WWBWWBYYOGGROOROOBGGWGGWRRYBRRBRROOGYOOYBBWBBWWGYYGYYR"
-    check_cube(cube, True,
+    check_cube(cube, False,
                [0, 2, 2, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                [5, 0, 1, 4, 2, 7, 6, 3, 12, 11, 10, 13, 9, 17, 14, 18, 16, 15, 19, 8])
     cube = Cube("U F2 R' D B2 L' M E2 S' Uw Fw2 Rw' Dw Bw2 Lw' u f2 r' d b2 l' x y2 z'")

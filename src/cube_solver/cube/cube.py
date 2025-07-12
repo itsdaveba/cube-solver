@@ -489,10 +489,10 @@ class Cube:
                     orientation = np.where(orientation != NONE, (orientation + [[1, 2, 1, 2], [1] * 4]) % ([3], [2]), NONE)
                 elif move.axis == Axis.X:
                     orientation[0] = np.where(orientation[0] != NONE, (orientation[0] + [2, 1, 2, 1]) % 3, NONE)
+                if self.permutation_parity is not None:
+                    self.permutation_parity = not self.permutation_parity
             self.orientation[CUBIE_TO_INDEX[layer.perm]] = orientation
             self.permutation[CUBIE_TO_INDEX[layer.perm]] = self.permutation[CUBIE_TO_INDEX[cubies]]
-            if self.permutation_parity is not None:
-                self.permutation_parity = not self.permutation_parity
 
         elif move.is_slice:
             shift = move.shifts[0]
