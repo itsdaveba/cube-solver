@@ -27,14 +27,14 @@ from ..cube.enums import Move
 from ..cube.defs import CORNER_ORIENTATION_SIZE as CO_SIZE
 from ..cube.defs import EDGE_ORIENTATION_SIZE as EO_SIZE
 from ..cube.defs import CORNER_PERMUTATION_SIZE as CP_SIZE
-from ..cube.defs import NUM_CORNERS, NUM_EDGES, FACTORIAL, COMBINATION, NUM_ORBIT_ELEMS
+from ..cube.defs import NUM_EDGES, FACTORIAL, COMBINATION, NUM_ORBIT_ELEMS
 from .defs import FlattenCoords, PruningDef
 from .solver import BaseSolver
 
 
-CC_SIZE = COMBINATION[NUM_CORNERS, NUM_ORBIT_ELEMS].item()  # corner combination
 EEC_SIZE = COMBINATION[NUM_EDGES, NUM_ORBIT_ELEMS].item()  # equator edge combination
 MSEP_SIZE = FACTORIAL[NUM_EDGES - NUM_ORBIT_ELEMS].item()  # middle standing edge permutation
+MSEC_SIZE = COMBINATION[NUM_EDGES - NUM_ORBIT_ELEMS, NUM_ORBIT_ELEMS].item()  # middle standing edge combination
 OP_SIZE = FACTORIAL[NUM_ORBIT_ELEMS].item()  # orbit permutation
 
 PHASE0_MOVES = [*Move.face_moves()]
@@ -64,7 +64,7 @@ class Kociemba(BaseSolver):
             return (corner_orientation, edge_orientation, equator_edge_combination)
         elif phase == 1:
             corner_permutation = coords[2]
-            middle_standing_edge_permutation = coords[5] + (coords[3] - CC_SIZE + 1 + coords[3] // OP_SIZE) * OP_SIZE
+            middle_standing_edge_permutation = coords[5] + (coords[3] - MSEC_SIZE + 1 + coords[3] // OP_SIZE) * OP_SIZE
             equator_edge_permutation = coords[4] % OP_SIZE
             return (corner_permutation, middle_standing_edge_permutation, equator_edge_permutation)
         raise ValueError(f"phase must be >= 0 and < {Kociemba.num_phases} (got {phase})")
