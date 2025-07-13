@@ -176,7 +176,7 @@ class Cube:
         The first ``8`` elements represent the `corner` orientation values, and the remaining ``12`` elements represent the
         `edge` orientation values.
 
-        A corner is correctly oriented when the `top` or `bottom` facelet of the corner piece matches eihter the `top` or
+        A corner is correctly oriented when the `top` or `bottom` facelet of the corner piece matches either the `top` or
         `bottom` color of the cube. Corner orientation values are:
 
         * ``0`` if the corner is `correctly` oriented.
