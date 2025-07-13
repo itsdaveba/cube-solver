@@ -10,5 +10,4 @@ print(f"Cube: {repr(cube)}")
 solver = Kociemba()
 solution = solver.solve(cube)
 assert solution is not None
-assert solution == scramble.inverse
 print(f"Solution: {solution} ({len(solution)})")
