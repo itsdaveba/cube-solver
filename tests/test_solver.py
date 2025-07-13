@@ -193,7 +193,7 @@ def test_solver():
     with pytest.raises(ValueError, match=r"invalid cube state"):
         solver.solve(cube, 0, False, 0)
     with pytest.warns(UserWarning, match=r"invalid corner permutation"):
-        cube = Cube(repr="BYBRRYBWOGORYGGOOWWWBWRG")
+        cube = Cube(repr="OYBRYYBWOGORYGGOOBWWBWRG")
     with pytest.raises(ValueError, match=r"invalid cube state"):
         solver.solve(cube, 0, False, 0)
     scramble = Maneuver("U F2 R'")

@@ -9,19 +9,19 @@ Examples
 --------
 >>> from cube_solver import Cube, Kociemba
 >>> solver = Kociemba()
->>> cube = Cube("L2 U R D' B2 D2 F B D")
+>>> cube = Cube("L2 U R D' B2 D2 F L D")
 >>> solver.solve(cube)
-"D' F' B' U2 F2 D L' F2 D2 L2 F2 U D L2 B2 D L2"
+"F' R' U' R U F2 U' F2 R2 U' R2 U"
 
 Solution divided by phases.
 
 >>> solver.solve(cube, verbose=2)
-["D' F' B' U2 F2 D L", 'L2 F2 D2 L2 F2 U D L2 B2 D L2']
+["F' R' U' R", "U F2 U' F2 R2 U' R2 U"]
 
 Find the optimal solution.
 
 >>> solver.solve(cube, optimal=True)
-"D' F' B' D2 B2 D R' U' L2"
+'F2 R F R2 F U'
 """
 from typing import Tuple
 

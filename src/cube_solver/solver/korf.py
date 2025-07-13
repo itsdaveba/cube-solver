@@ -9,9 +9,9 @@ Examples
 --------
 >>> from cube_solver import Cube, Korf
 >>> solver = Korf()
->>> cube = Cube("L2 U R D' B2 D2 F B")
+>>> cube = Cube("L2 U R D' B2 D2 F L D")
 >>> solver.solve(cube)
-"F' B' D2 B2 D R' U' L2"
+'F2 R F R2 F U'
 """
 from typing import Tuple
 

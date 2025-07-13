@@ -37,14 +37,14 @@ def select(coords: Tuple[int, ...], indexes: Union[int, Tuple[int, ...], None]) 
     --------
     >>> from cube_solver import Cube
     >>> from cube_solver.solver import utils
-    >>> cube = Cube()
+    >>> cube = Cube("U F2 R'")
     >>> coords = cube.get_coords()
     >>> utils.select(coords, None)
-    (0, 0)
-    >>> utils.select(flatten_coords, 5)
-    (11856,)
-    >>> utils.select(flatten_coords, (3, 5, 6))
-    (1656, 11856, 1656)
+    (183, 3675)
+    >>> utils.select(coords, 0)
+    (183,)
+    >>> utils.select(coords, (0, 1))
+    (183, 3675)
     """
     if indexes is None:
         return coords

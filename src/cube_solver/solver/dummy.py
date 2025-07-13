@@ -7,9 +7,9 @@ Examples
 --------
 >>> from cube_solver import Cube, DummySolver
 >>> solver = DummySolver()
->>> cube = Cube("L2 U R D'")
+>>> cube = Cube("L2 U R D' B2")
 >>> solver.solve(cube)
-"D R' U' L2"
+"F2 U R' F' U2"
 """
 from typing import Tuple
 

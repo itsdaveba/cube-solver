@@ -115,7 +115,7 @@ class Maneuver(str):
 
         >>> Maneuver("R L") == "L R"
         True
-        >>> Maneuver("F S B'") == "z"
+        >>> Maneuver("F B'") == "z"
         True
         >>> Maneuver("R L F2 B2 R' L' D R L F2 B2 R' L'") == "U"
         True
@@ -126,10 +126,10 @@ class Maneuver(str):
         'U2'
         >>> Maneuver("R L R")
         'R2 L'
-        >>> Maneuver("F S' B2 F")
-        'S z2'
-        >>> Maneuver("F S' B2 F", reduce=False)  # do not reduce
-        "F S' B2 F"
+        >>> Maneuver("F B2 F")
+        'z2'
+        >>> Maneuver("F B2 F", reduce=False)  # do not reduce
+        'F B2 F'
 
         Inverse maneuver.
 

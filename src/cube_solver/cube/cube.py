@@ -210,13 +210,13 @@ class Cube:
         Get cube coordinates.
 
         >>> cube.coords
-        (361, 1901)
+        (183, 3675)
 
         Set cube coordinates.
 
         >>> cube.coords = (0, 0)  # solved state
         >>> cube
-        BBBBRRRRYYYYOOOOWWWWGGGG
+        WWWWOOOOGGGGRRRRBBBBYYYY
         """
         return self.get_coords()
 
@@ -489,9 +489,9 @@ class Cube:
         Get corner coordinates.
 
         >>> cube.get_coord('co')   # corner orientation
-        361
+        183
         >>> cube.get_coord('cp')   # corner permutation
-        1901
+        3675
         """
         if not isinstance(coord_name, str):
             raise TypeError(f"coord_name must be str, not {type(coord_name).__name__}")
@@ -525,12 +525,12 @@ class Cube:
 
         Set corner coordinates.
 
-        >>> cube.set_coord('co', 361)   # corner orientation
+        >>> cube.set_coord('co', 183)   # corner orientation
         >>> cube.orientation
-        array([1, 1, 1, 1, 0, 1, 1, 0])
-        >>> cube.set_coord('cp', 1901)  # corner permutation
+        array([0, 2, 0, 2, 1, 0, 1, 0])
+        >>> cube.set_coord('cp', 3675)  # corner permutation
         >>> cube.permutation
-        array([2, 4, 6, 0, 5, 3, 1, 7])
+        array([5, 0, 4, 1, 3, 6, 2, 7])
         """
         if not isinstance(coord_name, str):
             raise TypeError(f"coord_name must be str, not {type(coord_name).__name__}")
@@ -570,7 +570,7 @@ class Cube:
         Get cube coordinates.
 
         >>> cube.get_coords()
-        (361, 1901)
+        (183, 3675)
         """
         return (self.get_coord("co"), self.get_coord("cp"))
 
@@ -597,10 +597,10 @@ class Cube:
 
         Set cube coordinates.
 
-        >>> coords = (361, 1901)
+        >>> coords = (183, 3675)
         >>> cube.set_coords(coords)
         >>> cube
-        BWGRYORWYBOGWORYGRBWBYGO
+        WBYOGROBGWRYBROGYOWBWGYR
         """
         if not isinstance(coords, tuple):
             raise TypeError(f"coords must be tuple, not {type(coords).__name__}")

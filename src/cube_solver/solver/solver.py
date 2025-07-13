@@ -236,11 +236,11 @@ class BaseSolver(ABC):
         >>> from cube_solver import Cube, Move, Kociemba
         >>> solver = Kociemba()
         >>> cube = Cube("R2")
-        >>> coords = solver.get_coords(cube)
+        >>> coords = cube.coords
         >>> solver.next_position(cube, Move.R2)
-        WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY
+        WWWWOOOOGGGGRRRRBBBBYYYY
         >>> solver.next_position(coords, Move.R2)
-        (0, 0, 0, (0, 11856, 1656))
+        (0, 0)
         """
         if isinstance(position, Cube):
             return apply_move(position, move)
@@ -286,11 +286,11 @@ class BaseSolver(ABC):
         --------
         >>> from cube_solver import Cube, Kociemba
         >>> solver = Kociemba()
-        >>> cube = Cube("L2 U R D' B2 D2 F B D")
+        >>> cube = Cube("L2 U R D' B2 D2 F L D")
         >>> solver.solve(cube)
-        "D' F' B' U2 F2 D L' F2 D2 L2 F2 U D L2 B2 D L2"
+        "F' R' U' R U F2 U' F2 R2 U' R2 U"
         >>> solver.solve(cube, optimal=True, verbose=2)
-        ["D' F' B' D2 B2 D R'", "U' L2"]
+        ['F2 R F R2 F', 'U']
         """
         if not isinstance(cube, Cube):
             raise TypeError(f"cube must be Cube, not {type(cube).__name__}")
