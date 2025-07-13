@@ -89,7 +89,7 @@ class BaseSolver(ABC):
         self.transition_tables: Dict[str, np.ndarray] = {}
         """Transition tables used to compute cube state transitions."""
         if self.use_transition_tables:
-            self.transition_tables = utils.get_tables("transition_2x2.npz", self.transition_defs,
+            self.transition_tables = utils.get_tables("transition.npz", self.transition_defs,
                                                       utils.generate_transition_table, accumulate=True)
         self.pruning_tables: Dict[str, np.ndarray] = {}
         """Pruning tables used to reduce the tree search space."""
@@ -101,7 +101,7 @@ class BaseSolver(ABC):
                     kwargs.phase = phase
                     pruning_defs.append(kwargs)
             if pruning_defs:
-                pruning_filename = f"pruning_{self.__class__.__name__.lower()}_2x2.npz"
+                pruning_filename = f"pruning_{self.__class__.__name__.lower()}.npz"
                 self.pruning_tables = utils.get_tables(pruning_filename, pruning_defs, utils.generate_pruning_table)
 
         self.nodes: List[int] = [0] * self.num_phases

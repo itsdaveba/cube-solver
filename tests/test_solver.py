@@ -155,7 +155,7 @@ def test_utils():
         utils.generate_pruning_table(solver, 0, (729,), (None,))
     assert np.all(utils.generate_pruning_table(solver, 0, (729,), (0,)) == solver.pruning_tables["co"])
     assert np.all(utils.generate_pruning_table(solver, 0, 729, 0) == solver.pruning_tables["co"])
-    os.remove("tables/pruning_testsolver_2x2.npz")
+    os.remove("tables/pruning_testsolver.npz")
 
 
 def test_solver():
@@ -240,7 +240,7 @@ def test_solver():
     solution = solver.solve(cube)
     assert isinstance(solution, Maneuver)
     assert apply_maneuver(cube, solution).coords == (0, 0)
-    os.remove("tables/pruning_testsolver_2x2.npz")
+    os.remove("tables/pruning_testsolver.npz")
 
 
 def test_dummy():
