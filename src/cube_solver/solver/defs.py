@@ -7,10 +7,10 @@ from typing_extensions import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .solver import BaseSolver
+from ..cube.enums import Move
 
 NONE = -1
-
-FlattenCoords = Tuple[int, ...]
+MAIN_MOVES = [Move.U1, Move.U2, Move.U3, Move.B1, Move.B2, Move.B3, Move.L1, Move.L2, Move.L3]
 
 
 @dataclass
