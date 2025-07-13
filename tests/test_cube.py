@@ -173,12 +173,9 @@ def test_utils():
 
     # permutation array
     with pytest.raises(TypeError, match=r"coord must be int, not NoneType"):
-        utils.get_permutation_array(None, None, None)
+        utils.get_permutation_array(None, None)
     with pytest.raises(TypeError, match=r"n must be int, not NoneType"):
-        utils.get_permutation_array(-1, None, None)
-    with pytest.raises(TypeError, match=r"force_even_parity must be bool, not NoneType"):
-        utils.get_permutation_array(-1, 0, None)
-    # force_even_parity = False
+        utils.get_permutation_array(-1, None)
     with pytest.raises(ValueError, match=r"n must be positive \(got 0\)"):
         utils.get_permutation_array(-1, 0)
     with pytest.raises(ValueError, match=r"coord must be >= 0 and < 1 \(got -1\)"):
@@ -191,19 +188,6 @@ def test_utils():
     permutation, parity = utils.get_permutation_array(16702, 8)
     assert np.all(permutation == [3, 2, 1, 0, 7, 6, 4, 5])
     assert parity is True
-    # force_even_parity = True
-    with pytest.raises(ValueError, match=r"n must be > 1 \(got 1\)"):
-        utils.get_permutation_array(-1, 1, True)
-    with pytest.raises(ValueError, match=r"coord must be >= 0 and < 1 \(got -1\)"):
-        utils.get_permutation_array(-1, 2, True)
-    permutation, parity = utils.get_permutation_array(0, 2, True)
-    assert np.all(permutation == [0, 1])
-    assert parity is False
-    with pytest.raises(ValueError, match=r"coord must be >= 0 and < 20160 \(got 20160\)"):
-        utils.get_permutation_array(20160, 8, True)
-    permutation, parity = utils.get_permutation_array(8351, 8, True)
-    assert np.all(permutation == [3, 2, 1, 0, 7, 6, 5, 4])
-    assert parity is False
     # no pre-computed factorial
     permutation, parity = utils.get_permutation_array(1000000001, 13)
     assert np.all(permutation == [2, 1, 0, 8, 10, 7, 9, 12, 4, 6, 11, 5, 3])
@@ -211,14 +195,11 @@ def test_utils():
 
     # permutation coord
     with pytest.raises(TypeError, match=r"permutation must be ndarray, not NoneType"):
-        utils.get_permutation_coord(None, None)
-    with pytest.raises(TypeError, match=r"is_even_parity must be bool, not NoneType"):
-        utils.get_permutation_coord(np.array([]), None)
+        utils.get_permutation_coord(None)
     with pytest.raises(ValueError, match=r"permutation length must be positive \(got 0\)"):
         utils.get_permutation_coord(np.array([]))
     with pytest.raises(TypeError, match=r"permutation elements must be int, not object"):
         utils.get_permutation_coord(np.array([None]))
-    # is_even_parity = False
     assert utils.get_permutation_coord(np.array([0])) == 0
     with pytest.raises(ValueError, match=r"permutation values must be different \(got \[0 0\]\)"):
         utils.get_permutation_coord(np.array([0, 0]))
@@ -227,19 +208,6 @@ def test_utils():
     array = utils.get_permutation_array(coord, n)[0]
     assert utils.get_permutation_coord(array) == coord
     assert np.all(utils.get_permutation_array(utils.get_permutation_coord(array), n)[0] == array)
-    # is_even_parity = True
-    with pytest.raises(ValueError, match=r"permutation length must be > 1 \(got 1\)"):
-        utils.get_permutation_coord(np.array([0]), True)
-    with pytest.raises(ValueError, match=r"permutation values must be different \(got \[0 0\]\)"):
-        utils.get_permutation_coord(np.array([0, 0]), True)
-    with pytest.raises(ValueError, match=r"permutation has no even parity \(got \[1 0\]\)"):
-        utils.get_permutation_coord(np.array([1, 0]), True)
-    assert utils.get_permutation_coord(np.array([0, 1]), True) == 0
-    assert utils.get_permutation_coord(np.array([0, 1, -1]), True) == 1
-    coord, n = 8351, 8
-    array = utils.get_permutation_array(coord, n, True)[0]
-    assert utils.get_permutation_coord(array, True) == coord
-    assert np.all(utils.get_permutation_array(utils.get_permutation_coord(array, True), n, True)[0] == array)
     # no pre-computed factorial
     coord, n = 1000000001, 13
     array = utils.get_permutation_array(coord, n)[0]
@@ -260,103 +228,6 @@ def test_utils():
     assert utils.get_permutation_parity(np.array([-1, 0])) is False
     assert utils.get_permutation_parity(np.array([1, 0])) is True
     assert utils.get_permutation_parity(np.array([0, -1])) is True
-
-    # combination array
-    with pytest.raises(TypeError, match=r"coord must be int, not NoneType"):
-        utils.get_combination_array(None, None)
-    with pytest.raises(TypeError, match=r"n must be int, not NoneType"):
-        utils.get_combination_array(-1, None)
-    with pytest.raises(ValueError, match=r"n must be positive \(got 0\)"):
-        utils.get_combination_array(-1, 0)
-    with pytest.raises(ValueError, match=r"coord must be >= 0 \(got -1\)"):
-        utils.get_combination_array(-1, 1)
-    assert np.all(utils.get_combination_array(0, 1) == [0])
-    assert np.all(utils.get_combination_array(450, 4) == [0, 1, 10, 11])
-    # no pre-computed combination
-    assert np.all(utils.get_combination_array(286, 3) == [0, 1, 13])
-    assert np.all(utils.get_combination_array(450, 5) == [1, 6, 8, 9, 10])
-
-    # combination coordinate
-    with pytest.raises(TypeError, match=r"combination must be ndarray, not NoneType"):
-        utils.get_combination_coord(None)
-    with pytest.raises(ValueError, match=r"combination length must be positive \(got 0\)"):
-        utils.get_combination_coord(np.array([]))
-    with pytest.raises(TypeError, match=r"combination elements must be int, not object"):
-        utils.get_combination_coord(np.array([None]))
-    with pytest.raises(ValueError, match=r"combination values must be >= 0 \(got \[-1\]\)"):
-        utils.get_combination_coord(np.array([-1]))
-    assert utils.get_combination_coord(np.array([0])) == 0
-    with pytest.raises(ValueError, match=r"combination values must be in increasing order \(got \[0 0\]\)"):
-        utils.get_combination_coord(np.array([0, 0]))
-    assert utils.get_combination_coord(np.array([0, 1])) == 0
-    coord, n = 450, 4
-    array = utils.get_combination_array(coord, n)
-    assert utils.get_combination_coord(array) == coord
-    assert np.all(utils.get_combination_array(utils.get_combination_coord(array), n) == array)
-    # no pre-computed combination
-    coord, n = 286, 3
-    array = utils.get_combination_array(coord, n)
-    assert utils.get_combination_coord(array) == coord
-    assert np.all(utils.get_combination_array(utils.get_combination_coord(array), n) == array)
-    coord, n = 450, 5
-    array = utils.get_combination_array(coord, n)
-    assert utils.get_combination_coord(array) == coord
-    assert np.all(utils.get_combination_array(utils.get_combination_coord(array), n) == array)
-
-    # partial permutation array
-    with pytest.raises(TypeError, match=r"coord must be int, not NoneType"):
-        utils.get_partial_permutation_array(None, None)
-    with pytest.raises(TypeError, match=r"n must be int, not NoneType"):
-        utils.get_partial_permutation_array(-1, None)
-    with pytest.raises(ValueError, match=r"n must be positive \(got 0\)"):
-        utils.get_partial_permutation_array(-1, 0)
-    with pytest.raises(ValueError, match=r"coord must be >= 0 \(got -1\)"):
-        utils.get_partial_permutation_array(-1, 1)
-    permutation, combination = utils.get_partial_permutation_array(0, 1)
-    assert np.all(permutation == [0])
-    assert np.all(combination == [0])
-    permutation, combination = utils.get_partial_permutation_array(450, 4)
-    assert np.all(permutation == [3, 0, 1, 2])
-    assert np.all(combination == [1, 2, 3, 6])
-    # no pre-computed factorial
-    permutation, combination = utils.get_partial_permutation_array(100000000000001, 13)
-    assert np.all(permutation == [0, 7, 11, 3, 4, 2, 5, 12, 6, 9, 10, 8, 1])
-    assert np.all(combination == [1, 2, 3, 5, 8, 9, 10, 11, 12, 13, 14, 17, 18])
-
-    # partial permutation coord
-    with pytest.raises(TypeError, match=r"permutation must be ndarray, not NoneType"):
-        utils.get_partial_permutation_coord(None, None)
-    with pytest.raises(TypeError, match=r"combination must be ndarray, not NoneType"):
-        utils.get_partial_permutation_coord(np.array([]), None)
-    with pytest.raises(ValueError, match=r"permutation length must be positive \(got 0\)"):
-        utils.get_partial_permutation_coord(np.array([]), np.array([]))
-    with pytest.raises(ValueError, match=r"permutation length and combination length must be the same \(got 1 != 0\)"):
-        utils.get_partial_permutation_coord(np.array([None]), np.array([]))
-    with pytest.raises(TypeError, match=r"permutation elements must be int, not object"):
-        utils.get_partial_permutation_coord(np.array([None]), np.array([None]))
-    with pytest.raises(TypeError, match=r"combination elements must be int, not object"):
-        utils.get_partial_permutation_coord(np.array([0]), np.array([None]))
-    with pytest.raises(ValueError, match=r"combination values must be >= 0 \(got \[-1\]\)"):
-        utils.get_partial_permutation_coord(np.array([0]), np.array([-1]))
-    assert utils.get_partial_permutation_coord(np.array([0]), np.array([0])) == 0
-    with pytest.raises(ValueError, match=r"permutation values must be different \(got \[0 0\]\)"):
-        utils.get_partial_permutation_coord(np.array([0, 0]), np.array([0, 0]))
-    with pytest.raises(ValueError, match=r"combination values must be in increasing order \(got \[0 0\]\)"):
-        utils.get_partial_permutation_coord(np.array([0, 1]), np.array([0, 0]))
-    assert utils.get_partial_permutation_coord(np.array([0, 1]), np.array([0, 1])) == 0
-    coord, n = 450, 4
-    permutation, combination = utils.get_partial_permutation_array(coord, n)
-    assert utils.get_partial_permutation_coord(permutation, combination) == coord
-    perm, comb = utils.get_partial_permutation_array(utils.get_partial_permutation_coord(permutation, combination), n)
-    assert np.all(perm == permutation)
-    assert np.all(comb == combination)
-    # no pre-computed factorial
-    coord, n = 100000000000001, 13
-    permutation, combination = utils.get_partial_permutation_array(coord, n)
-    assert utils.get_partial_permutation_coord(permutation, combination) == coord
-    perm, comb = utils.get_partial_permutation_array(utils.get_partial_permutation_coord(permutation, combination), n)
-    assert np.all(perm == permutation)
-    assert np.all(comb == combination)
 
 
 def check_cube(cube: Cube, permutation_parity: Union[bool,  None], orientation: List[int], permutation: List[int]):
