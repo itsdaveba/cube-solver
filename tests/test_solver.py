@@ -159,24 +159,16 @@ def test_utils():
 
 
 def test_solver():
-    cube = Cube()
-    cube.set_coord("pep", 0)
-    with pytest.raises(AttributeError, match=r"'TestSolver' class must define class attribute 'partial_corner_perm'"):
-        class TestSolver(BaseSolver):
-            pass
-    with pytest.raises(AttributeError, match=r"'TestSolver' class must define class attribute 'partial_edge_perm'"):
-        class TestSolver(BaseSolver):
-            partial_corner_perm = True
+    match = r"invalid string representation, setting undefined orientation and permutation values with -1"
+    with pytest.warns(UserWarning, match=match):
+        cube = Cube(repr="OYBRBYBWOGORYGGOOYWWBWRG")
     class TestSolver(BaseSolver):
-        partial_corner_perm = True
-        partial_edge_perm = True
+        pass
     with pytest.raises(TypeError):
         TestSolver(None)
     class TestSolver(BaseSolver):
-        partial_corner_perm = True
-        partial_edge_perm = True
         @staticmethod
-        def phase_coords(coords: FlattenCoords, phase: int) -> FlattenCoords:
+        def phase_coords(coords: Tuple[int, int], phase: int) -> Tuple[int, ...]:
             return coords
     with pytest.raises(TypeError, match=r"use_transition_tables must be bool, not NoneType"):
         TestSolver(None, None)
@@ -187,115 +179,82 @@ def test_solver():
     assert solver.transition_tables == {}
     assert solver.pruning_tables == {}
     with pytest.raises(TypeError, match=r"cube must be Cube, not NoneType"):
-        solver.solve(None, "", None, "", None)
+        solver.solve(None, "", None, None)
     with pytest.raises(TypeError, match=r"max_length must be int or None, not str"):
-        solver.solve(cube, "", None, "", None)
+        solver.solve(cube, "", None, None)
     with pytest.raises(TypeError, match=r"optimal must be bool, not NoneType"):
-        solver.solve(cube, -1, None, "", None)
-    with pytest.raises(TypeError, match=r"timeout must be int or None, not str"):
-        solver.solve(cube, -1, False, "", None)
+        solver.solve(cube, -1, None, None)
     with pytest.raises(TypeError, match=r"verbose must be int, not NoneType"):
-        solver.solve(cube, -1, False, -1, None)
+        solver.solve(cube, -1, False, None)
     with pytest.raises(ValueError, match=r"max_length must be >= 0 \(got -1\)"):
-        solver.solve(cube, -1, False, -1, -1)
-    with pytest.raises(ValueError, match=r"timeout must be >= 0 \(got -1\)"):
-        solver.solve(cube, 0, False, -1, -1)
+        solver.solve(cube, -1, False, -1)
     with pytest.raises(ValueError, match=r"verbose must be one of 0, 1, 2 \(got -1\)"):
-        solver.solve(cube, 0, False, 0, -1)
+        solver.solve(cube, 0, False, -1)
     with pytest.raises(ValueError, match=r"invalid cube state"):
-        solver.solve(cube, 0, False, 0, 0)
-    with pytest.warns(UserWarning, match=r"invalid cube parity"):
-        cube.set_coord("pep", (0, 11857, 1656))
-    with pytest.warns(UserWarning, match=r"invalid cube parity"):
-        with pytest.raises(ValueError, match=r"invalid cube state"):
-            solver.solve(cube, 0, False, 0, 0)
+        solver.solve(cube, 0, False, 0)
+    with pytest.warns(UserWarning, match=r"invalid corner permutation"):
+        cube = Cube(repr="BYBRRYBWOGORYGGOOWWWBWRG")
+    with pytest.raises(ValueError, match=r"invalid cube state"):
+        solver.solve(cube, 0, False, 0)
     scramble = Maneuver("U F2 R'")
     cube = Cube(scramble)
-    assert solver.solve(cube, 0, False, 0, 0) is None
-    assert solver.terminated
-    assert solver.solve(cube, 0, False, None, 0) is None
-    assert not solver.terminated
-    assert solver.solve(cube, None, False, None, 0) == scramble.inverse
-    assert not solver.terminated
-    assert solver.solve(cube, None, True, None, 0) == scramble.inverse
-    assert not solver.terminated
-    assert solver.solve(cube, None, True, None, 1) == scramble.inverse
-    assert not solver.terminated
-    assert solver.solve(cube, None, True, None, 2) == [scramble.inverse]
-    assert not solver.terminated
+    assert solver.solve(cube, 0, False, 0) is None
+    assert solver.solve(cube, 0, False, 0) is None
+    solution = solver.solve(cube, None, False, 0)
+    assert isinstance(solution, Maneuver)
+    assert apply_maneuver(cube, solution).coords == (0, 0)
+    solution = solver.solve(cube, None, True, 0)
+    assert isinstance(solution, Maneuver)
+    assert apply_maneuver(cube, solution).coords == (0, 0)
+    solution = solver.solve(cube, None, True, 1)
+    assert isinstance(solution, Maneuver)
+    assert apply_maneuver(cube, solution).coords == (0, 0)
+    solution = solver.solve(cube, None, True, 2)
+    assert isinstance(solution, list)
+    assert apply_maneuver(cube, solution[0]).coords == (0, 0)
     solver = TestSolver(True, False)
     assert solver.transition_tables != {}
     assert solver.pruning_tables == {}
-    assert solver.solve(cube) == scramble.inverse
+    solution = solver.solve(cube)
+    assert isinstance(solution, Maneuver)
+    assert apply_maneuver(cube, solution).coords == (0, 0)
     solver = TestSolver(False, True)
     assert solver.transition_tables == {}
     assert solver.pruning_tables == {}
-    assert solver.solve(cube) == scramble.inverse
+    solution = solver.solve(cube)
+    assert isinstance(solution, Maneuver)
+    assert apply_maneuver(cube, solution).coords == (0, 0)
     class TestSolver(BaseSolver):
-        partial_corner_perm = True
-        partial_edge_perm = True
-        pruning_defs = [[PruningDef("pcp", 1680, 2)]]
+        pruning_defs = [[PruningDef("co", 729, 0)]]
         @staticmethod
-        def phase_coords(coords: FlattenCoords, phase: int) -> FlattenCoords:
+        def phase_coords(coords: Tuple[int, int], phase: int) -> Tuple[int, ...]:
             return coords
     solver = TestSolver(False, True)
     assert solver.transition_tables == {}
     assert solver.pruning_tables != {}
-    assert solver.solve(cube) == scramble.inverse
+    solution = solver.solve(cube)
+    assert isinstance(solution, Maneuver)
+    assert apply_maneuver(cube, solution).coords == (0, 0)
     solver = TestSolver(True, True)
     assert solver.transition_tables != {}
     assert solver.pruning_tables != {}
-    assert solver.solve(cube) == scramble.inverse
-    os.remove("tables/pruning_testsolver.npz")
+    solution = solver.solve(cube)
+    assert isinstance(solution, Maneuver)
+    assert apply_maneuver(cube, solution).coords == (0, 0)
+    os.remove("tables/pruning_testsolver_2x2.npz")
 
 
 def test_dummy():
     DummySolver()
     num_cubes = 12
 
-    max_depth = 2
+    max_depth = 3
     solver = DummySolver(False, False)
     depth_test(solver, max_depth, num_cubes)
 
-    max_depth = 3
+    max_depth = 5
     solver = DummySolver(True, False)
     depth_test(solver, max_depth, num_cubes)
-
-
-def test_korf():
-    Korf()
-    num_cubes = 12
-
-    max_depth = 2
-    solver = Korf(False, False)
-    depth_test(solver, max_depth, num_cubes)
-
-    max_depth = 3
-    solver = Korf(True, False)
-    depth_test(solver, max_depth, num_cubes)
-
-    max_depth = 5
-    solver = Korf(False, True)
-    depth_test(solver, max_depth, num_cubes)
-
-    max_depth = 7
-    solver = Korf(True, True)
-    depth_test(solver, max_depth, num_cubes)
-
-
-def test_thistlethwaite():
-    Thistlethwaite()
-    num_cubes = 100
-
-    solver = Thistlethwaite(False)
-    with pytest.raises(ValueError, match=r"phase must be >= 0 and < 4 \(got -1\)"):
-        solver.phase_coords((), -1)
-    solve_test(solver, num_cubes)
-
-    solver = Thistlethwaite(True)
-    with pytest.raises(ValueError, match=r"phase must be >= 0 and < 4 \(got 4\)"):
-        solver.phase_coords((), 4)
-    solve_test(solver, num_cubes)
 
 
 def test_kociemba():
@@ -304,4 +263,11 @@ def test_kociemba():
     solver = Kociemba(True)
     with pytest.raises(ValueError, match=r"phase must be >= 0 and < 2 \(got -1\)"):
         solver.phase_coords((), -1)
+    solve_test(solver, num_cubes)
+
+
+def test_korf():
+    num_cubes = 100
+
+    solver = Korf(True)
     solve_test(solver, num_cubes)
