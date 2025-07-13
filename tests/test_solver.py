@@ -79,10 +79,10 @@ def depth_test(solver: BaseSolver, max_depth: int, num_cubes: int):
 def test_utils():
     # select
     cube = Cube()
-    cube.coords = (632, 3766)
-    assert utils.select(cube.coords, None) == (632, 3766)
-    assert utils.select(cube.coords, 0) == (632,)
-    assert utils.select(cube.coords, (0, 1)) == (632, 3766)
+    cube.coords = (67, 2053)
+    assert utils.select(cube.coords, None) == (67, 2053)
+    assert utils.select(cube.coords, 0) == (67,)
+    assert utils.select(cube.coords, (0, 1)) == (67, 2053)
 
     # load and save
     with pytest.raises(TypeError, match=r"path must be str or Path, not NoneType"):
@@ -198,7 +198,6 @@ def test_solver():
         solver.solve(cube, 0, False, 0)
     scramble = Maneuver("U F2 R'")
     cube = Cube(scramble)
-    assert solver.solve(cube, 0, False, 0) is None
     assert solver.solve(cube, 0, False, 0) is None
     solution = solver.solve(cube, None, False, 0)
     assert isinstance(solution, Maneuver)

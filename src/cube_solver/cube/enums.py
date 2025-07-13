@@ -30,9 +30,9 @@ class Orbit(IntEnum):
     """Orbit enumeration."""
     NONE = NONE  #: No orbit.
     TETRAD_111 = auto()
-    """`Tetrad` orbit containing the :attr:`Cubie.UBL`, :attr:`Cubie.UFR`, :attr:`Cubie.DBR`, and :attr:`Cubie.DFL` corners."""
+    """`Tetrad` orbit containing the :attr:`Cubie.UBL`, :attr:`Cubie.UFR`, :attr:`Cubie.DFL`, and :attr:`Cubie.DBR` corners."""
     TETRAD_M11 = auto()
-    """`Tetrad` orbit containing the :attr:`Cubie.UBR`, :attr:`Cubie.UFL`, :attr:`Cubie.DBL`, and :attr:`Cubie.DFR` corners."""
+    """`Tetrad` orbit containing the :attr:`Cubie.UBR`, :attr:`Cubie.UFL`, :attr:`Cubie.DFR`, and :attr:`Cubie.DBL` corners."""
 
     @classmethod
     def orbits(cls) -> Iterator[Orbit]:
@@ -100,12 +100,6 @@ class Layer(IntEnum):
     def layers(cls) -> Iterator[Layer]:
         """Iterate over valid layers."""
         for i in range(6):
-            yield cls(i)
-
-    @classmethod
-    def inners(cls) -> Iterator[Layer]:
-        """Iterate over inner layers."""
-        for i in range(6, 9):
             yield cls(i)
 
 
@@ -236,12 +230,12 @@ class Cubie(IntEnum):
     # corners
     UBL = auto()  #: `Up-Back-Left` corner.
     UFR = auto()  #: `Up-Front-Right` corner.
-    DBR = auto()  #: `Down-Back-Right` corner.
     DFL = auto()  #: `Down-Front-Left` corner.
+    DBR = auto()  #: `Down-Back-Right` corner.
     UBR = auto()  #: `Up-Back-Right` corner.
     UFL = auto()  #: `Up-Front-Left` corner.
-    DBL = auto()  #: `Down-Back-Left` corner.
     DFR = auto()  #: `Down-Front-Right` corner.
+    DBL = auto()  #: `Down-Back-Left` corner.
 
     @property
     def orbit(self) -> Orbit:
@@ -249,8 +243,8 @@ class Cubie(IntEnum):
         Cubie orbit.
 
         * :attr:`Orbit.NONE`: :attr:`Cubie.NONE`
-        * :attr:`Orbit.TETRAD_111`: :attr:`Cubie.UBL`, :attr:`Cubie.UFR`, :attr:`Cubie.DBR`, :attr:`Cubie.DFL`
-        * :attr:`Orbit.TETRAD_M11`: :attr:`Cubie.UBR`, :attr:`Cubie.UFL`, :attr:`Cubie.DBL`, :attr:`Cubie.DFR`
+        * :attr:`Orbit.TETRAD_111`: :attr:`Cubie.UBL`, :attr:`Cubie.UFR`, :attr:`Cubie.DFL`, :attr:`Cubie.DBR`
+        * :attr:`Orbit.TETRAD_M11`: :attr:`Cubie.UBR`, :attr:`Cubie.UFL`, :attr:`Cubie.DFR`, :attr:`Cubie.DBL`
         """
         return cubie_orbit[self]
 
@@ -488,12 +482,12 @@ cubie_orbit = {
     # corners
     Cubie.UBL: Orbit.TETRAD_111,
     Cubie.UFR: Orbit.TETRAD_111,
-    Cubie.DBR: Orbit.TETRAD_111,
     Cubie.DFL: Orbit.TETRAD_111,
+    Cubie.DBR: Orbit.TETRAD_111,
     Cubie.UBR: Orbit.TETRAD_M11,
     Cubie.UFL: Orbit.TETRAD_M11,
-    Cubie.DBL: Orbit.TETRAD_M11,
     Cubie.DFR: Orbit.TETRAD_M11,
+    Cubie.DBL: Orbit.TETRAD_M11,
 }
 
 cubie_index = {
@@ -501,12 +495,12 @@ cubie_index = {
     # corners
     Cubie.UBL: (0, 0, 0),
     Cubie.UFR: (0, 1, 1),
-    Cubie.DBR: (1, 0, 1),
     Cubie.DFL: (1, 1, 0),
+    Cubie.DBR: (1, 0, 1),
     Cubie.UBR: (0, 0, 1),
     Cubie.UFL: (0, 1, 0),
-    Cubie.DBL: (1, 0, 0),
-    Cubie.DFR: (1, 1, 1)
+    Cubie.DFR: (1, 1, 1),
+    Cubie.DBL: (1, 0, 0)
 }
 
 char_layer = {layer.char: layer for layer in Layer}
@@ -515,4 +509,3 @@ char_face = {face.char: face for face in Face}
 faces_cubie = {tuple(min([cb.faces[i:] + cb.faces[:i] for i in range(len(cb.faces))])if cb.faces else []): cb for cb in Cubie}
 layer_order = [Layer.UP, Layer.FRONT, Layer.RIGHT, Layer.DOWN, Layer.BACK, Layer.LEFT]
 str_move = {move.string: move for move in Move}
-str_move.update({move.string[0].lower() + move.string[2:]: move for move in Move.wide_moves()})

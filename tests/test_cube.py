@@ -256,7 +256,7 @@ def test_cube():
     assert not next_cube.is_solved
     assert repr(cube) == "WWWWOOOOGGGGRRRRBBBBYYYY"
     assert repr(next_cube) == "WBYOGROBGWRYBROGYOWBWGYR"
-    check_cube(next_cube, False, [1, 1, 1, 1, 0, 1, 1, 0], [2, 4, 6, 0, 5, 3, 1, 7])
+    check_cube(next_cube, False, [0, 2, 0, 2, 1, 0, 1, 0], [5, 0, 4, 1, 3, 6, 2, 7])
 
     # scramble
     with pytest.raises(TypeError, match=r"scramble must be str or None, not int"):
@@ -264,11 +264,11 @@ def test_cube():
     cube = Cube(Maneuver([Move.U1, Move.F2, Move.R3]))
     assert not cube.is_solved
     assert repr(cube) == "WBYOGROBGWRYBROGYOWBWGYR"
-    check_cube(next_cube, False, [1, 1, 1, 1, 0, 1, 1, 0], [2, 4, 6, 0, 5, 3, 1, 7])
+    check_cube(next_cube, False, [0, 2, 0, 2, 1, 0, 1, 0], [5, 0, 4, 1, 3, 6, 2, 7])
     cube = Cube("U F2 R' D B2 L' x y2 z'")
     assert not cube.is_solved
     assert repr(cube) == "RYBRBYBWOGORYGGOOYWWBWRG"
-    check_cube(cube, False, [2, 1, 2, 1, 0, 2, 1, 0], [5, 1, 2, 6, 4, 0, 3, 7])
+    check_cube(cube, False, [0, 0, 2, 1, 1, 1, 1, 0], [2, 6, 0, 4, 1, 5, 3, 7])
 
     # repr
     with pytest.raises(TypeError, match=r"repr must be str or None, not int"):
@@ -281,11 +281,11 @@ def test_cube():
         cube = Cube(repr="OYBRBYBWOGORYGGOOYWWBWRG")
         assert repr(cube) == "NYBRNYBWOGORYGGOONWWBWRG"
         cube = Cube(repr=repr(cube))
-    check_cube(cube, None, [-1, 1, 2, 1, 0, 2, 1, 0], [-1, 1, 2, 6, 4, 0, 3, 7])
+    check_cube(cube, None, [-1, 0, 2, 1, 1, 1, 1, 0], [-1, 6, 0, 4, 1, 5, 3, 7])
     with pytest.warns(UserWarning, match=match):
-        # original                             W
-        cube = Cube(repr="RYBRBYBWOGORYGGOOYWWBYRG")
-        assert repr(cube) == "NNNNNNNNNNNRNNGNNNNNNYNN"
+        # original                              R
+        cube = Cube(repr="RYBRBYBWOGORYGGOOYWWBWOG")
+        assert repr(cube) == "NNNNNNBNNNNNNNNNNNNWNNON"
         cube = Cube(repr=repr(cube))
     check_cube(cube, None, [-1, -1, -1, -1, -1, -1, -1, 0], [-1, -1, -1, -1, -1, -1, -1, 7])
     with pytest.warns(UserWarning, match=r"invalid corner orientation"):
@@ -293,23 +293,23 @@ def test_cube():
         cube = Cube(repr="YYBRRYBWOGORYGGOOBWWBWRG")
         assert repr(cube) == "YYBRRYBWOGORYGGOOBWWBWRG"
         cube = Cube(repr=repr(cube))
-    check_cube(cube, False, [0, 1, 2, 1, 0, 2, 1, 0], [5, 1, 2, 6, 4, 0, 3, 7])
+    check_cube(cube, False, [1, 0, 2, 1, 1, 1, 1, 0], [2, 6, 0, 4, 1, 5, 3, 7])
     with pytest.warns(UserWarning, match=r"invalid corner orientation"):
-        # original                   R  G      W
-        cube = Cube(repr="RYBRBYBWOGOWYGROOYWWBGRG")
-        assert repr(cube) == "RYBRBYBWOGOWYGROOYWWBGRG"
+        # original              B            W  R
+        cube = Cube(repr="RYBRBYRWOGORYGGOOYWBBWWG")
+        assert repr(cube) == "RYBRBYRWOGORYGGOOYWBBWWG"
         cube = Cube(repr=repr(cube))
-    check_cube(cube, False, [1, 2, 0, 0, 2, 0, 2, 0], [4, 2, 3, 5, 6, 0, 1, 7])
+    check_cube(cube, False, [2, 1, 1, 2, 0, 2, 0, 0], [0, 5, 3, 6, 1, 4, 2, 7])
     with pytest.warns(UserWarning, match=r"invalid corner permutation"):
         # original        R   B            Y
-        cube = Cube(repr="BYBRRYBWOGORYGGOOWWWBWRG")
-        assert repr(cube) == "BYBRRYBWOGORYGGOOWWWBWRG"
+        cube = Cube(repr="OYBRYYBWOGORYGGOOBWWBWRG")
+        assert repr(cube) == "OYBRYYBWOGORYGGOOBWWBWRG"
         cube = Cube(repr=repr(cube))
-    check_cube(cube, None, [2, 1, 2, 1, 0, 2, 1, 0], [3, 1, 2, 6, 4, 0, 3, 7])
+    check_cube(cube, None, [0, 0, 2, 1, 1, 1, 1, 0], [5, 6, 0, 4, 1, 5, 3, 7])
     cube = Cube(repr="RYBRBYBWOGORYGGOOYWWBWRG")
     assert repr(cube) == "RYBRBYBWOGORYGGOOYWWBWRG"
     cube = Cube(repr=repr(cube))
-    check_cube(cube, False, [2, 1, 2, 1, 0, 2, 1, 0], [5, 1, 2, 6, 4, 0, 3, 7])
+    check_cube(cube, False, [0, 0, 2, 1, 1, 1, 1, 0], [2, 6, 0, 4, 1, 5, 3, 7])
 
     # string
     assert str(cube) == """      -------
@@ -328,11 +328,11 @@ def test_cube():
         cube.get_coord(None)
     with pytest.raises(ValueError, match=r"coord_name must be one of 'co', 'cp' \(got 'None'\)"):
         cube.get_coord("None")
-    assert cube.get_coord("co") == 632
-    assert cube.get_coord("cp") == 3766
+    assert cube.get_coord("co") == 67
+    assert cube.get_coord("cp") == 2053
 
     # get_coords
-    assert cube.get_coords() == (632, 3766)
+    assert cube.get_coords() == (67, 2053)
 
     # random_state
     with pytest.raises(TypeError, match=r"random_state must be bool, not int"):
@@ -356,40 +356,40 @@ def test_cube():
     # corner orientation
     with pytest.raises(ValueError, match=r"coord must be >= 0 and < 729 \(got -1\)"):
         cube.set_coord("co", -1)
-    cube.set_coord("co", 632)
-    assert cube.get_coord("co") == 632
-    check_cube(cube, False, [2, 1, 2, 1, 0, 2, 1, 0], [0, 1, 2, 3, 4, 5, 6, 7])
+    cube.set_coord("co", 67)
+    assert cube.get_coord("co") == 67
+    check_cube(cube, False, [0, 0, 2, 1, 1, 1, 1, 0], [0, 1, 2, 3, 4, 5, 6, 7])
     # corner permutation
     with pytest.raises(TypeError, match=r"coord must be int, not NoneType"):
         cube.set_coord("cp", None)
     with pytest.raises(ValueError, match=r"coord must be >= 0 and < 5040 \(got -1\)"):
         cube.set_coord("cp", -1)
-    cube.set_coord("cp", 3766)
-    assert cube.get_coord("cp") == 3766
-    check_cube(cube, False, [2, 1, 2, 1, 0, 2, 1, 0], [5, 1, 2, 6, 4, 0, 3, 7])
+    cube.set_coord("cp", 2053)
+    assert cube.get_coord("cp") == 2053
+    check_cube(cube, False, [0, 0, 2, 1, 1, 1, 1, 0], [2, 6, 0, 4, 1, 5, 3, 7])
 
     # permutation parity
     cube.set_coord("cp", 0)
     assert cube.get_coord("cp") == 0
-    check_cube(cube, False, [2, 1, 2, 1, 0, 2, 1, 0], [0, 1, 2, 3, 4, 5, 6, 7])
+    check_cube(cube, False, [0, 0, 2, 1, 1, 1, 1, 0], [0, 1, 2, 3, 4, 5, 6, 7])
     cube.set_coord("cp", 1)
     assert cube.get_coord("cp") == 1
-    check_cube(cube, True, [2, 1, 2, 1, 0, 2, 1, 0], [0, 1, 2, 3, 4, 6, 5, 7])
+    check_cube(cube, True, [0, 0, 2, 1, 1, 1, 1, 0], [0, 1, 2, 3, 4, 6, 5, 7])
 
     # set_coords
     with pytest.raises(TypeError, match=r"coords must be tuple, not NoneType"):
         cube.set_coords(None)
     with pytest.raises(ValueError, match=r"coords tuple length must be 2 \(got 0\)"):
         assert cube.set_coords(())
-    cube.set_coords((632, 3766))
-    assert repr(cube) == "GWOGOWOYBRBGWRRBBWYYOYGR"
-    check_cube(cube, False, [2, 1, 2, 1, 0, 2, 1, 0], [5, 1, 2, 6, 4, 0, 3, 7])
+    cube.set_coords((67, 2053))
+    assert repr(cube) == "YGOYOGOBWRWYGRRWWGBBOBYR"
+    check_cube(cube, False, [0, 0, 2, 1, 1, 1, 1, 0], [2, 6, 0, 4, 1, 5, 3, 7])
 
     # coords
-    cube.coords = (632, 3766)
-    assert cube.coords == (632, 3766)
-    assert repr(cube) == "GWOGOWOYBRBGWRRBBWYYOYGR"
-    check_cube(cube, False, [2, 1, 2, 1, 0, 2, 1, 0], [5, 1, 2, 6, 4, 0, 3, 7])
+    cube.coords = (67, 2053)
+    assert cube.coords == (67, 2053)
+    assert repr(cube) == "YGOYOGOBWRWYGRRWWGBBOBYR"
+    check_cube(cube, False, [0, 0, 2, 1, 1, 1, 1, 0], [2, 6, 0, 4, 1, 5, 3, 7])
 
     # apply_move
     with pytest.raises(TypeError, match=r"move must be Move, not NoneType"):
@@ -400,7 +400,7 @@ def test_cube():
     check_cube(cube, False, [0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 2, 3, 4, 5, 6, 7])
     cube.apply_move(Move.F1)
     assert repr(cube) == "WWOOOYOYGGGGWRWRBBBBRRYY"
-    check_cube(cube, True, [1, 0, 1, 0, 2, 0, 2, 0], [4, 1, 6, 3, 2, 5, 0, 7])
+    check_cube(cube, True, [0, 1, 1, 0, 0, 2, 2, 0], [0, 5, 6, 3, 4, 2, 1, 7])
     cube.apply_move(Move.X1)
     assert repr(cube) == "GGGGYYOORRYYWWRROOWWBBBB"
     check_cube(cube, True, [0, 0, 0, 0, 0, 0, 0, 0], [5, 4, 2, 3, 0, 1, 6, 7])
@@ -409,15 +409,14 @@ def test_cube():
         cube = Cube(repr="OYBRBYBWOGORYGGOOYWWBWRG")
     cube.apply_move(Move.NONE)
     assert repr(cube) == "NYBRNYBWOGORYGGOONWWBWRG"
-    check_cube(cube, None, [-1, 1, 2, 1, 0, 2, 1, 0], [-1, 1, 2, 6, 4, 0, 3, 7])
-    with pytest.warns(UserWarning, match=match):
-        cube.apply_move(Move.F1)
+    check_cube(cube, None, [-1, 0, 2, 1, 1, 1, 1, 0], [-1, 6, 0, 4, 1, 5, 3, 7])
+    cube.apply_move(Move.F1)
     assert repr(cube) == "NYWYNBBWOORGBGROONWWGYRG"
-    check_cube(cube, None, [-1, 0, 2, 1, 0, 0, 1, 0], [-1, 6, 5, 1, 3, 0, 4, 7])
+    check_cube(cube, None, [-1, 2, 2, 1, 1, 1, 2, 0], [-1, 5, 3, 4, 1, 0, 6, 7])
     with pytest.warns(UserWarning, match=match):
         cube.apply_move(Move.X1)
-    assert repr(cube) == "OORGBWNBGYRGRBOGYWYNWWNO"
-    check_cube(cube, None, [2, 2, 2, 0, 1, 2, -1, 0], [2, 5, 1, 6, 4, 3, -1, 7])
+    assert repr(cube) == "NNNNNNNNNNNNNNNNNNNNNNNN"
+    check_cube(cube, None, [-1, -1, -1, -1, -1, -1, -1, -1], [-1, -1, -1, -1, -1, -1, -1, -1])
     with pytest.raises(TypeError, match=r"cube must be Cube, not NoneType"):
         apply_move(None, Move.NONE)
     cube.reset()

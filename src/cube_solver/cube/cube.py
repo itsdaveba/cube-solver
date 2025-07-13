@@ -24,8 +24,8 @@ DEFAULT_COLOR_SCHEME = {
 }
 
 INDEX_TO_CUBIE = np.array([
-    Cubie.UBL, Cubie.UFR, Cubie.DBR, Cubie.DFL,  # TETRAD_111 orbit
-    Cubie.UBR, Cubie.UFL, Cubie.DBL, Cubie.DFR,  # TETRAD_M11 orbit
+    Cubie.UBL, Cubie.UFR, Cubie.DFL, Cubie.DBR,  # TETRAD_111 orbit
+    Cubie.UBR, Cubie.UFL, Cubie.DFR, Cubie.DBL,  # TETRAD_M11 orbit
     Cubie.NONE], dtype=int)
 
 CUBIE_TO_INDEX = np.zeros(max(len(Cubie), max(Cubie) + 1), dtype=int)
@@ -155,7 +155,7 @@ class Cube:
         The ``orientation`` array contains the orientation values of the ``8`` corners.
 
         A corner is correctly oriented when the `top` or `bottom` facelet of the corner piece matches either the `top` or
-        `bottom` color of the cube. The cube's color scheme is determined with respect to the :attr:`.Cubie.DFR` corner.
+        `bottom` color of the cube. The cube's color scheme is determined with respect to the :attr:`.Cubie.DBL` corner.
         Corner orientation values are:
 
         * ``0`` if the corner is `correctly` oriented.
@@ -170,7 +170,7 @@ class Cube:
 
         The `solved state` permutation goes from ``0`` to ``7`` for the corners. The piece ordering in the solved state is:
 
-        * Corners: [``UBL``, ``UFR``, ``DBR``, ``DFL``, ``UBR``, ``UFL``, ``DBL``, ``DFR``]
+        * Corners: [``UBL``, ``UFR``, ``DFL``, ``DBR``, ``UBR``, ``UFL``, ``DFR``, ``DBL``]
         """
         self.permutation_parity: Union[bool, None]
         """
@@ -322,10 +322,13 @@ class Cube:
         # color scheme
         inv_color_scheme = {color: Face.NONE for color in Color.colors()}
         for face in Face.faces():
-            color = Color(self._colors[Cubie.DFR._index][face.axis.name])
-            if face in (Face.UP, Face.BACK, Face.LEFT):
-                default_face = [*DEFAULT_COLOR_SCHEME.keys()][[*DEFAULT_COLOR_SCHEME.values()].index(color)]
-                color = DEFAULT_COLOR_SCHEME[default_face.opposite]
+            color = Color(self._colors[Cubie.DBL._index][face.axis.name])
+            if face in (Face.UP, Face.FRONT, Face.RIGHT):
+                try:
+                    default_face = [*DEFAULT_COLOR_SCHEME.keys()][[*DEFAULT_COLOR_SCHEME.values()].index(color)]
+                    color = DEFAULT_COLOR_SCHEME[default_face.opposite]
+                except ValueError:
+                    color = Color.NONE
             self._color_scheme[face] = color
         inv_color_scheme.update({color: face for face, color in self._color_scheme.items()})
 
@@ -424,7 +427,7 @@ class Cube:
                     self.permutation_parity = not self.permutation_parity
             self.orientation[CUBIE_TO_INDEX[layer.perm]] = orientation
             self.permutation[CUBIE_TO_INDEX[layer.perm]] = self.permutation[CUBIE_TO_INDEX[cubies]]
-            if layer in (Layer.FRONT, Layer.RIGHT, Layer.DOWN):
+            if layer in (Layer.DOWN, Layer.BACK, Layer.LEFT):
                 self._parse_repr(repr(self))
 
         elif move.is_rotation:

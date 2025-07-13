@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 from ..cube.enums import Move
 
 NONE = -1
-MAIN_MOVES = [Move.U1, Move.U2, Move.U3, Move.B1, Move.B2, Move.B3, Move.L1, Move.L2, Move.L3]
+MAIN_MOVES = [Move.U1, Move.U2, Move.U3, Move.F1, Move.F2, Move.F3, Move.R1, Move.R2, Move.R3]
 
 
 @dataclass

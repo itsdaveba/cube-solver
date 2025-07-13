@@ -22,8 +22,7 @@ Features
 
 * Command-line interface
 * Transition and pruning tables
-* C extension module for table generation
-* Thistlethwaite and Kociemba solver algorithms
+* Kociemba  and Optimal solver algorithms
 
 
 Credits

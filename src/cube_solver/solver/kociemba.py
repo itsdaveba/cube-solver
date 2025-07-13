@@ -33,7 +33,7 @@ from .solver import BaseSolver
 
 
 PHASE0_MOVES = MAIN_MOVES
-RESTRICT_MOVES = [Move.B1, Move.B3, Move.L1, Move.L3]
+RESTRICT_MOVES = [Move.F1, Move.F3, Move.R1, Move.R3]
 PHASE1_MOVES = [move for move in PHASE0_MOVES if move not in RESTRICT_MOVES]
 
 
