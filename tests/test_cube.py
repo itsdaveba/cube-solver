@@ -10,37 +10,23 @@ from cube_solver.cube.enums import Axis, Orbit, Layer, Color, Face, Cubie, Move
 def test_enums():
     # axis
     assert hasattr(Axis, "NONE")
-    assert all(axis.is_cartesian for axis in Axis.cartesian_axes())
-    assert all(axis.is_diagonal for axis in Axis.diagonal_axes())
-    assert all(axis.is_edge for axis in Axis.edge_axes())
-    assert len([*Axis.axes()]) == 13
-    assert len([*Axis.cartesian_axes()]) == 3
-    assert len([*Axis.diagonal_axes()]) == 4
-    assert len([*Axis.edge_axes()]) == 6
+    assert len([*Axis.axes()]) == 3
 
     # orbit
     assert hasattr(Orbit, "NONE")
-    assert all(orbit.is_slice for orbit in Orbit.slices())
-    assert all(orbit.is_tetrad for orbit in Orbit.tetrads())
-    assert len([*Orbit.orbits()]) == 5
-    assert len([*Orbit.slices()]) == 3
-    assert len([*Orbit.tetrads()]) == 2
+    assert len([*Orbit.orbits()]) == 2
 
     # layer
     assert hasattr(Layer, "NONE")
     assert Layer.NONE.char == "N"
     assert Layer.NONE.axis == Axis.NONE
-    assert Layer.NONE.perm == [[Cubie.NONE]]
-    assert all(layer.is_outer for layer in Layer.outers())
-    assert all(layer.is_inner for layer in Layer.inners())
+    assert Layer.NONE.perm == [Cubie.NONE]
     with pytest.raises(TypeError, match=r"char must be str, not NoneType"):
         Layer.from_char(None)
     with pytest.raises(ValueError, match=r"invalid face character \(got 'None'\)"):
         Layer.from_char("None")
     assert all(layer == Layer.from_char(layer.char) for layer in Layer)
-    assert len([*Layer.layers()]) == 9
-    assert len([*Layer.outers()]) == 6
-    assert len([*Layer.inners()]) == 3
+    assert len([*Layer.layers()]) == 6
 
     # color
     assert hasattr(Color, "NONE")
@@ -69,31 +55,23 @@ def test_enums():
 
     # cubie
     assert hasattr(Cubie, "NONE")
-    assert Cubie.NONE.axis == Axis.NONE
-    assert Cubie.U.axis == Axis.Y
     assert Cubie.NONE.orbit == Orbit.NONE
-    assert Cubie.U.orbit == Orbit.NONE
     assert Cubie.NONE.faces == [Face.NONE]
-    assert Cubie.CORE.faces == []
     assert Cubie.UBL.faces == [Face.UP, Face.LEFT, Face.BACK]
     assert Cubie.UBR.faces == [Face.UP, Face.BACK, Face.RIGHT]
-    assert Cubie.NONE._index == (1, 1, 1)
-    assert all(cubie.is_corner for cubie in Cubie.corners())
-    assert all(cubie.is_edge for cubie in Cubie.edges())
-    assert all(cubie.is_center for cubie in Cubie.centers())
+    assert Cubie.NONE._index == (None, None, None)
     with pytest.raises(TypeError, match=r"faces must be list, not NoneType"):
         Cubie.from_faces(None)
     with pytest.raises(TypeError, match=r"faces elements must be Face, not NoneType"):
         Cubie.from_faces([None])
+    with pytest.raises(ValueError, match=r"invalid cubie faces \(got \[\]\)"):
+        Cubie.from_faces([])
     with pytest.raises(ValueError, match=r"invalid cubie faces \(got \[Face.NONE, Face.NONE\]\)"):
         Cubie.from_faces([Face.NONE, Face.NONE])
     with pytest.raises(ValueError, match=r"faces length must be at most 3 \(got 4\)"):
         Cubie.from_faces([Face.NONE, Face.NONE, Face.NONE, Face.NONE])
     assert all(cubie == Cubie.from_faces(cubie.faces) for cubie in Cubie)
-    assert len([*Cubie.cubies()]) == 27
-    assert len([*Cubie.corners()]) == 8
-    assert len([*Cubie.edges()]) == 12
-    assert len([*Cubie.centers()]) == 6
+    assert len([*Cubie.cubies()]) == 8
 
     # move
     assert hasattr(Move, "NONE")
@@ -104,38 +82,28 @@ def test_enums():
     assert Move.X1.string == "x"
     assert Move.X2.string == "x2"
     assert Move.X3.string == "x'"
-    assert Move.UW1.string == "Uw"
-    assert Move.UW2.string == "Uw2"
-    assert Move.UW3.string == "Uw'"
     assert Move.NONE.axis == Axis.NONE
     assert Move.X1.axis == Axis.X
     assert Move.U1.axis == Axis.Y
     assert Move.NONE.inverse == Move.NONE
     assert Move.U1.inverse == Move.U3
     assert Move.NONE.layers == [Layer.NONE]
-    assert Move.X1.layers == [Layer.RIGHT, Layer.LEFT, Layer.MIDDLE]
-    assert Move.FW1.layers == [Layer.FRONT, Layer.STANDING]
+    assert Move.X1.layers == [Layer.RIGHT, Layer.LEFT]
     assert Move.U1.layers == [Layer.UP]
     assert Move.NONE.shifts == [0]
     assert Move.X1.shifts == [1, -1, -1]
-    assert Move.FW1.shifts == [1, 1]
-    assert Move.RW1.shifts == [1, -1]
     assert Move.U1.shifts == [1]
     assert all(move.is_face for move in Move.face_moves())
-    assert all(move.is_slice for move in Move.slice_moves())
-    assert all(move.is_wide for move in Move.wide_moves())
     assert all(move.is_rotation for move in Move.rotations())
     with pytest.raises(TypeError, match=r"string must be str, not NoneType"):
         Move.from_string(None)
     with pytest.raises(ValueError, match=r"invalid move string \(got 'None'\)"):
         Move.from_string("None")
     assert all(move == Move.from_string(move.string) for move in Move)
-    assert all(move == Move.from_string(move.string[0].lower() + move.string[2:]) for move in Move.wide_moves())
-    assert len([*Move.moves()]) == 54
+    assert len([*Move.moves()]) == 27
     assert len([*Move.face_moves()]) == 18
-    assert len([*Move.slice_moves()]) == 9
-    assert len([*Move.wide_moves()]) == 18
     assert len([*Move.rotations()]) == 9
+    assert Move.U1.rotate(Move.X1) == Move.B1
 
 
 def test_utils():
