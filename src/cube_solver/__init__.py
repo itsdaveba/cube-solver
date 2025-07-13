@@ -5,7 +5,7 @@ __email__ = 'itsdaveba@gmail.com'
 __version__ = '1.1.3'
 
 from .cube import Cube, apply_move, apply_maneuver, Move, Maneuver
-from .solver import BaseSolver, DummySolver, Korf, Thistlethwaite, Kociemba
+from .solver import BaseSolver, DummySolver, Korf, Kociemba
 
 __all__ = ["Cube", "apply_move", "apply_maneuver", "Move", "Maneuver",
-           "BaseSolver", "DummySolver", "Korf", "Thistlethwaite", "Kociemba"]
+           "BaseSolver", "DummySolver", "Korf", "Kociemba"]

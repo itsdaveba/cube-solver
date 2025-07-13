@@ -103,7 +103,6 @@ def test_enums():
     assert len([*Move.moves()]) == 27
     assert len([*Move.face_moves()]) == 18
     assert len([*Move.rotations()]) == 9
-    assert Move.U1.rotate(Move.X1) == Move.B1
 
 
 def test_utils():
@@ -470,39 +469,38 @@ def test_maneuver():
 
     # equivalent
     assert Maneuver("U") == "U2 U'"
-    assert Maneuver("Fw2") != "B2"
-    assert Maneuver("f2") == "z2 B2"
-    assert Maneuver("M'") != "R' L"
-    assert Maneuver("M'") == "x R' L"
+    assert Maneuver("F2") != "B2"
+    assert Maneuver("F2") == "z2 B2"
+    assert Maneuver("") != "R' L"
+    assert Maneuver("") == "x R' L"
     assert Maneuver("z") != ""
-    assert Maneuver("z") == "F S B'"
-    assert Maneuver("z'") == "f' B"
+    assert Maneuver("z") == "F B'"
+    assert Maneuver("z'") == "F' B"
 
     # reduce
     assert str(Maneuver("U U U", False)) == "U U U"
     assert str(Maneuver("U U U")) == "U'"
     assert str(Maneuver("U U U2")) == ""
     assert str(Maneuver("U D U'")) == "D"
-    assert str(Maneuver("U D Uw'")) == "Dw"
-    assert str(Maneuver("U D' E'")) == "y"
-    assert str(Maneuver("U D' y'")) == "E"
-    assert str(Maneuver("U D E2")) == "U D E2"
-    maneuver = Maneuver("U D E2 U")
+    assert str(Maneuver("U D'")) == "y"
+    assert str(Maneuver("U D' y'")) == ""
+    assert str(Maneuver("U D")) == "U D"
+    maneuver = Maneuver("U D U")
     assert len(maneuver) == 2
-    assert maneuver == "D Uw2"
+    assert maneuver == "D U2"
     maneuver = Maneuver("B B' U2 U' U' F2 F2 B F2 F2 U U' D2 D' D' U2 D' R U2 U2 R2 R' R' R' L' R L2 L\
                          R L2 F B' B F2 B' F' B' F' F' L2 L' F' U' U U2 U L2 D2 D D L R' L R B2 F2 F2 B'\
                          B' F' B2 B F2 F2 F2 B F2 F2 U U' D2 D' D' U2 D' U U U L2 L2 U' D U2 U2 U D' U")
     assert len(maneuver) == 11
     assert maneuver == "B U2 D' R2 B2 L F' U' F U2 D'"
-    assert str(Maneuver("x' Rw y Uw' z2 Fw2 y2 Uw2 Dw2 y' Dw' y Dw Dw2 y2")) == "L D' B2 Uw2"
+    assert str(Maneuver("x' R y U' z2 F2 y2 U2 D2 y' D' y D D2 y2")) == "L D' B2 U2"
 
     # inverse
-    maneuver = Maneuver("U F2 R' D B2 L' M E2 S' Uw Fw2 Rw' Dw Bw2 Lw' u f2 r' d b2 l' x y2 z'")
+    maneuver = Maneuver("U F2 R' D B2 L' x y2 z'")
     cube = Cube(maneuver)
-    assert repr(cube) == "YGWYYOBWWBGRGRRWGBYBGBGBRRYRYOOOBGOGGROYBWYRBWWROWWOYO"
+    assert repr(cube) == "RYBRBYBWOGORYGGOOYWWBWRG"
     cube.apply_maneuver(maneuver.inverse)
-    assert repr(cube) == "WWWWWWWWWOOOOOOOOOGGGGGGGGGRRRRRRRRRBBBBBBBBBYYYYYYYYY"
+    assert repr(cube) == "WWWWOOOOGGGGRRRRBBBBYYYY"
     assert maneuver == maneuver.inverse.inverse
 
     # container operations
@@ -539,21 +537,21 @@ def test_maneuver():
     assert str(maneuver + [Move.L1, Move.R1, Move.U3]) == "U F2 L U'"
     assert str([Move.L1, Move.R1, Move.U3] + maneuver) == "L R F2 R'"
     # subtraction
-    assert str(maneuver - "D B2 L'") == "U F2 R' L B2 D'"
-    assert str("D B2 L'" - maneuver) == "D B2 L' R F2 U'"
+    assert str(maneuver - "D B2 L'") == "U F2 x' B2 D'"
+    assert str("D B2 L'" - maneuver) == "D B2 x F2 U'"
     assert str(maneuver - [Move.L1, Move.R1, Move.U3]) == "U F2 R' U R' L'"
     assert str([Move.L1, Move.R1, Move.U3] - maneuver) == "L R U' R F2 U'"
     # integer multiplication
     assert str(maneuver * 2) == "U F2 R' U F2 R'"
     assert str(2 * maneuver) == "U F2 R' U F2 R'"
     # conjugation
-    assert str(maneuver * "D B2 L'") == "U F2 R' D B2 L' R F2 U'"
-    assert str("D B2 L'" * maneuver) == "D B2 L' U F2 R' L B2 D'"
+    assert str(maneuver * "D B2 L'") == "U F2 R' D B2 x F2 U'"
+    assert str("D B2 L'" * maneuver) == "D B2 L' U F2 x' B2 D'"
     assert str(maneuver * [Move.L1, Move.R1, Move.U3]) == "U F2 L U' R F2 U'"
     assert str([Move.L1, Move.R1, Move.U3] * maneuver) == "L R F2 R' U R' L'"
     # commutator
-    assert str(maneuver @ "D B2 L'") == "U F2 R' D B2 L' R F2 U' L B2 D'"
-    assert str("D B2 L'" @ maneuver) == "D B2 L' U F2 R' L B2 D' R F2 U'"
+    assert str(maneuver @ "D B2 L'") == "U F2 R' D B2 x F2 U' L B2 D'"
+    assert str("D B2 L'" @ maneuver) == "D B2 L' U F2 x' B2 D' R F2 U'"
     assert str(maneuver @ [Move.L1, Move.R1, Move.U3]) == "U F2 L U' R F2 R' L'"
     assert str([Move.L1, Move.R1, Move.U3] @ maneuver) == "L R F2 R' U L' F2 U'"
 

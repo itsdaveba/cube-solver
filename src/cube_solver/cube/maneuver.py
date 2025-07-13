@@ -284,14 +284,14 @@ class Maneuver(str):
         return Maneuver([move.inverse for move in self.moves[::-1]])
 
     @classmethod
-    def random(cls, length: int = 25) -> Maneuver:
+    def random(cls, length: int = 15) -> Maneuver:
         """
         Generate a random maneuver.
 
         Parameters
         ----------
         length : int, optional
-            Maneuver length. Default is ``25``.
+            Maneuver length. Default is ``15``.
 
         Returns
         -------
