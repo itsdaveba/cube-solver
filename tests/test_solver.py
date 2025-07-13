@@ -27,9 +27,9 @@ def solve_test(solver: BaseSolver, num_cubes: int):
         solution = solver.solve(cube)
         times[i] = time.perf_counter() - times[i]
         nodes.append(solver.nodes)
-        assert solution is not None and not isinstance(solution, list)
-        lengths.append(len(solution))
+        assert isinstance(solution, Maneuver)
         assert apply_maneuver(cube, solution).is_solved
+        lengths.append(len(solution))
         if i and i % 50 == 0:
             print(f" {i}")
         print("#", end="")
