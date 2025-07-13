@@ -901,7 +901,7 @@ class Cube:
             raise TypeError(f"partial_corner_perm must be bool, not {type(partial_corner_perm).__name__}")
         if not isinstance(partial_edge_perm, bool):
             raise TypeError(f"partial_edge_perm must be bool, not {type(partial_edge_perm).__name__}")
-        if len(coords) < 4:
+        if len(coords) != 4:
             raise ValueError(f"coords tuple length must be 4 (got {len(coords)})")
 
         self.set_coord("co", coords[0])
