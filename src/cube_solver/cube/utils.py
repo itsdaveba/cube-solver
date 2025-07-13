@@ -61,6 +61,7 @@ def get_orientation_array(coord: int, v: int, n: int, force_modulo: bool = False
         upper_lim //= v
     if coord < 0 or coord >= upper_lim:
         raise ValueError(f"coord must be >= 0 and < {upper_lim} (got {coord})")
+
     orientation = np.zeros(n, dtype=int)
     for i in range(n - (2 if force_modulo else 1), -1, -1):
         coord, orientation[i] = divmod(coord, v)
