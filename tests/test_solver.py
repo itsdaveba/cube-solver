@@ -2,10 +2,11 @@ import os
 import time
 import pytest
 import numpy as np
+from typing import Tuple
 
 from cube_solver import Cube, Maneuver, apply_maneuver
-from cube_solver import BaseSolver, DummySolver, Korf, Thistlethwaite, Kociemba
-from cube_solver.solver.defs import FlattenCoords, TransitionDef, PruningDef
+from cube_solver import BaseSolver, DummySolver, Korf, Kociemba
+from cube_solver.solver.defs import TransitionDef, PruningDef
 from cube_solver.solver import utils
 
 
@@ -65,7 +66,8 @@ def depth_test(solver: BaseSolver, max_depth: int, num_cubes: int):
             solution = solver.solve(cube)
             times[i] = time.perf_counter() - times[i]
             nodes.append(solver.nodes)
-            assert solution == scramble.inverse
+            assert isinstance(solution, Maneuver)
+            assert apply_maneuver(cube, solution).is_solved
             print("#", end="")
         nodes = np.mean(nodes, axis=0)
         print(f"\t{np.mean(times):.4f} sec", end="\t")
@@ -75,21 +77,12 @@ def depth_test(solver: BaseSolver, max_depth: int, num_cubes: int):
 
 
 def test_utils():
-    # flatten
-    cube = Cube()
-    flatten_coords = utils.flatten(cube.get_coords(False, False))
-    assert flatten_coords == (0, 0, 0, 0)
-    flatten_coords = utils.flatten(cube.get_coords(False, True))
-    assert flatten_coords == (0, 0, 0, 0, 11856, 1656)
-    flatten_coords = utils.flatten(cube.get_coords(True, False))
-    assert flatten_coords == (0, 0, 0, 1656, 0)
-    flatten_coords = utils.flatten(cube.get_coords(True, True))
-    assert flatten_coords == (0, 0, 0, 1656, 0, 11856, 1656)
-
     # select
-    assert utils.select(flatten_coords, None) == flatten_coords
-    assert utils.select(flatten_coords, 5) == (11856,)
-    assert utils.select(flatten_coords, (3, 5, 6)) == (1656, 11856, 1656)
+    cube = Cube()
+    cube.coords = (632, 3766)
+    assert utils.select(cube.coords, None) == (632, 3766)
+    assert utils.select(cube.coords, 0) == (632,)
+    assert utils.select(cube.coords, (0, 1)) == (632, 3766)
 
     # load and save
     with pytest.raises(TypeError, match=r"path must be str or Path, not NoneType"):
@@ -130,22 +123,20 @@ def test_utils():
 
     # generate transition table
     class TestSolver(BaseSolver):
-        partial_corner_perm = True
-        partial_edge_perm = True
-        pruning_defs = [[PruningDef("pcp", 1680, 2)]]
+        pruning_defs = [[PruningDef("co", 729, 0)]]
         @staticmethod
-        def phase_coords(coords: FlattenCoords, phase: int) -> FlattenCoords:
+        def phase_coords(coords: Tuple[int, int], phase: int) -> Tuple[int, ...]:
             return coords
     solver = TestSolver()
     with pytest.raises(TypeError, match=r"coord_name must be str, not NoneType"):
         utils.generate_transition_table(None, None)
     with pytest.raises(TypeError, match=r"coord_size must be int, not NoneType"):
-        utils.generate_transition_table("pcp", None)
+        utils.generate_transition_table("co", None)
     with pytest.raises(ValueError, match=r"coord_size must be > 0 and <= 65536 \(got 0\)"):
-        utils.generate_transition_table("pcp", 0)
+        utils.generate_transition_table("co", 0)
     with pytest.raises(ValueError, match=r"coord_size must be > 0 and <= 65536 \(got 65537\)"):
-        utils.generate_transition_table("pcp", 65537)
-    assert np.all(utils.generate_transition_table("pcp", 1680) == solver.transition_tables["pcp"])
+        utils.generate_transition_table("co", 65537)
+    assert np.all(utils.generate_transition_table("co", 729) == solver.transition_tables["co"])
 
     # generate pruning table
     with pytest.raises(TypeError, match=r"phase must be int, not NoneType"):
@@ -161,10 +152,10 @@ def test_utils():
     with pytest.raises(TypeError, match=r"shape elements must be int, not NoneType"):
         utils.generate_pruning_table(solver, 0, (None,), (None,))
     with pytest.raises(TypeError, match=r"indexes elements must be int, not NoneType"):
-        utils.generate_pruning_table(solver, 0, (1680,), (None,))
-    assert np.all(utils.generate_pruning_table(solver, 0, (1680,), (2,)) == solver.pruning_tables["pcp"])
-    assert np.all(utils.generate_pruning_table(solver, 0, 1680, 2) == solver.pruning_tables["pcp"])
-    os.remove("tables/pruning_testsolver.npz")
+        utils.generate_pruning_table(solver, 0, (729,), (None,))
+    assert np.all(utils.generate_pruning_table(solver, 0, (729,), (0,)) == solver.pruning_tables["co"])
+    assert np.all(utils.generate_pruning_table(solver, 0, 729, 0) == solver.pruning_tables["co"])
+    os.remove("tables/pruning_testsolver_2x2.npz")
 
 
 def test_solver():

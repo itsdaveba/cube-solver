@@ -11,14 +11,12 @@ Examples
 >>> solver.solve(cube)
 "D R' U' L2"
 """
-from .defs import FlattenCoords
+from typing import Tuple
+
 from .solver import BaseSolver
 
 
 class DummySolver(BaseSolver):
-    partial_corner_perm = True
-    partial_edge_perm = True
-
     @staticmethod
-    def phase_coords(coords: FlattenCoords, phase: int) -> FlattenCoords:
+    def phase_coords(coords: Tuple[int, int], phase: int) -> Tuple[int, ...]:
         return coords

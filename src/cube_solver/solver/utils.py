@@ -9,47 +9,14 @@ from typing_extensions import TYPE_CHECKING
 from typing import Union, Tuple, Sequence, Dict, Callable
 
 from ..logger import logger
-from ..defs import CoordsType, NEXT_MOVES
-from ..cube.enums import Move
 from ..cube.cube import Cube, apply_move
-from .defs import NONE, FlattenCoords, TransitionDef, PruningDef, TableDef
+from .defs import NONE, MAIN_MOVES, TransitionDef, PruningDef, TableDef
 
 if TYPE_CHECKING:
     from .solver import BaseSolver
 
 
-def flatten(coords: CoordsType) -> FlattenCoords:
-    """
-    Get the flattened cube coordinates.
-
-    Parameters
-    ----------
-    coords : tuple of (int or tuple of int)
-        Cube coordinates.
-
-    Returns
-    -------
-    flatten_coords : tuple of int
-        Flattened cube coordinates.
-
-    Examples
-    --------
-    >>> from cube_solver import Cube
-    >>> from cube_solver.solver import utils
-    >>> cube = Cube()
-    >>> coords = cube.get_coords(partial_corner_perm=True, partial_edge_perm=True)
-    >>> coords
-    (0, 0, (0, 1656), (0, 11856, 1656))
-    >>> utils.flatten(coords)
-    (0, 0, 0, 1656, 0, 11856, 1656)
-    """
-    flatten_coords = ()
-    for coord in coords:
-        flatten_coords += (coord,) if isinstance(coord, int) else coord
-    return flatten_coords
-
-
-def select(coords: FlattenCoords, indexes: Union[int, Tuple[int, ...], None]) -> FlattenCoords:
+def select(coords: Tuple[int, ...], indexes: Union[int, Tuple[int, ...], None]) -> Tuple[int, ...]:
     """
     Select coordinates.
 
@@ -71,10 +38,9 @@ def select(coords: FlattenCoords, indexes: Union[int, Tuple[int, ...], None]) ->
     >>> from cube_solver import Cube
     >>> from cube_solver.solver import utils
     >>> cube = Cube()
-    >>> coords = cube.get_coords(partial_corner_perm=True, partial_edge_perm=True)
-    >>> flatten_coords = utils.flatten(coords)
-    >>> utils.select(flatten_coords, None)
-    (0, 0, 0, 1656, 0, 11856, 1656)
+    >>> coords = cube.get_coords()
+    >>> utils.select(coords, None)
+    (0, 0)
     >>> utils.select(flatten_coords, 5)
     (11856,)
     >>> utils.select(flatten_coords, (3, 5, 6))
@@ -220,12 +186,12 @@ def generate_transition_table(coord_name: str, coord_size: int) -> np.ndarray:
 
     if coord_size <= 0 or coord_size - 1 > np.iinfo(np.uint16).max:
         raise ValueError(f"coord_size must be > 0 and <= {np.iinfo(np.uint16).max + 1} (got {coord_size})")
-    transition_table = np.zeros((coord_size, len(NEXT_MOVES[Move.NONE])), dtype=np.uint16)
+    transition_table = np.zeros((coord_size, len(MAIN_MOVES)), dtype=np.uint16)
 
     cube = Cube()
     for coord in range(coord_size):
         cube.set_coord(coord_name, coord)
-        transition_table[coord] = [apply_move(cube, move).get_coord(coord_name) for move in NEXT_MOVES[Move.NONE]]
+        transition_table[coord] = [apply_move(cube, move).get_coord(coord_name) for move in MAIN_MOVES]
     return transition_table
 
 
@@ -269,8 +235,8 @@ def generate_pruning_table(solver: BaseSolver, phase: int, shape: Union[int, Tup
                 raise TypeError(f"indexes elements must be int, not {type(index).__name__}")
 
     pruning_table = np.full(shape, NONE, dtype=np.int8)
-    init_coords = solver.get_coords(Cube())
-    phase_coords = solver.phase_coords(flatten(init_coords), phase)
+    init_coords = Cube().coords
+    phase_coords = solver.phase_coords(init_coords, phase)
     prune_coords = select(phase_coords, indexes)
     pruning_table[prune_coords] = 0
     queue = deque([(init_coords, 0)])
@@ -278,7 +244,7 @@ def generate_pruning_table(solver: BaseSolver, phase: int, shape: Union[int, Tup
         coords, depth = queue.popleft()
         for move in solver.phase_moves[phase]:
             next_coords = solver.next_position(coords, move)
-            phase_coords = solver.phase_coords(flatten(next_coords), phase)
+            phase_coords = solver.phase_coords(next_coords, phase)
             prune_coords = select(phase_coords, indexes)
             if pruning_table[prune_coords] == NONE:
                 pruning_table[prune_coords] = depth + 1
