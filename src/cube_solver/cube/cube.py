@@ -482,7 +482,7 @@ class Cube:
         if move.is_face:
             layer = move.layers[0]
             shift = move.shifts[0]
-            cubies = np.roll(layer.perm, shift, axis=1)
+            cubies = np.roll(layer.perm, shift, axis=-1)
             orientation = self.orientation[CUBIE_TO_INDEX[cubies]]
             if shift % 2 == 1:
                 if move.axis == Axis.Z:
@@ -508,7 +508,7 @@ class Cube:
 
         elif move.is_rotation:
             layers_perm = [layer.perm for layer in move.layers]
-            layers_shifted = [np.roll(layer, shift, axis=1) for layer, shift in zip(layers_perm, move.shifts)]
+            layers_shifted = [np.roll(layer, shift, axis=-1) for layer, shift in zip(layers_perm, move.shifts)]
             rotation = {center: center for center in Cubie.centers()}
             rotation.update({Cubie(key): Cubie(val) for key, val in zip(np.ravel(layers_shifted), np.ravel(layers_perm))})
             rotation[Cubie.NONE] = Cubie.NONE
